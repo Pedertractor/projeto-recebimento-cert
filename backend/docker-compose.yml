@@ -1,0 +1,26 @@
+name: certificado-qualidade
+
+services:
+  certificado-qualidade-database:
+    image: postgres:17-alpine
+    container_name: certificado-qualidade-database
+    restart: unless-stopped
+    ports:
+      - "${PORT_DATABASE:-5434}:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data-certificado-qualidade:/var/lib/postgresql/data
+    networks:
+      - certificado-qualidade-net
+
+volumes:
+  postgres-data-certificado-qualidade:
+
+networks:
+  certificado-qualidade-net:
+    name: certificado-qualidade

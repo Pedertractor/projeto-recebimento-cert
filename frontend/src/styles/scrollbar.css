@@ -1,0 +1,87 @@
+/* Scrollbar personalizado — Batalha Naval / Estanqueidade */
+
+:root {
+  --scrollbar-size: 0.625rem;
+  --scrollbar-track: var(--palette-100);
+  --scrollbar-thumb: var(--palette-700);
+  --scrollbar-thumb-hover: var(--palette-900);
+}
+
+.dark {
+  --scrollbar-track: #262626;
+  --scrollbar-thumb: #525252;
+  --scrollbar-thumb-hover: #737373;
+}
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+  }
+
+  *::-webkit-scrollbar-track {
+    background-color: var(--scrollbar-track);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border: 2px solid var(--scrollbar-track);
+    border-radius: 9999px;
+    transition: background-color 150ms ease;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background-color: var(--scrollbar-track);
+  }
+}
+
+@layer utilities {
+  .app-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  .app-scrollbar::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+  }
+
+  .app-scrollbar::-webkit-scrollbar-track {
+    background-color: var(--scrollbar-track);
+    border-radius: 9999px;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border: 2px solid var(--scrollbar-track);
+    border-radius: 9999px;
+    transition: background-color 150ms ease;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  .app-scrollbar::-webkit-scrollbar-corner {
+    background-color: var(--scrollbar-track);
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
