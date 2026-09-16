@@ -66,7 +66,7 @@ export function AdminThemeProvider({ children }: { children: ReactNode }) {
       storeAdminTheme(nextTheme);
       applyDocumentTheme(nextTheme);
     },
-    [isAdmin],
+    [isSuperAdmin],
   );
 
   const toggleTheme = useCallback(() => {

@@ -64,35 +64,42 @@ export function LoginForm({
   }
 
   return (
-    <div className="flex min-h-dvh w-full items-center justify-center bg-background p-3 sm:p-4">
-      <div
-        className={cn(
-          'flex w-full max-w-[min(100%,22rem)] flex-col gap-4 sm:max-w-md',
-          'lg:max-h-[min(100dvh-1.5rem,36rem)] lg:max-w-4xl lg:flex-row lg:gap-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-border lg:bg-card lg:shadow-md',
-        )}
-      >
-        <div
-          className={cn(
-            'relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-soft to-brand py-5 shadow-md sm:py-6',
-            'lg:w-[38%] lg:rounded-none lg:py-0 lg:shadow-none',
-          )}
-        >
+    <div className="flex min-h-dvh w-full flex-col lg:flex-row">
+      <section className="flex items-center justify-center bg-gradient-to-br from-brand-soft to-brand px-6 py-10 lg:w-1/2 lg:min-h-dvh lg:py-0">
+        <div className="flex flex-col items-center gap-5 text-center">
           <BrandMark
             logoSrc={APP_LOGO_SRC}
             alt="Certificado de Qualidade"
-            className="h-28 w-48 sm:h-32 sm:w-56 lg:h-56 lg:w-[18rem]"
+            className="h-32 w-52 sm:h-40 sm:w-64 lg:h-72 lg:w-[22rem]"
           />
-          <p className="absolute inset-x-4 bottom-5 hidden text-center text-xs font-normal tracking-wide text-white/75 lg:block">
+          <p className="hidden max-w-sm text-sm leading-relaxed text-brand-foreground/80 lg:block">
             Solicitação de certificados · Pedertractor &amp; TractorComponents
           </p>
         </div>
+      </section>
 
-        <div className="flex flex-col gap-4 lg:flex-1 lg:justify-center lg:gap-5 lg:p-8 xl:px-10">
+      <section className="flex flex-1 items-center justify-center bg-background px-4 pb-8 lg:w-1/2 lg:min-h-dvh lg:px-12 lg:py-10">
+        <div
+          className={cn(
+            'w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8',
+            'lg:border-white/15 lg:bg-gradient-to-br lg:from-brand-soft lg:to-brand lg:shadow-xl',
+          )}
+        >
           <div className="space-y-1">
-            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+            <h1
+              className={cn(
+                'text-xl font-bold tracking-tight text-foreground sm:text-2xl',
+                'lg:text-brand-foreground',
+              )}
+            >
               {isFirstLoginStep ? 'Troca de senha' : 'Login'}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p
+              className={cn(
+                'text-sm text-muted-foreground',
+                'lg:text-brand-foreground/80',
+              )}
+            >
               {isFirstLoginStep
                 ? 'Defina uma nova senha para concluir o primeiro acesso.'
                 : 'Acesse o Certificado de Qualidade.'}
@@ -105,13 +112,24 @@ export function LoginForm({
             noValidate
           >
             {infoMessage ? (
-              <p className="rounded-lg border border-brand/30 bg-brand-muted/40 px-3 py-2 text-sm text-foreground">
+              <p
+                className={cn(
+                  'rounded-lg border border-brand/30 bg-brand-muted/40 px-3 py-2 text-sm text-foreground',
+                  'lg:border-white/25 lg:bg-white/15 lg:text-brand-foreground',
+                )}
+              >
                 {infoMessage}
               </p>
             ) : null}
 
             {errorMessage ? (
-              <p className="text-sm text-destructive" role="alert">
+              <p
+                className={cn(
+                  'text-sm text-destructive',
+                  'lg:rounded-lg lg:border lg:border-red-200/40 lg:bg-red-50/90 lg:px-3 lg:py-2',
+                )}
+                role="alert"
+              >
                 {errorMessage}
               </p>
             ) : null}
@@ -119,7 +137,12 @@ export function LoginForm({
             {!isFirstLoginStep ? (
               <>
                 <div className="space-y-1.5">
-                  <Label htmlFor="cardNumber">Cartão</Label>
+                  <Label
+                    htmlFor="cardNumber"
+                    className="lg:text-brand-foreground"
+                  >
+                    Cartão
+                  </Label>
                   <div className="relative">
                     <CreditCard
                       className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -134,14 +157,14 @@ export function LoginForm({
                       onChange={(event) =>
                         onCardNumberChange(event.target.value)
                       }
-                      className="h-10 border-border pl-10 placeholder:text-muted-foreground"
+                      className="h-10 border-border bg-background pl-10 placeholder:text-muted-foreground lg:border-white/20"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <span className="block text-sm font-bold text-foreground">
+                  <span className="block text-sm font-bold text-foreground lg:text-brand-foreground">
                     Unidade
                   </span>
                   <div className="grid grid-cols-2 gap-2">
@@ -156,8 +179,8 @@ export function LoginForm({
                           className={cn(
                             'h-10 rounded-lg border text-sm font-bold transition-colors',
                             active
-                              ? 'border-brand bg-brand text-brand-foreground'
-                              : 'border-border bg-background text-foreground hover:bg-muted/60',
+                              ? 'border-brand bg-brand text-brand-foreground lg:border-white lg:bg-white lg:text-brand'
+                              : 'border-border bg-background text-foreground hover:bg-muted/60 lg:border-white/30 lg:bg-white/10 lg:text-brand-foreground lg:hover:bg-white/20',
                           )}
                         >
                           {UNIT_LABELS[unitValue]}
@@ -168,7 +191,12 @@ export function LoginForm({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label
+                    htmlFor="password"
+                    className="lg:text-brand-foreground"
+                  >
+                    Senha
+                  </Label>
                   <div className="relative">
                     <KeyRound
                       className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -180,16 +208,14 @@ export function LoginForm({
                       placeholder="Digite sua senha"
                       type={showPassword ? 'text' : 'password'}
                       value={password}
-                      onChange={(event) =>
-                        onPasswordChange(event.target.value)
-                      }
-                      className="h-10 border-border pr-10 pl-10 placeholder:text-muted-foreground"
+                      onChange={(event) => onPasswordChange(event.target.value)}
+                      className="h-10 border-border bg-background pr-10 pl-10 placeholder:text-muted-foreground lg:border-white/20"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((current) => !current)}
-                      className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-brand"
+                      className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-brand lg:hover:bg-white/20 lg:hover:text-brand-foreground"
                       aria-label={
                         showPassword ? 'Ocultar senha' : 'Mostrar senha'
                       }
@@ -206,7 +232,12 @@ export function LoginForm({
             ) : (
               <>
                 <div className="space-y-1.5">
-                  <Label htmlFor="newPassword">Nova senha</Label>
+                  <Label
+                    htmlFor="newPassword"
+                    className="lg:text-brand-foreground"
+                  >
+                    Nova senha
+                  </Label>
                   <div className="relative">
                     <LockKeyhole
                       className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -221,15 +252,13 @@ export function LoginForm({
                       onChange={(event) =>
                         onNewPasswordChange(event.target.value)
                       }
-                      className="h-10 border-border pr-10 pl-10 placeholder:text-muted-foreground"
+                      className="h-10 border-border bg-background pr-10 pl-10 placeholder:text-muted-foreground lg:border-white/20"
                       required
                     />
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowNewPassword((current) => !current)
-                      }
-                      className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-brand"
+                      onClick={() => setShowNewPassword((current) => !current)}
+                      className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-brand lg:hover:bg-white/20 lg:hover:text-brand-foreground"
                       aria-label={
                         showNewPassword ? 'Ocultar senha' : 'Mostrar senha'
                       }
@@ -244,7 +273,12 @@ export function LoginForm({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="confirmPassword">Confirmar senha</Label>
+                  <Label
+                    htmlFor="confirmPassword"
+                    className="lg:text-brand-foreground"
+                  >
+                    Confirmar senha
+                  </Label>
                   <div className="relative">
                     <LockKeyhole
                       className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -259,7 +293,7 @@ export function LoginForm({
                       onChange={(event) =>
                         onConfirmPasswordChange(event.target.value)
                       }
-                      className="h-10 border-border pr-10 pl-10 placeholder:text-muted-foreground"
+                      className="h-10 border-border bg-background pr-10 pl-10 placeholder:text-muted-foreground lg:border-white/20"
                       required
                     />
                     <button
@@ -267,11 +301,9 @@ export function LoginForm({
                       onClick={() =>
                         setShowConfirmPassword((current) => !current)
                       }
-                      className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-brand"
+                      className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-brand lg:hover:bg-white/20 lg:hover:text-brand-foreground"
                       aria-label={
-                        showConfirmPassword
-                          ? 'Ocultar senha'
-                          : 'Mostrar senha'
+                        showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'
                       }
                     >
                       {showConfirmPassword ? (
@@ -289,7 +321,7 @@ export function LoginForm({
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="h-10 w-full rounded-lg bg-brand text-sm font-bold tracking-wide text-brand-foreground hover:bg-brand/90"
+                className="h-10 w-full rounded-lg bg-brand text-sm font-bold tracking-wide text-brand-foreground hover:bg-brand/90 lg:bg-white lg:text-brand lg:hover:bg-white/90"
               >
                 <span className="flex-1 text-center">
                   {isLoading
@@ -306,7 +338,7 @@ export function LoginForm({
                   type="button"
                   variant="outline"
                   disabled={isLoading}
-                  className="h-10 w-full rounded-lg"
+                  className="h-10 w-full rounded-lg lg:border-white/30 lg:bg-transparent lg:text-brand-foreground lg:hover:bg-white/10"
                   onClick={onBackToCredentials}
                 >
                   Voltar
@@ -315,7 +347,7 @@ export function LoginForm({
             </div>
           </form>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

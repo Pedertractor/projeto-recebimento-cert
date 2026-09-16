@@ -32,4 +32,4 @@ export function BrandMark({
   );
 }
 
-export const APP_LOGO_SRC = '/icone_plataforma.svg';
+export const APP_LOGO_SRC = '/icone_plataforma.png';
