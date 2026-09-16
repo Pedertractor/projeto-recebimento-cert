@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { House, Users } from 'lucide-react-motion';
+import { ClipboardList, FilePlus, House, Users } from 'lucide-react-motion';
 
 import { APP_LOGO_SRC, BrandMark } from '@/components/brand-mark';
 import { motionIconGroupProps } from '@/components/motion-icon-provider';
@@ -19,6 +19,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useWebSession } from '@/hooks/auth/use-web-session';
+import { canAccessStockModules } from '@/lib/role-access';
 import { isSuperAdminRole } from '@/lib/user-labels';
 
 type SidebarNavItem = {
@@ -79,6 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { pathname } = useLocation();
   const { data: user } = useWebSession();
   const isSuperAdmin = isSuperAdminRole(user?.role);
+  const canUseStockModules = canAccessStockModules(user?.role);
 
   const homeItems: SidebarNavItem[] = [
     {
@@ -89,6 +91,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: (path) => path === '/',
     },
   ];
+
+  const stockItems: SidebarNavItem[] = canUseStockModules
+    ? [
+        {
+          label: 'Solicitar certificado',
+          href: '/solicitar-certificado',
+          tooltip: 'Solicitar certificado',
+          icon: FilePlus,
+          isActive: (path) => path.startsWith('/solicitar-certificado'),
+        },
+        {
+          label: 'Minhas solicitações',
+          href: '/minhas-solicitacoes',
+          tooltip: 'Minhas solicitações',
+          icon: ClipboardList,
+          isActive: (path) => path.startsWith('/minhas-solicitacoes'),
+        },
+      ]
+    : [];
 
   const adminItems: SidebarNavItem[] = isSuperAdmin
     ? [
@@ -104,6 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const navGroups = [
     { label: 'Início', items: homeItems },
+    { label: 'Operações', items: stockItems },
     { label: 'Administração', items: adminItems },
   ];
 

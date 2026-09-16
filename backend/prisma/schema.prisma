@@ -22,6 +22,34 @@ enum UserRole {
   @@map("user_role")
 }
 
+enum CertificateRequestStatus {
+  AGUARDANDO_COMPRAS
+  AGUARDANDO_FORNECEDOR
+  CONCLUIDA
+  CANCELADA
+
+  @@map("certificate_request_status")
+}
+
+enum AttachmentType {
+  NOTA_FISCAL
+  CERTIFICADO
+
+  @@map("attachment_type")
+}
+
+enum RequestHistoryEventType {
+  SOLICITACAO_CRIADA
+  EMAIL_COMPRAS_ENVIADO
+  ENVIO_FORNECEDOR_REGISTRADO
+  CERTIFICADO_ANEXADO
+  CERTIFICADO_REMOVIDO
+  SOLICITACAO_CONCLUIDA
+  EMAIL_ESTOQUE_ENVIADO
+
+  @@map("request_history_event_type")
+}
+
 model User {
   id         Int       @id @default(autoincrement())
   email      String?   @unique
@@ -37,10 +65,90 @@ model User {
   updatedAt  DateTime  @updatedAt @map("updated_at")
   deletedAt  DateTime? @map("deleted_at")
 
-  refreshTokens RefreshToken[]
+  refreshTokens              RefreshToken[]
+  createdCertificateRequests CertificateRequest[] @relation("CertificateRequestCreatedBy")
+  uploadedAttachments        RequestAttachment[]  @relation("RequestAttachmentUploadedBy")
+  historyEvents              RequestHistoryEvent[] @relation("RequestHistoryEventActor")
 
   @@unique([cardNumber, unit])
   @@map("users")
+}
+
+model Supplier {
+  id          Int      @id @default(autoincrement())
+  name        String
+  cnpj        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  certificateRequests CertificateRequest[]
+
+  @@map("suppliers")
+}
+
+model CertificateRequest {
+  id                   Int                      @id @default(autoincrement())
+  supplierId           Int                      @map("supplier_id")
+  supplier             Supplier                 @relation(fields: [supplierId], references: [id])
+  invoiceNumber        String                   @map("invoice_number")
+  invoiceDate          DateTime                 @map("invoice_date") @db.Date
+  expectedCertificates Int                      @default(1) @map("expected_certificates")
+  notes                String?
+  status               CertificateRequestStatus @default(AGUARDANDO_COMPRAS)
+  createdByUserId      Int                      @map("created_by_user_id")
+  createdBy            User                     @relation("CertificateRequestCreatedBy", fields: [createdByUserId], references: [id])
+  submittedAt          DateTime                 @default(now()) @map("submitted_at")
+  supplierContactAt    DateTime?                @map("supplier_contact_at")
+  completedAt          DateTime?                @map("completed_at")
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  updatedAt            DateTime                 @updatedAt @map("updated_at")
+
+  attachments   RequestAttachment[]
+  historyEvents RequestHistoryEvent[]
+  magicLink     MagicLink?
+
+  @@map("certificate_requests")
+}
+
+model RequestAttachment {
+  id               String             @id @default(uuid())
+  requestId        Int                @map("request_id")
+  request          CertificateRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  type             AttachmentType
+  fileName         String             @map("file_name")
+  storagePath      String             @map("storage_path")
+  lotLabel         String?            @map("lot_label")
+  uploadedByUserId Int?               @map("uploaded_by_user_id")
+  uploadedBy       User?              @relation("RequestAttachmentUploadedBy", fields: [uploadedByUserId], references: [id])
+  uploadedAt       DateTime           @default(now()) @map("uploaded_at")
+
+  @@map("request_attachments")
+}
+
+model RequestHistoryEvent {
+  id          String                  @id @default(uuid())
+  requestId   Int                     @map("request_id")
+  request     CertificateRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  eventType   RequestHistoryEventType @map("event_type")
+  description String?
+  actorUserId Int?                    @map("actor_user_id")
+  actor       User?                   @relation("RequestHistoryEventActor", fields: [actorUserId], references: [id])
+  occurredAt  DateTime                @default(now()) @map("occurred_at")
+
+  @@map("request_history_events")
+}
+
+model MagicLink {
+  id        String             @id @default(uuid())
+  requestId Int                @unique @map("request_id")
+  request   CertificateRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  tokenHash String             @unique @map("token_hash")
+  expiresAt DateTime?          @map("expires_at")
+  usedAt    DateTime?          @map("used_at")
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  @@map("magic_links")
 }
 
 model RefreshToken {
