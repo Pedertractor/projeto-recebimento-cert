@@ -213,6 +213,8 @@ export class CertificateRequestService {
       invoiceDate: fullRequest.invoiceDate,
       expectedCertificates: fullRequest.expectedCertificates,
       notes: fullRequest.notes,
+      createdByName: fullRequest.createdByName,
+      submittedAt: fullRequest.submittedAt,
       magicLinkUrl,
       recipients,
     });
@@ -425,6 +427,7 @@ export class CertificateRequestService {
       attachedCertificatesCount,
       stockOperatorName: request.createdBy.name,
       stockOperatorEmail: request.createdBy.email,
+      completedAt: completedAt.toISOString(),
       requestUrl,
     });
 

@@ -14,6 +14,7 @@ export async function sendEmailByNodeMailer(
   to: string,
   subject: string,
   html: string,
+  text?: string,
 ) {
   if (!isMailConfigured()) {
     throw new Error(
@@ -35,5 +36,6 @@ export async function sendEmailByNodeMailer(
     to,
     subject,
     html,
+    text,
   });
 }
