@@ -12,6 +12,7 @@ import { DocQualidadePage } from '@/pages/doc-qualidade-page';
 import { HomePage } from '@/pages/home-page';
 import { MinhasSolicitacoesPage } from '@/pages/minhas-solicitacoes-page';
 import { SolicitacaoComprasDetailPage } from '@/pages/solicitacao-compras-detail-page';
+import { SolicitacaoEstoqueDetailPage } from '@/pages/solicitacao-estoque-detail-page';
 import { SolicitacoesComprasPage } from '@/pages/solicitacoes-compras-page';
 import { SolicitarCertificadoPage } from '@/pages/solicitar-certificado-page';
 import { UsuariosPage } from '@/pages/usuarios-page';
@@ -35,6 +36,10 @@ export function AppRouter() {
                   <Route
                     path="/minhas-solicitacoes"
                     element={<MinhasSolicitacoesPage />}
+                  />
+                  <Route
+                    path="/minhas-solicitacoes/:id"
+                    element={<SolicitacaoEstoqueDetailPage />}
                   />
                 </Route>
                 <Route element={<RequirePurchaseOperator />}>

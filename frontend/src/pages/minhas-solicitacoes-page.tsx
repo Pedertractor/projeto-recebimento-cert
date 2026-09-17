@@ -2,18 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { CancelCertificateRequestButton } from '@/components/requests/cancel-certificate-request-button';
-import { RequestStatusBadge } from '@/components/requests/request-status-badge';
+import { CertificateRequestsTable } from '@/components/requests/certificate-requests-table';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { formatRequestDate } from '@/lib/certificate-request-labels';
 import {
   certificateRequestsListQueryKey,
   listCertificateRequests,
@@ -56,53 +46,12 @@ export function MinhasSolicitacoesPage() {
       ) : null}
 
       {requestsQuery.isSuccess ? (
-        <div className="overflow-hidden rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Solicitação</TableHead>
-                <TableHead>Fornecedor</TableHead>
-                <TableHead>Nº NF</TableHead>
-                <TableHead>Lotes</TableHead>
-                <TableHead>Data NF</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Abertura</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requestsQuery.data.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="py-10 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Nenhuma solicitação encontrada.
-                    </p>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                requestsQuery.data.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell className="font-medium">#{request.id}</TableCell>
-                    <TableCell>{request.supplier.name}</TableCell>
-                    <TableCell>{request.invoiceNumber}</TableCell>
-                    <TableCell>{request.expectedCertificates}</TableCell>
-                    <TableCell>
-                      {formatRequestDate(request.invoiceDate)}
-                    </TableCell>
-                    <TableCell>
-                      <RequestStatusBadge status={request.status} />
-                    </TableCell>
-                    <TableCell>
-                      {formatRequestDate(request.submittedAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <CancelCertificateRequestButton request={request} />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+        <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60">
+          <CertificateRequestsTable
+            requests={requestsQuery.data}
+            variant="stock"
+            detailPath={(id) => `/minhas-solicitacoes/${id}`}
+          />
         </div>
       ) : null}
     </div>
