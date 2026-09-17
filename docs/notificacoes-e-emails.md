@@ -99,7 +99,9 @@ Variáveis de ambiente sugeridas:
 
 | Variável | Descrição |
 | -------- | --------- |
-| `EMAIL_COMPRAS` | Destinatário padrão do e-mail de nova solicitação |
-| `EMAIL_FROM` | Remetente dos e-mails do sistema |
+| `CORREIO` | Host SMTP (ex.: correio.ptractor.com.br) |
+| `EMAIL_AUTOMACAO` | Usuário/remetente SMTP |
+| `PASSWORD_AUTOMACAO` | Senha SMTP |
+| `PORT_CORREIO` | Porta SMTP (padrão: 587) |
+| `EMAIL_COMPRAS` | Destinatário fallback se nenhum operador de compras tiver e-mail |
 | `APP_BASE_URL` | Base URL para montar magic links |
-| `SMTP_*` ou serviço | Credenciais do provedor de e-mail |

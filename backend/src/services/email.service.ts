@@ -1,4 +1,5 @@
 import { env } from '../config/env.js';
+import { isMailConfigured, sendEmailByNodeMailer } from '../utils/nodemailer.js';
 
 type NewRequestEmailParams = {
   requestId: number;
@@ -16,6 +17,27 @@ export type EmailDispatchResult = {
   sent: boolean;
   recipients: string[];
 };
+
+function toHtmlBody(text: string): string {
+  return text.replace(/\n/g, '<br>');
+}
+
+async function dispatchEmail(
+  to: string,
+  subject: string,
+  body: string,
+): Promise<boolean> {
+  if (!isMailConfigured()) {
+    console.info(`[email:skipped] SMTP não configurado. Para ${to}`);
+    console.info(subject);
+    console.info(body);
+    return false;
+  }
+
+  await sendEmailByNodeMailer(to, subject, toHtmlBody(body));
+  console.info(`[email:sent] Para ${to}`);
+  return true;
+}
 
 export async function sendNewCertificateRequestEmail(
   params: NewRequestEmailParams,
@@ -55,13 +77,25 @@ export async function sendNewCertificateRequestEmail(
     return { sent: false, recipients: [] };
   }
 
-  for (const recipient of recipients) {
-    console.info(`[email:queued] Para ${recipient}`);
-    console.info(subject);
-    console.info(body);
-  }
+  const deliveredRecipients: string[] = [];
 
-  return { sent: true, recipients };
+  await Promise.all(
+    recipients.map(async (recipient) => {
+      try {
+        const sent = await dispatchEmail(recipient, subject, body);
+        if (sent) {
+          deliveredRecipients.push(recipient);
+        }
+      } catch (error) {
+        console.error(`[email:error] Para ${recipient}`, error);
+      }
+    }),
+  );
+
+  return {
+    sent: deliveredRecipients.length > 0,
+    recipients: deliveredRecipients,
+  };
 }
 
 type CompletedRequestEmailParams = {
@@ -77,7 +111,8 @@ type CompletedRequestEmailParams = {
 export async function sendCompletedCertificateRequestEmail(
   params: CompletedRequestEmailParams,
 ): Promise<void> {
-  const recipient = params.stockOperatorEmail;
+  const recipient = params.stockOperatorEmail?.trim().toLowerCase();
+
   const subject = `[Certificados recebidos] Solicitação #${params.requestId} — ${params.supplierName}`;
   const body = [
     'Os certificados da solicitação foram anexados e a solicitação foi concluída.',
@@ -103,9 +138,11 @@ export async function sendCompletedCertificateRequestEmail(
     return;
   }
 
-  console.info(`[email:queued] Para ${recipient}`);
-  console.info(subject);
-  console.info(body);
+  try {
+    await dispatchEmail(recipient, subject, body);
+  } catch (error) {
+    console.error(`[email:error] Para ${recipient}`, error);
+  }
 }
 
 export function resolvePurchaseNotificationRecipients(

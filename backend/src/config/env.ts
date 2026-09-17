@@ -4,6 +4,17 @@ import { parseDurationToSeconds } from './duration.js';
 
 const durationSchema = z.string().regex(/^\d+[smhd]$/);
 
+function optionalEnvString() {
+  return z.preprocess((value: unknown) => {
+    if (value === undefined || value === null) {
+      return undefined;
+    }
+
+    const normalized = String(value).trim();
+    return normalized === '' ? undefined : normalized;
+  }, z.string().optional());
+}
+
 const envSchema = z.object({
   DATABASE_URL: z.string(),
   PORT: z.coerce.number().default(3000),
@@ -20,7 +31,10 @@ const envSchema = z.object({
   COOKIE_SECURE: z.enum(['true', 'false']).optional(),
   APP_BASE_URL: z.string().url().default('http://localhost:5173'),
   EMAIL_COMPRAS: z.string().email().optional(),
-  EMAIL_FROM: z.string().email().optional(),
+  CORREIO: optionalEnvString(),
+  EMAIL_AUTOMACAO: optionalEnvString(),
+  PASSWORD_AUTOMACAO: optionalEnvString(),
+  PORT_CORREIO: z.coerce.number().default(587),
 });
 
 const parsed = envSchema.safeParse(process.env);
