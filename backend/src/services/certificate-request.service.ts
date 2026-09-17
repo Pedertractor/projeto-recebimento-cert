@@ -19,7 +19,8 @@ import { AppError } from '../lib/errors.js';
 import type { CreateCertificateRequestFields } from '../schemas/certificate-request.schemas.js';
 import { saveCertificateRequestFile } from '../utils/certificate-request-storage.js';
 import { hashToken } from '../utils/token-hash.js';
-import { sendCompletedCertificateRequestEmail, sendNewCertificateRequestEmail } from './email.service.js';
+import { sendCompletedCertificateRequestEmail, sendNewCertificateRequestEmail, resolvePurchaseNotificationRecipients } from './email.service.js';
+import { UserService } from './user.service.js';
 
 type RequestWithRelations = CertificateRequest & {
   supplier: Supplier;
@@ -197,7 +198,14 @@ export class CertificateRequestService {
     const fullRequest = await this.findById(request);
     const magicLinkUrl = `${env.APP_BASE_URL}/solicitacoes/${fullRequest.id}?token=${rawToken}`;
 
-    await sendNewCertificateRequestEmail({
+    const userService = new UserService(this.prisma);
+    const purchaseOperatorEmails =
+      await userService.listActivePurchaseOperatorEmails();
+    const recipients = resolvePurchaseNotificationRecipients(
+      purchaseOperatorEmails,
+    );
+
+    const emailDispatch = await sendNewCertificateRequestEmail({
       requestId: fullRequest.id,
       supplierName: fullRequest.supplier.name,
       supplierCnpj: fullRequest.supplier.cnpj,
@@ -206,15 +214,16 @@ export class CertificateRequestService {
       expectedCertificates: fullRequest.expectedCertificates,
       notes: fullRequest.notes,
       magicLinkUrl,
+      recipients,
     });
 
     await this.prisma.requestHistoryEvent.create({
       data: {
         requestId: fullRequest.id,
         eventType: RequestHistoryEventType.EMAIL_COMPRAS_ENVIADO,
-        description: env.EMAIL_COMPRAS
-          ? `E-mail enviado para ${env.EMAIL_COMPRAS}.`
-          : 'E-mail registrado (destinatário não configurado).',
+        description: emailDispatch.recipients.length
+          ? `E-mail enviado para ${emailDispatch.recipients.join(', ')}.`
+          : 'E-mail registrado (nenhum operador de compras com e-mail cadastrado).',
         actorUserId: userId,
       },
     });

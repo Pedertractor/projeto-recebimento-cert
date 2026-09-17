@@ -6,13 +6,13 @@ import {
   FileUp,
   Loader2,
   Mail,
-  Paperclip,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { CancelCertificateRequestButton } from '@/components/requests/cancel-certificate-request-button';
 import { CertificateRequestSummary } from '@/components/requests/certificate-request-summary';
+import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-card';
 import { RequestAttachmentActions } from '@/components/requests/request-attachment-actions';
 import { RequestHistoryTimeline } from '@/components/requests/request-history-timeline';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
@@ -192,7 +192,7 @@ export function CertificateRequestDetailView({
     attachedCount >= request.expectedCertificates;
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-3">
           <Button asChild variant="ghost" className="-ml-2 w-fit px-2">
@@ -221,32 +221,20 @@ export function CertificateRequestDetailView({
         ) : null}
       </div>
 
-      <section className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6">
-        <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-          Detalhes
-        </h2>
-        <div className="mt-4">
-          <CertificateRequestSummary request={request} />
-        </div>
-      </section>
-
-      <section className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6">
-        <div className="flex items-center gap-2">
-          <Paperclip className="size-4 text-brand" />
-          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-            Nota fiscal
+      <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
+        <section className="flex h-full min-h-0 flex-col rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6 lg:col-span-2">
+          <h2 className="shrink-0 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+            Detalhes
           </h2>
+          <div className="mt-4 flex min-h-0 flex-1 flex-col">
+            <CertificateRequestSummary request={request} />
+          </div>
+        </section>
+
+        <div className="h-full lg:col-span-1">
+          <InvoiceAttachmentCard attachment={invoiceAttachment} />
         </div>
-        <div className="mt-4">
-          {invoiceAttachment ? (
-            <AttachmentListItem attachment={invoiceAttachment} />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma nota fiscal anexada.
-            </p>
-          )}
-        </div>
-      </section>
+      </div>
 
       {canRegisterSupplierContact ? (
         <section className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6">

@@ -9,12 +9,25 @@ type NewRequestEmailParams = {
   expectedCertificates: number;
   notes?: string | null;
   magicLinkUrl: string;
+  recipients: string[];
+};
+
+export type EmailDispatchResult = {
+  sent: boolean;
+  recipients: string[];
 };
 
 export async function sendNewCertificateRequestEmail(
   params: NewRequestEmailParams,
-): Promise<void> {
-  const recipient = env.EMAIL_COMPRAS;
+): Promise<EmailDispatchResult> {
+  const recipients = [
+    ...new Set(
+      params.recipients
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+
   const subject = `[Solicitação Certificado] NF ${params.invoiceNumber} — ${params.supplierName}`;
   const body = [
     'Nova solicitação de certificado de qualidade.',
@@ -33,16 +46,22 @@ export async function sendNewCertificateRequestEmail(
     .filter(Boolean)
     .join('\n');
 
-  if (!recipient) {
-    console.info('[email:skipped] EMAIL_COMPRAS não configurado.');
+  if (recipients.length === 0) {
+    console.info(
+      '[email:skipped] Nenhum operador de compras com e-mail cadastrado.',
+    );
     console.info(subject);
     console.info(body);
-    return;
+    return { sent: false, recipients: [] };
   }
 
-  console.info(`[email:queued] Para ${recipient}`);
-  console.info(subject);
-  console.info(body);
+  for (const recipient of recipients) {
+    console.info(`[email:queued] Para ${recipient}`);
+    console.info(subject);
+    console.info(body);
+  }
+
+  return { sent: true, recipients };
 }
 
 type CompletedRequestEmailParams = {
@@ -87,4 +106,19 @@ export async function sendCompletedCertificateRequestEmail(
   console.info(`[email:queued] Para ${recipient}`);
   console.info(subject);
   console.info(body);
+}
+
+export function resolvePurchaseNotificationRecipients(
+  operatorEmails: string[],
+  fallbackEmail = env.EMAIL_COMPRAS,
+): string[] {
+  const recipients = operatorEmails
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (fallbackEmail?.trim()) {
+    recipients.push(fallbackEmail.trim().toLowerCase());
+  }
+
+  return [...new Set(recipients)];
 }

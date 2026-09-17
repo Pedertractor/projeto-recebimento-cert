@@ -254,4 +254,55 @@ export class UserService {
       data: { role },
     });
   }
+
+  async updateMyEmail(userId: number, email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+    });
+
+    if (!existingUser) {
+      throw new AppError('Usuário não encontrado', 404);
+    }
+
+    const emailInUse = await this.prisma.user.findFirst({
+      where: {
+        email: normalizedEmail,
+        deletedAt: null,
+        NOT: { id: userId },
+      },
+      select: { id: true },
+    });
+
+    if (emailInUse) {
+      throw new AppError('Este e-mail já está em uso.', 409);
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { email: normalizedEmail },
+      select: userPublicSelect,
+    });
+
+    return toPublicUser(updated);
+  }
+
+  async listActivePurchaseOperatorEmails(): Promise<string[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.PURCHASE_OPERATOR,
+        status: true,
+        deletedAt: null,
+        email: { not: null },
+      },
+      select: { email: true },
+    });
+
+    const emails = users
+      .map((user) => user.email?.trim().toLowerCase())
+      .filter((email): email is string => Boolean(email));
+
+    return [...new Set(emails)];
+  }
 }

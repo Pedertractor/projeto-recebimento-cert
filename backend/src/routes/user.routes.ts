@@ -15,6 +15,7 @@ import {
   logoutController,
   refreshController,
   resetUserPasswordController,
+  updateMyEmailController,
   updateUserRoleController,
 } from '../controllers/user.controller.js';
 import {
@@ -36,8 +37,11 @@ import {
   type EmployeeInfoQuery,
   type GetUserByEmployeeIdParams,
   type LoginBody,
+  type UpdateMyEmailBody,
   type UpdateUserRoleBody,
   type UserIdParams,
+  updateMyEmailBodySchema,
+  updateMyEmailResponseSchema,
   updateUserRoleBodySchema,
   userIdParamsSchema,
   userSchema,
@@ -79,6 +83,26 @@ export function userRoutes(fastify: FastifyInstance) {
       onRequest: [fastify.authenticate],
     },
     getMyUserController,
+  );
+
+  fastify.patch<{ Body: UpdateMyEmailBody }>(
+    '/me/email',
+    {
+      schema: {
+        summary: 'Update my email',
+        tags: ['User'],
+        security: [{ cookieAuth: [] }],
+        body: updateMyEmailBodySchema,
+        response: {
+          200: updateMyEmailResponseSchema.describe(
+            'Update my email success response',
+          ),
+          ...commonErrors,
+        },
+      },
+      onRequest: [fastify.authenticate, fastify.csrfProtection],
+    },
+    updateMyEmailController,
   );
 
   fastify.get(

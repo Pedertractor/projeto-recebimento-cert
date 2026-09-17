@@ -40,6 +40,10 @@ export type CsrfTokenResponse = {
   csrfToken: string;
 };
 
+export type UpdateUserEmailInput = {
+  email: string;
+};
+
 export type CreateUserInput = {
   cardNumber: string;
   unit: Unit;

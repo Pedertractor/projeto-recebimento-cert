@@ -37,20 +37,50 @@ export function CertificateRequestSummary({
     });
   }
 
-  if (request.notes) {
-    items.push({ label: 'Observações', value: request.notes });
+  if (compact) {
+    if (request.notes) {
+      items.push({ label: 'Observações', value: request.notes });
+    }
+
+    return (
+      <dl className="grid gap-3 sm:grid-cols-2">
+        {items.map((item) => (
+          <div key={item.label} className="min-w-0 space-y-1">
+            <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              {item.label}
+            </dt>
+            <dd className="text-sm leading-snug wrap-break-word">{item.value}</dd>
+          </div>
+        ))}
+      </dl>
+    );
   }
 
   return (
-    <dl className="grid gap-3 sm:grid-cols-2">
-      {items.map((item) => (
-        <div key={item.label} className="min-w-0 space-y-1">
-          <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {item.label}
-          </dt>
-          <dd className="text-sm leading-snug wrap-break-word">{item.value}</dd>
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <dl className="grid shrink-0 gap-3 sm:grid-cols-2">
+        {items.map((item) => (
+          <div key={item.label} className="min-w-0 space-y-1">
+            <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              {item.label}
+            </dt>
+            <dd className="text-sm leading-snug wrap-break-word">{item.value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5">
+        <p className="shrink-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Observações
+        </p>
+        <div className="min-h-24 flex-1 overflow-auto rounded-xl bg-muted/30 p-3 text-sm leading-relaxed wrap-break-word ring-1 ring-border/50">
+          {request.notes?.trim() ? (
+            request.notes
+          ) : (
+            <span className="text-muted-foreground">Nenhuma observação informada.</span>
+          )}
         </div>
-      ))}
-    </dl>
+      </div>
+    </div>
   );
 }

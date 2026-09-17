@@ -6,6 +6,7 @@ import type {
   CreateUserBody,
   GetUserByEmployeeIdParams,
   LoginBody,
+  UpdateMyEmailBody,
   UpdateUserRoleBody,
   UserIdParams,
 } from '../schemas/user.schemas.js';
@@ -52,6 +53,15 @@ export async function getMyUserController(
 ) {
   const userService = new UserService(req.server.prisma);
   const user = await userService.getUserById(req.user.id);
+  return reply.status(200).send(user);
+}
+
+export async function updateMyEmailController(
+  req: FastifyRequest<{ Body: UpdateMyEmailBody }>,
+  reply: FastifyReply,
+) {
+  const userService = new UserService(req.server.prisma);
+  const user = await userService.updateMyEmail(req.user.id, req.body.email);
   return reply.status(200).send(user);
 }
 

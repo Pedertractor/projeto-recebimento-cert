@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 
 import { AppSidebar } from '@/components/app-sidebar';
 import { AdminThemeToggle } from '@/components/admin-theme-toggle';
+import { UserEmailRequiredNotifier } from '@/components/auth/user-email-required-notifier';
 import { PurchasePendingRequestNotifier } from '@/components/requests/purchase-pending-request-notifier';
 import { Button } from '@/components/ui/button';
 import { AppChromeProvider, useAppChrome } from '@/contexts/app-chrome-context';
@@ -42,6 +43,7 @@ function AppShellContent() {
 
   return (
     <SidebarProvider>
+      <UserEmailRequiredNotifier />
       <PurchasePendingRequestNotifier />
       <AppSidebar />
       <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">

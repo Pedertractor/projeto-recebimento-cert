@@ -117,6 +117,18 @@ export type GetUserByEmployeeIdParams = z.infer<
   typeof getUserByEmployeeIdParamsSchema
 >;
 
+export const updateMyEmailBodySchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Informe o e-mail.')
+    .email('Informe um e-mail válido.'),
+});
+
+export type UpdateMyEmailBody = z.infer<typeof updateMyEmailBodySchema>;
+
+export const updateMyEmailResponseSchema = userSchema;
+
 export const csrfResponseSchema = z.object({
   csrfToken: z.string(),
 });
