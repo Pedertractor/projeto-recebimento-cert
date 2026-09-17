@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ClipboardList, FilePlus, House, Users } from 'lucide-react-motion';
+import { ClipboardList, FilePlus, FileText, House, Inbox, Users } from 'lucide-react-motion';
 
 import { APP_LOGO_SRC, BrandMark } from '@/components/brand-mark';
 import { motionIconGroupProps } from '@/components/motion-icon-provider';
@@ -19,7 +19,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useWebSession } from '@/hooks/auth/use-web-session';
-import { canAccessStockModules } from '@/lib/role-access';
+import { canAccessPurchaseModules, canAccessStockModules } from '@/lib/role-access';
 import { isSuperAdminRole } from '@/lib/user-labels';
 
 type SidebarNavItem = {
@@ -81,6 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: user } = useWebSession();
   const isSuperAdmin = isSuperAdminRole(user?.role);
   const canUseStockModules = canAccessStockModules(user?.role);
+  const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
 
   const homeItems: SidebarNavItem[] = [
     {
@@ -95,6 +96,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const stockItems: SidebarNavItem[] = canUseStockModules
     ? [
         {
+          label: 'Doc qualidade',
+          href: '/doc-qualidade',
+          tooltip: 'Doc qualidade',
+          icon: FileText,
+          isActive: (path) => path.startsWith('/doc-qualidade'),
+        },
+        {
           label: 'Solicitar certificado',
           href: '/solicitar-certificado',
           tooltip: 'Solicitar certificado',
@@ -107,6 +115,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           tooltip: 'Minhas solicitações',
           icon: ClipboardList,
           isActive: (path) => path.startsWith('/minhas-solicitacoes'),
+        },
+      ]
+    : [];
+
+  const purchaseItems: SidebarNavItem[] = canUsePurchaseModules
+    ? [
+        {
+          label: 'Solicitações',
+          href: '/compras/solicitacoes',
+          tooltip: 'Solicitações de certificado',
+          icon: Inbox,
+          isActive: (path) => path.startsWith('/compras/solicitacoes'),
         },
       ]
     : [];
@@ -126,6 +146,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navGroups = [
     { label: 'Início', items: homeItems },
     { label: 'Operações', items: stockItems },
+    { label: 'Compras', items: purchaseItems },
     { label: 'Administração', items: adminItems },
   ];
 

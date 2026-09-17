@@ -80,9 +80,22 @@ export const createCertificateRequestFieldsSchema = z.object({
   invoiceDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Informe a data da NF.'),
+  expectedCertificates: z.coerce
+    .number()
+    .int('Informe a quantidade de lotes.')
+    .min(1, 'Informe pelo menos 1 lote na NF.')
+    .max(99, 'Quantidade de lotes inválida.'),
   notes: z.string().trim().optional(),
 });
 
 export type CreateCertificateRequestFields = z.infer<
   typeof createCertificateRequestFieldsSchema
+>;
+
+export const attachCertificateFieldsSchema = z.object({
+  lotLabel: z.string().trim().max(100).optional(),
+});
+
+export type AttachCertificateFields = z.infer<
+  typeof attachCertificateFieldsSchema
 >;

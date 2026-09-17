@@ -60,6 +60,7 @@ export function SolicitarCertificadoPage() {
       supplierId: 0,
       invoiceNumber: '',
       invoiceDate: '',
+      expectedCertificates: 1,
       notes: '',
     },
   });
@@ -180,7 +181,7 @@ export function SolicitarCertificadoPage() {
           ) : null}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
             <Label htmlFor="invoiceNumber">Número da nota fiscal</Label>
             <Input
@@ -202,6 +203,17 @@ export function SolicitarCertificadoPage() {
               setValue('invoiceDate', value, { shouldValidate: true })
             }
           />
+
+          <div className="space-y-1.5">
+            <Label htmlFor="expectedCertificates">Lotes na NF</Label>
+            <Input
+              id="expectedCertificates"
+              type="number"
+              min={1}
+              max={99}
+              {...register('expectedCertificates', { valueAsNumber: true })}
+            />
+          </div>
         </div>
 
         <div className="space-y-1.5">
@@ -252,11 +264,7 @@ export function SolicitarCertificadoPage() {
         </div>
 
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/')}
-          >
+          <Button type="button" variant="outline" onClick={() => navigate('/')}>
             Cancelar
           </Button>
           <Button type="submit" disabled={mutation.isPending}>

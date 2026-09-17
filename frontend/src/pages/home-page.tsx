@@ -4,11 +4,15 @@ import { APP_LOGO_SRC, BrandMark } from '@/components/brand-mark';
 import { HomeActionTile } from '@/components/home/home-action-tile';
 import { CreateSupplierDialog } from '@/components/suppliers/create-supplier-dialog';
 import { useWebSession } from '@/hooks/auth/use-web-session';
-import { canAccessStockModules } from '@/lib/role-access';
+import {
+  canAccessPurchaseModules,
+  canAccessStockModules,
+} from '@/lib/role-access';
 
 export function HomePage() {
   const { data: user } = useWebSession();
   const canUseStockModules = canAccessStockModules(user?.role);
+  const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
 
   function showComingSoon(label: string): void {
     toast.message(`${label} será implementado em breve.`);
@@ -40,10 +44,9 @@ export function HomePage() {
           />
           <div className="relative grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
             <HomeActionTile
-              title="Doc qualidade - V2026"
+              title="Doc qualidade"
               hoverDirection="left"
-              disabled
-              onClick={() => showComingSoon('Doc qualidade')}
+              to="/doc-qualidade"
             />
             <HomeActionTile
               title="Indicar NF de material"
@@ -61,6 +64,20 @@ export function HomePage() {
               hoverDirection="right"
               disabled
               onClick={() => showComingSoon('Ver NF\'s de materiais')}
+            />
+          </div>
+        </div>
+      ) : canUsePurchaseModules ? (
+        <div className="relative w-full max-w-xl">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-8 -inset-y-6 rounded-4xl bg-linear-to-b from-brand-muted/50 via-transparent to-brand-muted/30 blur-2xl"
+          />
+          <div className="relative grid grid-cols-1 gap-4">
+            <HomeActionTile
+              title="Solicitações de certificado"
+              hoverDirection="left"
+              to="/compras/solicitacoes"
             />
           </div>
         </div>

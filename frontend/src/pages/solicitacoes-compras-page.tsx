@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { CancelCertificateRequestButton } from '@/components/requests/cancel-certificate-request-button';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,30 +14,26 @@ import {
 } from '@/components/ui/table';
 import { formatRequestDate } from '@/lib/certificate-request-labels';
 import {
-  certificateRequestsListQueryKey,
-  listCertificateRequests,
+  listPurchaseCertificateRequests,
+  purchaseCertificateRequestsListQueryKey,
 } from '@/services/certificate-requests/certificate-request.service';
 
-export function MinhasSolicitacoesPage() {
+export function SolicitacoesComprasPage() {
   const requestsQuery = useQuery({
-    queryKey: certificateRequestsListQueryKey,
-    queryFn: listCertificateRequests,
+    queryKey: purchaseCertificateRequestsListQueryKey,
+    queryFn: listPurchaseCertificateRequests,
   });
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Minhas solicitações
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Acompanhe o andamento das solicitações abertas pelo estoque.
-          </p>
-        </div>
-        <Button asChild className="bg-brand text-brand-foreground hover:bg-brand/90">
-          <Link to="/solicitar-certificado">Nova solicitação</Link>
-        </Button>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Solicitações de certificado
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Solicitações abertas pelo estoque para contato com fornecedores e
+          anexo de certificados.
+        </p>
       </div>
 
       {requestsQuery.isLoading ? (
@@ -48,7 +43,7 @@ export function MinhasSolicitacoesPage() {
       ) : null}
 
       {requestsQuery.isError ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+        <div className="rounded-2xl bg-destructive/5 px-4 py-4">
           <p className="text-sm text-destructive">
             Não foi possível carregar as solicitações.
           </p>
@@ -56,7 +51,7 @@ export function MinhasSolicitacoesPage() {
       ) : null}
 
       {requestsQuery.isSuccess ? (
-        <div className="overflow-hidden rounded-lg border">
+        <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60">
           <Table>
             <TableHeader>
               <TableRow>
@@ -66,7 +61,7 @@ export function MinhasSolicitacoesPage() {
                 <TableHead>Lotes</TableHead>
                 <TableHead>Data NF</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Abertura</TableHead>
+                <TableHead>Solicitante</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -93,10 +88,14 @@ export function MinhasSolicitacoesPage() {
                       <RequestStatusBadge status={request.status} />
                     </TableCell>
                     <TableCell>
-                      {formatRequestDate(request.submittedAt)}
+                      {request.createdByName ?? 'Operador de estoque'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <CancelCertificateRequestButton request={request} />
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/compras/solicitacoes/${request.id}`}>
+                          Abrir
+                        </Link>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

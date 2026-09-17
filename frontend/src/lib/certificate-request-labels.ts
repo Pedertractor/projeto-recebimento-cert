@@ -37,3 +37,38 @@ export function formatRequestDate(value: string): string {
   }
   return `${day}/${month}/${year}`;
 }
+
+export function formatRequestDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+export function requestHistoryEventLabel(eventType: string): string {
+  switch (eventType) {
+    case 'SOLICITACAO_CRIADA':
+      return 'Solicitação criada';
+    case 'EMAIL_COMPRAS_ENVIADO':
+      return 'E-mail enviado ao compras';
+    case 'ENVIO_FORNECEDOR_REGISTRADO':
+      return 'Envio ao fornecedor registrado';
+    case 'CERTIFICADO_ANEXADO':
+      return 'Certificado anexado';
+    case 'CERTIFICADO_REMOVIDO':
+      return 'Certificado removido';
+    case 'SOLICITACAO_CONCLUIDA':
+      return 'Solicitação concluída';
+    case 'EMAIL_ESTOQUE_ENVIADO':
+      return 'E-mail enviado ao estoque';
+    case 'SOLICITACAO_CANCELADA':
+      return 'Solicitação cancelada';
+    default:
+      return eventType;
+  }
+}

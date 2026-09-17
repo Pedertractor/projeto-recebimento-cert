@@ -46,6 +46,7 @@ enum RequestHistoryEventType {
   CERTIFICADO_REMOVIDO
   SOLICITACAO_CONCLUIDA
   EMAIL_ESTOQUE_ENVIADO
+  SOLICITACAO_CANCELADA
 
   @@map("request_history_event_type")
 }
@@ -69,6 +70,7 @@ model User {
   createdCertificateRequests CertificateRequest[] @relation("CertificateRequestCreatedBy")
   uploadedAttachments        RequestAttachment[]  @relation("RequestAttachmentUploadedBy")
   historyEvents              RequestHistoryEvent[] @relation("RequestHistoryEventActor")
+  uploadedQualityDocuments   QualityDocument[]     @relation("QualityDocumentUploadedBy")
 
   @@unique([cardNumber, unit])
   @@map("users")
@@ -149,6 +151,22 @@ model MagicLink {
   createdAt DateTime           @default(now()) @map("created_at")
 
   @@map("magic_links")
+}
+
+model QualityDocument {
+  id               String   @id @default(uuid())
+  year             Int
+  versionNumber    Int      @map("version_number")
+  displayName      String   @map("display_name")
+  fileName         String   @map("file_name")
+  storagePath      String   @map("storage_path")
+  uploadedByUserId Int      @map("uploaded_by_user_id")
+  uploadedBy       User     @relation("QualityDocumentUploadedBy", fields: [uploadedByUserId], references: [id])
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@unique([year, versionNumber])
+  @@index([year])
+  @@map("quality_documents")
 }
 
 model RefreshToken {

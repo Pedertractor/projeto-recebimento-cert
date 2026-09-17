@@ -50,6 +50,7 @@ export type CreateCertificateRequestPayload = {
   supplierId: number;
   invoiceNumber: string;
   invoiceDate: string;
+  expectedCertificates: number;
   notes?: string;
   invoiceFile: File;
 };
