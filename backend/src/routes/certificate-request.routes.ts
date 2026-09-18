@@ -1,6 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { UserRole } from '../generated/prisma/enums.js';
 import {
+  attachConferencePrintController,
+  attachConferencePrintPasteController,
+  listCompletedCertificateRequestsController,
+  submitCertificateInspectionController,
+} from '../controllers/certificate-inspection.controller.js';
+import {
   attachCertificateController,
   cancelCertificateRequestController,
   completeCertificateRequestController,
@@ -12,6 +18,12 @@ import {
   listRecentCertificateRequestsController,
   registerSupplierContactController,
 } from '../controllers/certificate-request.controller.js';
+import {
+  attachConferencePrintPasteSchema,
+  certificateInspectionParamsSchema,
+  certificateInspectionSchema,
+  submitCertificateInspectionSchema,
+} from '../schemas/certificate-inspection.schemas.js';
 import {
   certificateRequestIdParamsSchema,
   certificateRequestResponseSchema,
@@ -79,6 +91,26 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
       ],
     },
     listPendingPurchaseCertificateRequestsController,
+  );
+
+  fastify.get(
+    '/completed',
+    {
+      schema: {
+        summary: 'List completed certificate requests for conference',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        response: {
+          200: listCertificateRequestsResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+      ],
+    },
+    listCompletedCertificateRequestsController,
   );
 
   fastify.get(
@@ -206,6 +238,75 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
       ],
     },
     completeCertificateRequestController,
+  );
+
+  fastify.post<{ Params: CertificateRequestIdParams }>(
+    '/:id/conference-prints/paste',
+    {
+      schema: {
+        summary: 'Attach conference print from pasted image',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        params: certificateRequestIdParamsSchema,
+        body: attachConferencePrintPasteSchema,
+        response: {
+          200: certificateRequestResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    attachConferencePrintPasteController,
+  );
+
+  fastify.post<{ Params: CertificateRequestIdParams }>(
+    '/:id/conference-prints',
+    {
+      schema: {
+        summary: 'Attach conference print for a lot',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        consumes: ['multipart/form-data'],
+        params: certificateRequestIdParamsSchema,
+        response: {
+          200: certificateRequestResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    attachConferencePrintController,
+  );
+
+  fastify.post<{ Params: CertificateRequestIdParams & { attachmentId: string } }>(
+    '/:id/attachments/:attachmentId/inspection',
+    {
+      schema: {
+        summary: 'Submit certificate inspection comparison',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        params: certificateInspectionParamsSchema,
+        body: submitCertificateInspectionSchema,
+        response: {
+          201: certificateInspectionSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    submitCertificateInspectionController,
   );
 
   fastify.post<{ Params: CertificateRequestIdParams }>(

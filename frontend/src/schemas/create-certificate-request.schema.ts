@@ -15,8 +15,12 @@ export const createCertificateRequestFormSchema = z.object({
     .max(99, 'Quantidade de lotes inválida.'),
   notes: z.string().trim().optional(),
   invoiceFile: z
-    .instanceof(File, { message: 'Anexe a nota fiscal.' })
-    .refine((file) => file.size > 0, 'Anexe a nota fiscal.'),
+    .instanceof(File)
+    .refine(
+      (file) => file.size > 0 && file.size <= 10 * 1024 * 1024,
+      'PDF ou imagem, até 10 MB.',
+    )
+    .optional(),
 });
 
 export type CreateCertificateRequestFormValues = z.infer<

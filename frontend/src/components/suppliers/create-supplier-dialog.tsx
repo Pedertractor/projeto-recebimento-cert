@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -29,9 +29,13 @@ import { formatCnpjInput } from '@/utils/cnpj';
 
 type CreateSupplierDialogProps = {
   onCreated?: (supplierId: number) => void;
+  trigger?: ReactNode;
 };
 
-export function CreateSupplierDialog({ onCreated }: CreateSupplierDialogProps) {
+export function CreateSupplierDialog({
+  onCreated,
+  trigger,
+}: CreateSupplierDialogProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
@@ -71,10 +75,12 @@ export function CreateSupplierDialog({ onCreated }: CreateSupplierDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm" className="gap-2">
-          <Plus className="size-4" />
-          Novo fornecedor
-        </Button>
+        {trigger ?? (
+          <Button type="button" variant="outline" size="sm" className="gap-2">
+            <Plus className="size-4" />
+            Novo fornecedor
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>

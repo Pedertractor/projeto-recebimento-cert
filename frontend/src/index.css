@@ -141,3 +141,21 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .quality-management-form-sheet,
+  .quality-management-form-sheet * {
+    visibility: visible;
+  }
+
+  .quality-management-form-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

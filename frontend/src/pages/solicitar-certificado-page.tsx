@@ -95,6 +95,7 @@ export function SolicitarCertificadoPage() {
     const file = event.target.files?.[0];
     if (!file) {
       setSelectedFileName(null);
+      setValue('invoiceFile', undefined, { shouldValidate: true });
       return;
     }
 
@@ -226,7 +227,7 @@ export function SolicitarCertificadoPage() {
         </div>
 
         <div className="space-y-2">
-          <Label>Anexo da NF</Label>
+          <Label>Anexo da NF (opcional)</Label>
           <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand/40 bg-brand-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex size-11 items-center justify-center rounded-xl bg-brand text-brand-foreground">
@@ -237,7 +238,8 @@ export function SolicitarCertificadoPage() {
                   {selectedFileName ?? 'Selecione o arquivo da nota fiscal'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  PDF ou imagem, até 10 MB
+                  PDF ou imagem, até 10 MB. Referência para o compras — a NF
+                  usada na conferência será anexada na resposta.
                 </p>
               </div>
             </div>

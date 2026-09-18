@@ -88,10 +88,14 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: apiProxyTarget,
           changeOrigin: true,
+          timeout: 120_000,
+          proxyTimeout: 120_000,
         },
         '/uploads': {
           target: apiProxyTarget,
           changeOrigin: true,
+          timeout: 120_000,
+          proxyTimeout: 120_000,
         },
       },
     },

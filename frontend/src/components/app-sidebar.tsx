@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ClipboardList, FilePlus, FileText, House, Inbox, Users } from 'lucide-react-motion';
+import { ClipboardList, FilePlus, FileSearch, FileText, House, Inbox, Users } from 'lucide-react-motion';
 
 import { APP_LOGO_SRC, BrandMark } from '@/components/brand-mark';
 import { motionIconGroupProps } from '@/components/motion-icon-provider';
@@ -115,6 +115,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           tooltip: 'Minhas solicitações',
           icon: ClipboardList,
           isActive: (path) => path.startsWith('/minhas-solicitacoes'),
+        },
+        {
+          label: "NF's de materiais",
+          href: '/notas-fiscais',
+          tooltip: "NF's de materiais",
+          icon: FileSearch,
+          isActive: (path) => path.startsWith('/notas-fiscais'),
         },
       ]
     : [];

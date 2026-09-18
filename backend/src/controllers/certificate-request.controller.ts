@@ -1,5 +1,8 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { UserRole } from '../generated/prisma/enums.js';
+import {
+  CertificateRequestStatus,
+  UserRole,
+} from '../generated/prisma/enums.js';
 import { AppError } from '../lib/errors.js';
 import {
   attachCertificateFieldsSchema,
@@ -10,28 +13,35 @@ import { CertificateRequestService } from '../services/certificate-request.servi
 
 type MultipartFields = Record<string, string>;
 
+type MultipartFile = { buffer: Buffer; filename: string };
+
+type ParsedMultipartFiles = Partial<
+  Record<'invoiceFile' | 'certificateFile', MultipartFile>
+>;
+
 async function parseMultipartRequest(
   request: FastifyRequest,
-): Promise<{ fields: MultipartFields; file: { buffer: Buffer; filename: string } | null }> {
+): Promise<{ fields: MultipartFields; files: ParsedMultipartFiles }> {
   const fields: MultipartFields = {};
-  let file: { buffer: Buffer; filename: string } | null = null;
+  const files: ParsedMultipartFiles = {};
 
   for await (const part of request.parts()) {
     if (part.type === 'file') {
-      if (part.fieldname === 'invoiceFile' && !file) {
+      if (
+        part.fieldname === 'invoiceFile' ||
+        part.fieldname === 'certificateFile'
+      ) {
         const buffer = await part.toBuffer();
-        file = {
-          buffer,
-          filename: part.filename || 'nota-fiscal.pdf',
-        };
-      }
-
-      if (part.fieldname === 'certificateFile' && !file) {
-        const buffer = await part.toBuffer();
-        file = {
-          buffer,
-          filename: part.filename || 'certificado.pdf',
-        };
+        if (buffer.length > 0) {
+          files[part.fieldname] = {
+            buffer,
+            filename:
+              part.filename ||
+              (part.fieldname === 'certificateFile'
+                ? 'certificado.pdf'
+                : 'nota-fiscal.pdf'),
+          };
+        }
       }
 
       continue;
@@ -40,11 +50,11 @@ async function parseMultipartRequest(
     fields[part.fieldname] = String(part.value ?? '');
   }
 
-  return { fields, file };
+  return { fields, files };
 }
 
 function canAccessCertificateRequest(
-  request: { createdByUserId: number },
+  request: { createdByUserId: number; status: CertificateRequestStatus },
   user: { id: number; role: UserRole },
 ): boolean {
   if (user.role === UserRole.SUPERADMIN) {
@@ -56,6 +66,10 @@ function canAccessCertificateRequest(
   }
 
   if (user.role === UserRole.STOCK_OPERATOR) {
+    if (request.status === CertificateRequestStatus.CONCLUIDA) {
+      return true;
+    }
+
     return request.createdByUserId === user.id;
   }
 
@@ -116,19 +130,17 @@ export async function createCertificateRequestController(
   req: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const { fields, file } = await parseMultipartRequest(req);
-
-  if (!file) {
-    throw new AppError('Anexe a nota fiscal.');
-  }
+  const { fields, files } = await parseMultipartRequest(req);
 
   const parsed = createCertificateRequestFieldsSchema.safeParse(fields);
   if (!parsed.success) {
     throw new AppError(parsed.error.issues[0]?.message ?? 'Dados inválidos.');
   }
 
+  const invoiceFile = files.invoiceFile ?? null;
+
   const service = new CertificateRequestService(req.server.prisma);
-  const request = await service.create(req.user.id, parsed.data, file);
+  const request = await service.create(req.user.id, parsed.data, invoiceFile);
   return reply.status(201).send(request);
 }
 
@@ -155,10 +167,17 @@ export async function attachCertificateController(
   req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
   reply: FastifyReply,
 ) {
-  const { fields, file } = await parseMultipartRequest(req);
+  const { fields, files } = await parseMultipartRequest(req);
 
-  if (!file) {
-    throw new AppError('Anexe o certificado.');
+  const certificateFile = files.certificateFile;
+  const invoiceFile = files.invoiceFile;
+
+  if (!certificateFile) {
+    throw new AppError('Anexe o PDF com os certificados.');
+  }
+
+  if (!invoiceFile) {
+    throw new AppError('Anexe a nota fiscal retornada na resposta.');
   }
 
   const parsed = attachCertificateFieldsSchema.safeParse(fields);
@@ -176,7 +195,8 @@ export async function attachCertificateController(
   const request = await service.attachCertificate(
     req.params.id,
     req.user.id,
-    file,
+    certificateFile,
+    invoiceFile,
     parsed.data.lotLabel,
   );
 

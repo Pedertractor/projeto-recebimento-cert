@@ -8,7 +8,15 @@ const UPLOADS_ROOT = path.join(process.cwd(), 'uploads', 'certificate-requests')
 const ALLOWED_EXTENSIONS = new Set(['.pdf', '.png', '.jpg', '.jpeg', '.webp']);
 
 function folderForType(type: AttachmentType): string {
-  return type === AttachmentType.NOTA_FISCAL ? 'invoices' : 'certificates';
+  if (type === AttachmentType.NOTA_FISCAL) {
+    return 'invoices';
+  }
+
+  if (type === AttachmentType.IMPRESSAO_CONFERENCIA) {
+    return 'conference-prints';
+  }
+
+  return 'certificates';
 }
 
 export async function saveCertificateRequestFile(

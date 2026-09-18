@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { UserRole } from '../generated/prisma/enums.js';
+import { getCurrentQualityDocumentController } from '../controllers/certificate-inspection.controller.js';
 import {
   createQualityDocumentController,
   listQualityDocumentsController,
@@ -29,6 +30,26 @@ export function qualityDocumentRoutes(fastify: FastifyInstance) {
       ],
     },
     listQualityDocumentsController,
+  );
+
+  fastify.get(
+    '/current',
+    {
+      schema: {
+        summary: 'Get current quality document version',
+        tags: ['QualityDocument'],
+        security: [{ cookieAuth: [] }],
+        response: {
+          200: qualityDocumentResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+      ],
+    },
+    getCurrentQualityDocumentController,
   );
 
   fastify.post(

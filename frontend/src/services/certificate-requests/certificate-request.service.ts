@@ -1,11 +1,13 @@
 import axios from 'axios';
 import { env } from '@/config/env';
-import { getWebCsrfToken } from '@/lib/http-client';
-import { httpClient } from '@/lib/http-client';
+import { getWebCsrfToken, httpClient } from '@/lib/http-client';
+import { fileToBase64 } from '@/utils/file-to-base64';
 import type {
+  CertificateInspection,
   CertificateRequest,
   CreateCertificateRequestPayload,
 } from '@/types/certificate-request';
+import type { CertificateComparisonFormValues } from '@/schemas/certificate-comparison.schema';
 
 export const certificateRequestsListQueryKey = [
   'certificate-requests',
@@ -27,6 +29,11 @@ export const recentCertificateRequestsQueryKey = [
   'recent',
 ] as const;
 
+export const completedCertificateRequestsQueryKey = [
+  'certificate-requests',
+  'completed',
+] as const;
+
 export function certificateRequestDetailQueryKey(id: number) {
   return ['certificate-requests', id] as const;
 }
@@ -35,7 +42,9 @@ export function listCertificateRequests(): Promise<CertificateRequest[]> {
   return httpClient.get<CertificateRequest[]>('/certificate-requests');
 }
 
-export function listPurchaseCertificateRequests(): Promise<CertificateRequest[]> {
+export function listPurchaseCertificateRequests(): Promise<
+  CertificateRequest[]
+> {
   return httpClient.get<CertificateRequest[]>('/certificate-requests/purchase');
 }
 
@@ -49,6 +58,14 @@ export function listPendingPurchaseCertificateRequests(): Promise<
 
 export function listRecentCertificateRequests(): Promise<CertificateRequest[]> {
   return httpClient.get<CertificateRequest[]>('/certificate-requests/recent');
+}
+
+export function listCompletedCertificateRequests(): Promise<
+  CertificateRequest[]
+> {
+  return httpClient.get<CertificateRequest[]>(
+    '/certificate-requests/completed',
+  );
 }
 
 export function getCertificateRequest(id: number): Promise<CertificateRequest> {
@@ -66,7 +83,9 @@ export async function createCertificateRequest(
   if (payload.notes?.trim()) {
     formData.append('notes', payload.notes.trim());
   }
-  formData.append('invoiceFile', payload.invoiceFile);
+  if (payload.invoiceFile) {
+    formData.append('invoiceFile', payload.invoiceFile);
+  }
 
   const response = await axios.post<CertificateRequest>(
     `${env.apiUrl}/certificate-requests`,
@@ -101,6 +120,7 @@ export async function registerSupplierContact(
 
 export type AttachCertificatePayload = {
   certificateFile: File;
+  invoiceFile: File;
   lotLabel?: string;
 };
 
@@ -110,6 +130,7 @@ export async function attachCertificate(
 ): Promise<CertificateRequest> {
   const formData = new FormData();
   formData.append('certificateFile', payload.certificateFile);
+  formData.append('invoiceFile', payload.invoiceFile);
   if (payload.lotLabel?.trim()) {
     formData.append('lotLabel', payload.lotLabel.trim());
   }
@@ -143,6 +164,43 @@ export async function completeCertificateRequest(
   );
 
   return response.data;
+}
+
+export type AttachConferencePrintPayload = {
+  lotIndex: number;
+  printFile: File;
+};
+
+export async function attachConferencePrint(
+  requestId: number,
+  payload: AttachConferencePrintPayload,
+): Promise<CertificateRequest> {
+  if (payload.printFile.size === 0) {
+    throw new Error('A imagem colada está vazia. Copie o print novamente.');
+  }
+
+  const imageBase64 = await fileToBase64(payload.printFile);
+
+  return httpClient.post<CertificateRequest>(
+    `/certificate-requests/${requestId}/conference-prints/paste`,
+    {
+      lotIndex: payload.lotIndex,
+      imageBase64,
+      mimeType: payload.printFile.type || 'image/png',
+      fileName: payload.printFile.name || `lote-${payload.lotIndex}-print.png`,
+    },
+  );
+}
+
+export async function submitCertificateInspection(
+  requestId: number,
+  attachmentId: string,
+  payload: CertificateComparisonFormValues,
+): Promise<CertificateInspection> {
+  return httpClient.post<CertificateInspection>(
+    `/certificate-requests/${requestId}/attachments/${attachmentId}/inspection`,
+    payload,
+  );
 }
 
 export async function cancelCertificateRequest(

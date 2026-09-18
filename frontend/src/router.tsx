@@ -8,9 +8,12 @@ import { Toaster } from '@/components/ui/sonner';
 import { AppShell } from '@/layouts/app-shell';
 import { AdminThemeProvider } from '@/providers/admin-theme-provider';
 import { LoginPage } from '@/pages/auth/login-page';
+import { CertificateComparisonPage } from '@/pages/certificate-comparison-page';
 import { DocQualidadePage } from '@/pages/doc-qualidade-page';
 import { HomePage } from '@/pages/home-page';
 import { MinhasSolicitacoesPage } from '@/pages/minhas-solicitacoes-page';
+import { NotaFiscalDetailPage } from '@/pages/nota-fiscal-detail-page';
+import { NotasFiscaisPage } from '@/pages/notas-fiscais-page';
 import { SolicitacaoComprasDetailPage } from '@/pages/solicitacao-compras-detail-page';
 import { SolicitacaoEstoqueDetailPage } from '@/pages/solicitacao-estoque-detail-page';
 import { SolicitacoesComprasPage } from '@/pages/solicitacoes-compras-page';
@@ -40,6 +43,18 @@ export function AppRouter() {
                   <Route
                     path="/minhas-solicitacoes/:id"
                     element={<SolicitacaoEstoqueDetailPage />}
+                  />
+                  <Route
+                    path="/notas-fiscais"
+                    element={<NotasFiscaisPage />}
+                  />
+                  <Route
+                    path="/notas-fiscais/:id"
+                    element={<NotaFiscalDetailPage />}
+                  />
+                  <Route
+                    path="/notas-fiscais/:id/comparacao/:attachmentId"
+                    element={<CertificateComparisonPage />}
                   />
                 </Route>
                 <Route element={<RequirePurchaseOperator />}>

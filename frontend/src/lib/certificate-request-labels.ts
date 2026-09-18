@@ -68,6 +68,10 @@ export function requestHistoryEventLabel(eventType: string): string {
       return 'E-mail enviado ao estoque';
     case 'SOLICITACAO_CANCELADA':
       return 'Solicitação cancelada';
+    case 'CONFERENCIA_REALIZADA':
+      return 'Conferência realizada';
+    case 'CERTIFICADO_INVALIDADO':
+      return 'Certificado invalidado';
     default:
       return eventType;
   }

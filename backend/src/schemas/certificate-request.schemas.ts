@@ -1,12 +1,15 @@
 import z from 'zod';
 import {
   AttachmentType,
+  AttachmentValidity,
   CertificateRequestStatus,
   RequestHistoryEventType,
 } from '../generated/prisma/enums.js';
+import { certificateInspectionSchema } from './certificate-inspection.schemas.js';
 
 export const certificateRequestStatusSchema = z.enum(CertificateRequestStatus);
 export const attachmentTypeSchema = z.enum(AttachmentType);
+export const attachmentValiditySchema = z.enum(AttachmentValidity);
 export const requestHistoryEventTypeSchema = z.enum(RequestHistoryEventType);
 
 const supplierSummarySchema = z.object({
@@ -21,7 +24,10 @@ export const attachmentSchema = z.object({
   fileName: z.string(),
   storagePath: z.string(),
   lotLabel: z.string().nullable(),
+  lotIndex: z.number().nullable(),
+  validity: attachmentValiditySchema,
   uploadedAt: z.string(),
+  inspection: certificateInspectionSchema.nullable().optional(),
 });
 
 export const historyEventSchema = z.object({

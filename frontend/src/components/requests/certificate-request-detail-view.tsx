@@ -1,12 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  FileUp,
-  Loader2,
-  Mail,
-} from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileUp, Loader2, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -18,9 +12,11 @@ import { RequestHistoryTimeline } from '@/components/requests/request-history-ti
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { Button } from '@/components/ui/button';
 import { DocumentUploadField } from '@/components/ui/document-upload-field';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { HttpClientError } from '@/lib/http-client';
+import {
+  getComparisonInvoiceAttachment,
+  getStockReferenceInvoiceAttachment,
+} from '@/lib/certificate-request-attachments';
 import {
   attachCertificate,
   certificateRequestDetailQueryKey,
@@ -50,7 +46,7 @@ export function CertificateRequestDetailView({
 }: CertificateRequestDetailViewProps) {
   const queryClient = useQueryClient();
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
-  const [lotLabel, setLotLabel] = useState('');
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const isPurchaseView = viewer === 'purchase';
 
   const requestQuery = useQuery({
@@ -94,22 +90,28 @@ export function CertificateRequestDetailView({
   const attachCertificateMutation = useMutation({
     mutationFn: () => {
       if (!certificateFile) {
-        throw new Error('Selecione um certificado.');
+        throw new Error('Selecione o PDF com os certificados.');
+      }
+
+      if (!invoiceFile) {
+        throw new Error('Selecione a nota fiscal retornada.');
       }
 
       return attachCertificate(requestId, {
         certificateFile,
-        lotLabel,
+        invoiceFile,
       });
     },
     onSuccess: async (updatedRequest) => {
       if (updatedRequest.status === 'CONCLUIDA') {
-        toast.success('Certificado anexado e solicitação concluída.');
+        toast.success(
+          'Certificado e nota fiscal anexados. Solicitação concluída.',
+        );
       } else {
-        toast.success('Certificado anexado.');
+        toast.success('Certificado e nota fiscal anexados.');
       }
       setCertificateFile(null);
-      setLotLabel('');
+      setInvoiceFile(null);
       await invalidateQueries();
     },
     onError: (error) => {
@@ -140,12 +142,18 @@ export function CertificateRequestDetailView({
 
   const request = requestQuery.data;
 
-  const invoiceAttachment = useMemo(
-    () =>
-      request?.attachments?.find((attachment) => attachment.type === 'NOTA_FISCAL') ??
-      null,
-    [request?.attachments],
-  );
+  const invoiceAttachment = useMemo(() => {
+    const comparison = getComparisonInvoiceAttachment(request?.attachments);
+    if (comparison) {
+      return comparison;
+    }
+
+    if (isPurchaseView || request?.status === 'CONCLUIDA') {
+      return null;
+    }
+
+    return getStockReferenceInvoiceAttachment(request?.attachments);
+  }, [isPurchaseView, request?.attachments, request?.status]);
 
   const certificateAttachments = useMemo(
     () =>
@@ -189,7 +197,7 @@ export function CertificateRequestDetailView({
   const canCompleteRequest =
     isPurchaseView &&
     request.status === 'AGUARDANDO_FORNECEDOR' &&
-    attachedCount >= request.expectedCertificates;
+    attachedCount >= 1;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -209,9 +217,11 @@ export function CertificateRequestDetailView({
               <RequestStatusBadge status={request.status} />
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Certificados anexados: {attachedCount} de{' '}
               {request.expectedCertificates} lote
-              {request.expectedCertificates === 1 ? '' : 's'}
+              {request.expectedCertificates === 1 ? '' : 's'} na NF
+              {attachedCount > 0
+                ? ' — PDF de certificados anexado'
+                : ' — aguardando PDF único com todos os certificados'}
               {canCompleteRequest ? ' — pronta para conclusão' : null}
             </p>
           </div>
@@ -232,7 +242,23 @@ export function CertificateRequestDetailView({
         </section>
 
         <div className="h-full lg:col-span-1">
-          <InvoiceAttachmentCard attachment={invoiceAttachment} />
+          <InvoiceAttachmentCard
+            attachment={invoiceAttachment}
+            subtitle={
+              isPurchaseView
+                ? 'Anexe na resposta ao concluir a solicitação'
+                : getComparisonInvoiceAttachment(request.attachments)
+                  ? 'Retorno do compras — usada na conferência'
+                  : invoiceAttachment
+                    ? 'Referência opcional enviada pelo estoque'
+                    : undefined
+            }
+            emptyMessage={
+              isPurchaseView
+                ? 'Anexe a nota fiscal ao responder a solicitação.'
+                : 'Aguardando nota fiscal retornada pelo compras.'
+            }
+          />
         </div>
       </div>
 
@@ -272,27 +298,35 @@ export function CertificateRequestDetailView({
           <div className="space-y-5">
             <div className="flex items-center gap-2">
               <FileUp className="size-4 text-brand" />
-              <h2 className="text-base font-semibold">Anexar certificado</h2>
+              <h2 className="text-base font-semibold">Anexar certificados</h2>
             </div>
+            <p className="text-sm text-muted-foreground">
+              Envie a nota fiscal e um único PDF contendo os certificados dos{' '}
+              {request.expectedCertificates} lote
+              {request.expectedCertificates === 1 ? '' : 's'} desta NF. A
+              solicitação será concluída ao anexar os arquivos.
+            </p>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="lotLabel">Identificação do lote (opcional)</Label>
-              <Input
-                id="lotLabel"
-                value={lotLabel}
-                onChange={(event) => setLotLabel(event.target.value)}
-                placeholder="Ex.: Lote A"
-              />
-            </div>
+            <DocumentUploadField
+              id="invoiceFile"
+              label="Nota fiscal"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              value={invoiceFile}
+              onChange={setInvoiceFile}
+              placeholder="Selecione a NF"
+              hint="PDF ou imagem, até 10 MB"
+              buttonLabel="Escolher NF"
+            />
 
             <DocumentUploadField
               id="certificateFile"
-              label="Arquivo do certificado"
+              label="PDF com todos os certificados"
+              accept=".pdf"
               value={certificateFile}
               onChange={setCertificateFile}
-              placeholder="Selecione o certificado"
-              hint="PDF ou imagem, até 10 MB"
-              buttonLabel="Escolher certificado"
+              placeholder="Selecione o PDF"
+              hint="Um único PDF, até 10 MB"
+              buttonLabel="Escolher PDF"
             />
 
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -312,7 +346,11 @@ export function CertificateRequestDetailView({
               ) : null}
               <Button
                 className="bg-brand text-brand-foreground hover:bg-brand/90"
-                disabled={!certificateFile || attachCertificateMutation.isPending}
+                disabled={
+                  !certificateFile ||
+                  !invoiceFile ||
+                  attachCertificateMutation.isPending
+                }
                 onClick={() => attachCertificateMutation.mutate()}
               >
                 {attachCertificateMutation.isPending ? (
@@ -320,7 +358,7 @@ export function CertificateRequestDetailView({
                 ) : (
                   <FileUp className="size-4" />
                 )}
-                Anexar certificado
+                Anexar e concluir
               </Button>
             </div>
           </div>
@@ -330,14 +368,11 @@ export function CertificateRequestDetailView({
       {certificateAttachments.length > 0 ? (
         <section className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6">
           <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-            Certificados anexados
+            PDF de certificados
           </h2>
           <div className="mt-4 space-y-2">
             {certificateAttachments.map((attachment) => (
-              <AttachmentListItem
-                key={attachment.id}
-                attachment={attachment}
-              />
+              <AttachmentListItem key={attachment.id} attachment={attachment} />
             ))}
           </div>
         </section>

@@ -1,8 +1,10 @@
 import { randomBytes } from 'node:crypto';
 import type {
+  CertificateInspection,
   CertificateRequest,
   Prisma,
   PrismaClient,
+  QualityDocument,
   RequestAttachment,
   RequestHistoryEvent,
   Supplier,
@@ -11,6 +13,7 @@ import type {
 import {
   AttachmentType,
   CertificateRequestStatus,
+  InspectionCheckResult,
   RequestHistoryEventType,
   UserRole,
 } from '../generated/prisma/enums.js';
@@ -19,15 +22,62 @@ import { AppError } from '../lib/errors.js';
 import type { CreateCertificateRequestFields } from '../schemas/certificate-request.schemas.js';
 import { saveCertificateRequestFile } from '../utils/certificate-request-storage.js';
 import { hashToken } from '../utils/token-hash.js';
-import { sendCompletedCertificateRequestEmail, sendNewCertificateRequestEmail, resolvePurchaseNotificationRecipients } from './email.service.js';
+import {
+  sendCompletedCertificateRequestEmail,
+  sendNewCertificateRequestEmail,
+  resolvePurchaseNotificationRecipients,
+} from './email.service.js';
 import { UserService } from './user.service.js';
+
+type AttachmentWithInspection = RequestAttachment & {
+  inspection:
+    | (CertificateInspection & {
+        qualityDocument: Pick<
+          QualityDocument,
+          'id' | 'displayName' | 'year' | 'versionNumber'
+        >;
+      })
+    | null;
+};
 
 type RequestWithRelations = CertificateRequest & {
   supplier: Supplier;
   createdBy: Pick<User, 'id' | 'name' | 'email'>;
-  attachments: RequestAttachment[];
+  attachments: AttachmentWithInspection[];
   historyEvents: RequestHistoryEvent[];
 };
+
+function toPublicInspection(
+  inspection: NonNullable<AttachmentWithInspection['inspection']>,
+) {
+  const isValid =
+    inspection.chemicalComposition === InspectionCheckResult.OK &&
+    inspection.visualInspection === InspectionCheckResult.OK &&
+    inspection.reportStatus === InspectionCheckResult.OK;
+
+  return {
+    id: inspection.id,
+    attachmentId: inspection.attachmentId,
+    requestId: inspection.requestId,
+    qualityDocumentId: inspection.qualityDocumentId,
+    qualityDocumentName: inspection.qualityDocument.displayName,
+    receiptDate: inspection.receiptDate.toISOString().slice(0, 10),
+    materialDescription: inspection.materialDescription,
+    rm: inspection.rm,
+    certificateNumber: inspection.certificateNumber,
+    chemicalComposition: inspection.chemicalComposition,
+    quantitySpecified: inspection.quantitySpecified,
+    quantityFound: inspection.quantityFound,
+    dimensionalSpecified: inspection.dimensionalSpecified,
+    dimensionalFound: inspection.dimensionalFound,
+    visualInspection: inspection.visualInspection,
+    reportStatus: inspection.reportStatus,
+    receiverResponsible: inspection.receiverResponsible,
+    inspectedByUserId: inspection.inspectedByUserId,
+    inspectedAt: inspection.inspectedAt.toISOString(),
+    isValid,
+  };
+}
 
 function toIsoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
@@ -63,7 +113,12 @@ function toPublicRequest(request: RequestWithRelations) {
       fileName: attachment.fileName,
       storagePath: attachment.storagePath,
       lotLabel: attachment.lotLabel,
+      lotIndex: attachment.lotIndex,
+      validity: attachment.validity,
       uploadedAt: attachment.uploadedAt.toISOString(),
+      inspection: attachment.inspection
+        ? toPublicInspection(attachment.inspection)
+        : null,
     })),
     historyEvents: request.historyEvents.map((event) => ({
       id: event.id,
@@ -82,7 +137,23 @@ export class CertificateRequestService {
     return {
       supplier: true,
       createdBy: { select: { id: true, name: true, email: true } },
-      attachments: { orderBy: { uploadedAt: 'asc' } },
+      attachments: {
+        orderBy: { uploadedAt: 'asc' },
+        include: {
+          inspection: {
+            include: {
+              qualityDocument: {
+                select: {
+                  id: true,
+                  displayName: true,
+                  year: true,
+                  versionNumber: true,
+                },
+              },
+            },
+          },
+        },
+      },
       historyEvents: { orderBy: { occurredAt: 'asc' } },
     };
   }
@@ -92,6 +163,16 @@ export class CertificateRequestService {
       where: { createdByUserId: userId },
       include: this.includeRelations(),
       orderBy: { submittedAt: 'desc' },
+    });
+
+    return requests.map(toPublicRequest);
+  }
+
+  async listCompleted() {
+    const requests = await this.prisma.certificateRequest.findMany({
+      where: { status: CertificateRequestStatus.CONCLUIDA },
+      include: this.includeRelations(),
+      orderBy: { completedAt: 'desc' },
     });
 
     return requests.map(toPublicRequest);
@@ -123,7 +204,7 @@ export class CertificateRequestService {
   async create(
     userId: number,
     fields: CreateCertificateRequestFields,
-    invoiceFile: { buffer: Buffer; filename: string },
+    invoiceFile: { buffer: Buffer; filename: string } | null,
   ) {
     const supplier = await this.prisma.supplier.findUnique({
       where: { id: fields.supplierId },
@@ -158,22 +239,26 @@ export class CertificateRequestService {
         },
       });
 
-      const storagePath = await saveCertificateRequestFile(
-        created.id,
-        AttachmentType.NOTA_FISCAL,
-        invoiceFile.buffer,
-        invoiceFile.filename,
-      );
+      const storagePath = invoiceFile
+        ? await saveCertificateRequestFile(
+            created.id,
+            AttachmentType.NOTA_FISCAL,
+            invoiceFile.buffer,
+            invoiceFile.filename,
+          )
+        : null;
 
-      await tx.requestAttachment.create({
-        data: {
-          requestId: created.id,
-          type: AttachmentType.NOTA_FISCAL,
-          fileName: invoiceFile.filename,
-          storagePath,
-          uploadedByUserId: userId,
-        },
-      });
+      if (invoiceFile && storagePath) {
+        await tx.requestAttachment.create({
+          data: {
+            requestId: created.id,
+            type: AttachmentType.NOTA_FISCAL,
+            fileName: invoiceFile.filename,
+            storagePath,
+            uploadedByUserId: userId,
+          },
+        });
+      }
 
       await tx.requestHistoryEvent.create({
         data: {
@@ -300,8 +385,9 @@ export class CertificateRequestService {
   async attachCertificate(
     requestId: number,
     userId: number,
-    file: { buffer: Buffer; filename: string },
-    lotLabel?: string | null,
+    certificateFile: { buffer: Buffer; filename: string },
+    invoiceFile: { buffer: Buffer; filename: string },
+    _lotLabel?: string | null,
   ) {
     const request = await this.prisma.certificateRequest.findUnique({
       where: { id: requestId },
@@ -318,47 +404,87 @@ export class CertificateRequestService {
       );
     }
 
+    const existingCertificates = await this.prisma.requestAttachment.count({
+      where: {
+        requestId,
+        type: AttachmentType.CERTIFICADO,
+      },
+    });
+
+    if (existingCertificates > 0) {
+      throw new AppError(
+        'Já existe um PDF de certificados anexado nesta solicitação.',
+        400,
+      );
+    }
+
     const storagePath = await saveCertificateRequestFile(
       requestId,
       AttachmentType.CERTIFICADO,
-      file.buffer,
-      file.filename,
+      certificateFile.buffer,
+      certificateFile.filename,
     );
 
-    const normalizedLotLabel = lotLabel?.trim() || null;
+    const invoiceStoragePath = await saveCertificateRequestFile(
+      requestId,
+      AttachmentType.NOTA_FISCAL,
+      invoiceFile.buffer,
+      invoiceFile.filename,
+    );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.requestAttachment.create({
         data: {
           requestId,
           type: AttachmentType.CERTIFICADO,
-          fileName: file.filename,
+          fileName: certificateFile.filename,
           storagePath,
-          lotLabel: normalizedLotLabel,
+          lotLabel: 'Todos os lotes',
           uploadedByUserId: userId,
         },
       });
+
+      const existingInvoice = await tx.requestAttachment.findFirst({
+        where: {
+          requestId,
+          type: AttachmentType.NOTA_FISCAL,
+          lotIndex: null,
+        },
+      });
+
+      if (existingInvoice) {
+        await tx.requestAttachment.update({
+          where: { id: existingInvoice.id },
+          data: {
+            fileName: invoiceFile.filename,
+            storagePath: invoiceStoragePath,
+            uploadedByUserId: userId,
+            uploadedAt: new Date(),
+          },
+        });
+      } else {
+        await tx.requestAttachment.create({
+          data: {
+            requestId,
+            type: AttachmentType.NOTA_FISCAL,
+            fileName: invoiceFile.filename,
+            storagePath: invoiceStoragePath,
+            uploadedByUserId: userId,
+          },
+        });
+      }
 
       await tx.requestHistoryEvent.create({
         data: {
           requestId,
           eventType: RequestHistoryEventType.CERTIFICADO_ANEXADO,
-          description: normalizedLotLabel
-            ? `Certificado anexado (${normalizedLotLabel}).`
-            : `Certificado anexado: ${file.filename}.`,
+          description: `PDF único com os certificados anexado: ${certificateFile.filename}. Nota fiscal retornada: ${invoiceFile.filename}.`,
           actorUserId: userId,
         },
       });
     });
 
-    const updated = await this.findById(requestId);
-    const attachedCount = updated.attachedCertificatesCount ?? 0;
-
-    if (attachedCount >= updated.expectedCertificates) {
-      return this.completeRequest(requestId, userId);
-    }
-
-    return updated;
+    return this.completeRequest(requestId, userId);
   }
 
   async completeRequest(requestId: number, userId: number) {
@@ -390,9 +516,9 @@ export class CertificateRequestService {
       (attachment) => attachment.type === AttachmentType.CERTIFICADO,
     ).length;
 
-    if (attachedCertificatesCount < request.expectedCertificates) {
+    if (attachedCertificatesCount < 1) {
       throw new AppError(
-        'Anexe todos os certificados antes de concluir a solicitação.',
+        'Anexe o PDF com os certificados antes de concluir a solicitação.',
         400,
       );
     }

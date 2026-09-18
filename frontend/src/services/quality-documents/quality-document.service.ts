@@ -9,8 +9,17 @@ import type {
 
 export const qualityDocumentsListQueryKey = ['quality-documents'] as const;
 
+export const currentQualityDocumentQueryKey = [
+  'quality-documents',
+  'current',
+] as const;
+
 export function listQualityDocuments(): Promise<QualityDocument[]> {
   return httpClient.get<QualityDocument[]>('/quality-documents');
+}
+
+export function getCurrentQualityDocument(): Promise<QualityDocument> {
+  return httpClient.get<QualityDocument>('/quality-documents/current');
 }
 
 export async function createQualityDocument(
