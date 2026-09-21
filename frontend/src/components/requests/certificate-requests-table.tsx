@@ -9,14 +9,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatRequestDate } from '@/lib/certificate-request-labels';
+import {
+  formatRequestDate,
+  getInspectedCertificatesCount,
+  getNfConferenceStatus,
+} from '@/lib/certificate-request-labels';
 import { cn } from '@/lib/utils';
 import type { CertificateRequest } from '@/types/certificate-request';
 
 type CertificateRequestsTableProps = {
   requests: CertificateRequest[];
   detailPath: (requestId: number) => string;
-  variant: 'stock' | 'purchase';
+  variant: 'stock' | 'purchase' | 'conference';
 };
 
 export function CertificateRequestsTable({
@@ -42,10 +46,13 @@ export function CertificateRequestsTable({
           <TableHead>Fornecedor</TableHead>
           <TableHead>Nº NF</TableHead>
           <TableHead>Lotes</TableHead>
+          {variant === 'conference' ? (
+            <TableHead>Comparados</TableHead>
+          ) : null}
           <TableHead>Data NF</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>
-            {variant === 'stock' ? 'Abertura' : 'Solicitante'}
+            {variant === 'purchase' ? 'Solicitante' : 'Abertura'}
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -62,14 +69,26 @@ export function CertificateRequestsTable({
             <TableCell>{request.supplier.name}</TableCell>
             <TableCell>{request.invoiceNumber}</TableCell>
             <TableCell>{request.expectedCertificates}</TableCell>
+            {variant === 'conference' ? (
+              <TableCell className="tabular-nums">
+                {getInspectedCertificatesCount(request)}/
+                {request.expectedCertificates}
+              </TableCell>
+            ) : null}
             <TableCell>{formatRequestDate(request.invoiceDate)}</TableCell>
             <TableCell>
-              <RequestStatusBadge status={request.status} />
+              <RequestStatusBadge
+                status={
+                  variant === 'conference'
+                    ? getNfConferenceStatus(request)
+                    : request.status
+                }
+              />
             </TableCell>
             <TableCell>
-              {variant === 'stock'
-                ? formatRequestDate(request.submittedAt)
-                : (request.createdByName ?? 'Operador de estoque')}
+              {variant === 'purchase'
+                ? (request.createdByName ?? 'Operador de estoque')
+                : formatRequestDate(request.submittedAt)}
             </TableCell>
           </TableRow>
         ))}

@@ -91,6 +91,17 @@ function toPublicRequest(request: RequestWithRelations) {
     (attachment) => attachment.type === AttachmentType.CERTIFICADO,
   ).length;
 
+  const inspectedCertificatesCount = new Set(
+    request.attachments
+      .filter(
+        (attachment) =>
+          attachment.type === AttachmentType.IMPRESSAO_CONFERENCIA &&
+          attachment.inspection != null &&
+          attachment.lotIndex != null,
+      )
+      .map((attachment) => attachment.lotIndex),
+  ).size;
+
   return {
     id: request.id,
     supplier: {
@@ -130,6 +141,7 @@ function toPublicRequest(request: RequestWithRelations) {
       occurredAt: event.occurredAt.toISOString(),
     })),
     attachedCertificatesCount,
+    inspectedCertificatesCount,
   };
 }
 

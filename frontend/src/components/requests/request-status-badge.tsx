@@ -1,4 +1,5 @@
 import type { CertificateRequestStatus } from '@/types/certificate-request';
+import type { NfConferenceStatus } from '@/lib/certificate-request-labels';
 import {
   certificateRequestStatusClassName,
   certificateRequestStatusLabel,
@@ -6,7 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 
 type RequestStatusBadgeProps = {
-  status: CertificateRequestStatus;
+  status: CertificateRequestStatus | NfConferenceStatus;
   className?: string;
 };
 

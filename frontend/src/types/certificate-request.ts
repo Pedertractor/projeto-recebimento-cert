@@ -78,6 +78,7 @@ export type CertificateRequest = {
   attachments?: RequestAttachment[];
   historyEvents?: RequestHistoryEvent[];
   attachedCertificatesCount?: number;
+  inspectedCertificatesCount?: number;
 };
 
 export type CreateCertificateRequestPayload = {

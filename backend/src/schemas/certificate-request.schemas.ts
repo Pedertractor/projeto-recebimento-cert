@@ -55,6 +55,7 @@ export const certificateRequestSchema = z.object({
   attachments: z.array(attachmentSchema).optional(),
   historyEvents: z.array(historyEventSchema).optional(),
   attachedCertificatesCount: z.number().optional(),
+  inspectedCertificatesCount: z.number().optional(),
 });
 
 export type PublicCertificateRequest = z.infer<typeof certificateRequestSchema>;

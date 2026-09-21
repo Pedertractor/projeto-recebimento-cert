@@ -43,7 +43,7 @@ export function NotasFiscaisPage() {
         <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60">
           <CertificateRequestsTable
             requests={requestsQuery.data}
-            variant="stock"
+            variant="conference"
             detailPath={(id) => `/notas-fiscais/${id}`}
           />
         </div>
