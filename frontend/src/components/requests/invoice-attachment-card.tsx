@@ -1,7 +1,18 @@
-import { FileText, Paperclip } from 'lucide-react';
+import { useRef, type ChangeEvent } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { FileText, Loader2, Paperclip, Pencil } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { PdfPageViewer } from '@/components/conference/pdf-page-viewer';
 import { RequestAttachmentActions } from '@/components/requests/request-attachment-actions';
+import { Button } from '@/components/ui/button';
+import { HttpClientError } from '@/lib/http-client';
+import {
+  certificateRequestDetailQueryKey,
+  certificateRequestsListQueryKey,
+  completedCertificateRequestsQueryKey,
+  upsertInvoiceDocument,
+} from '@/services/certificate-requests/certificate-request.service';
 import { resolveAttachmentUrl } from '@/utils/attachment-url';
 import { isImageFile, isPdfFile } from '@/utils/file-type';
 import type { RequestAttachment } from '@/types/certificate-request';
@@ -11,6 +22,8 @@ type InvoiceAttachmentCardProps = {
   title?: string;
   subtitle?: string;
   emptyMessage?: string;
+  requestId?: number;
+  canUpdate?: boolean;
 };
 
 export function InvoiceAttachmentCard({
@@ -18,19 +31,92 @@ export function InvoiceAttachmentCard({
   title = 'Nota fiscal',
   subtitle,
   emptyMessage = 'Nenhuma nota fiscal anexada.',
+  requestId,
+  canUpdate = false,
 }: InvoiceAttachmentCardProps) {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updateMutation = useMutation({
+    mutationFn: (file: File) => {
+      if (!requestId) {
+        throw new Error('NF inválida.');
+      }
+      return upsertInvoiceDocument(requestId, file);
+    },
+    onSuccess: async () => {
+      toast.success('Nota fiscal atualizada.');
+      if (!requestId) {
+        return;
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: certificateRequestDetailQueryKey(requestId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: certificateRequestsListQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: completedCertificateRequestsQueryKey,
+        }),
+      ]);
+    },
+    onError: (error) => {
+      const message =
+        error instanceof HttpClientError
+          ? error.message
+          : 'Não foi possível atualizar a nota fiscal.';
+      toast.error(message);
+    },
+  });
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      updateMutation.mutate(file);
+    }
+    event.target.value = '';
+  }
+
   return (
     <section className="flex h-full min-h-88 flex-col rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6 lg:min-h-112">
-      <div className="flex items-center gap-2">
-        <Paperclip className="size-4 text-brand" />
-        <div>
-          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-            {title}
-          </h2>
-          {subtitle ? (
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
-          ) : null}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Paperclip className="size-4 text-brand" />
+          <div>
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+              {title}
+            </h2>
+            {subtitle ? (
+              <p className="text-xs text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </div>
         </div>
+        {canUpdate ? (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={updateMutation.isPending}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {updateMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Pencil className="size-4" />
+              )}
+              {attachment ? 'Atualizar' : 'Anexar'}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </>
+        ) : null}
       </div>
 
       <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3">

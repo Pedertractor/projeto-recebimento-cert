@@ -83,6 +83,27 @@ export function updateCertificateRequest(
   );
 }
 
+export async function upsertInvoiceDocument(
+  requestId: number,
+  invoiceFile: File,
+): Promise<CertificateRequest> {
+  const formData = new FormData();
+  formData.append('invoiceFile', invoiceFile);
+
+  const response = await axios.post<CertificateRequest>(
+    `${env.apiUrl}/certificate-requests/${requestId}/invoice`,
+    formData,
+    {
+      withCredentials: true,
+      headers: {
+        'x-csrf-token': getWebCsrfToken() ?? '',
+      },
+    },
+  );
+
+  return response.data;
+}
+
 export async function createCertificateRequest(
   payload: CreateCertificateRequestPayload,
 ): Promise<CertificateRequest> {
@@ -131,7 +152,6 @@ export async function registerSupplierContact(
 
 export type AttachCertificatePayload = {
   certificateFile: File;
-  invoiceFile: File;
   lotLabel?: string;
 };
 
@@ -141,7 +161,6 @@ export async function attachCertificate(
 ): Promise<CertificateRequest> {
   const formData = new FormData();
   formData.append('certificateFile', payload.certificateFile);
-  formData.append('invoiceFile', payload.invoiceFile);
   if (payload.lotLabel?.trim()) {
     formData.append('lotLabel', payload.lotLabel.trim());
   }

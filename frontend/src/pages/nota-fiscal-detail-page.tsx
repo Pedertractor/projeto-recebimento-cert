@@ -192,16 +192,19 @@ export function NotaFiscalDetailPage() {
         </section>
 
         <div className="space-y-4">
-          {purchaseCertificate ? (
+          {purchaseCertificate &&
+          purchaseCertificate.id !== invoiceAttachment?.id ? (
             <PurchaseCertificatePdfPanel attachment={purchaseCertificate} />
           ) : null}
           <InvoiceAttachmentCard
             attachment={invoiceAttachment}
+            requestId={request.id}
+            canUpdate={request.status !== 'CANCELADA'}
             subtitle={
               purchaseCertificate
-                ? 'Documento usado na conferência'
+                ? 'Documento do compras — este é o que vale na conferência'
                 : invoiceAttachment
-                  ? 'Referência anexada no cadastro da NF'
+                  ? 'Arquivo da nota fiscal'
                   : undefined
             }
             emptyMessage="Nenhuma nota fiscal anexada. Você pode incluir depois ou vincular o PDF com NF e certificados."

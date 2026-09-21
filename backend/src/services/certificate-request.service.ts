@@ -161,6 +161,47 @@ export class CertificateRequestService {
     };
   }
 
+  private async replaceInvoiceAttachment(
+    tx: Prisma.TransactionClient,
+    params: {
+      requestId: number;
+      userId: number;
+      fileName: string;
+      storagePath: string;
+    },
+  ) {
+    const existingInvoice = await tx.requestAttachment.findFirst({
+      where: {
+        requestId: params.requestId,
+        type: AttachmentType.NOTA_FISCAL,
+        lotIndex: null,
+      },
+    });
+
+    if (existingInvoice) {
+      await tx.requestAttachment.update({
+        where: { id: existingInvoice.id },
+        data: {
+          fileName: params.fileName,
+          storagePath: params.storagePath,
+          uploadedByUserId: params.userId,
+          uploadedAt: new Date(),
+        },
+      });
+      return;
+    }
+
+    await tx.requestAttachment.create({
+      data: {
+        requestId: params.requestId,
+        type: AttachmentType.NOTA_FISCAL,
+        fileName: params.fileName,
+        storagePath: params.storagePath,
+        uploadedByUserId: params.userId,
+      },
+    });
+  }
+
   async listForStock(userId: number) {
     const requests = await this.prisma.certificateRequest.findMany({
       where: {
@@ -356,6 +397,63 @@ export class CertificateRequestService {
     return this.findById(requestId);
   }
 
+  async upsertInvoice(
+    requestId: number,
+    userId: number,
+    invoiceFile: { buffer: Buffer; filename: string },
+  ) {
+    const request = await this.prisma.certificateRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!request) {
+      throw new AppError('NF não encontrada.', 404);
+    }
+
+    if (request.status === CertificateRequestStatus.CANCELADA) {
+      throw new AppError('Não é possível atualizar a NF de uma solicitação cancelada.', 400);
+    }
+
+    const storagePath = await saveCertificateRequestFile(
+      requestId,
+      AttachmentType.NOTA_FISCAL,
+      invoiceFile.buffer,
+      invoiceFile.filename,
+    );
+
+    const existingInvoice = await this.prisma.requestAttachment.findFirst({
+      where: {
+        requestId,
+        type: AttachmentType.NOTA_FISCAL,
+        lotIndex: null,
+      },
+    });
+
+    if (existingInvoice) {
+      await this.prisma.requestAttachment.update({
+        where: { id: existingInvoice.id },
+        data: {
+          fileName: invoiceFile.filename,
+          storagePath,
+          uploadedByUserId: userId,
+          uploadedAt: new Date(),
+        },
+      });
+    } else {
+      await this.prisma.requestAttachment.create({
+        data: {
+          requestId,
+          type: AttachmentType.NOTA_FISCAL,
+          fileName: invoiceFile.filename,
+          storagePath,
+          uploadedByUserId: userId,
+        },
+      });
+    }
+
+    return this.findById(requestId);
+  }
+
   async requestDocumentFromPurchase(requestId: number, userId: number) {
     const request = await this.prisma.certificateRequest.findUnique({
       where: { id: requestId },
@@ -531,7 +629,6 @@ export class CertificateRequestService {
     requestId: number,
     userId: number,
     certificateFile: { buffer: Buffer; filename: string },
-    invoiceFile: { buffer: Buffer; filename: string },
     _lotLabel?: string | null,
   ) {
     const request = await this.prisma.certificateRequest.findUnique({
@@ -544,7 +641,7 @@ export class CertificateRequestService {
 
     if (request.status !== CertificateRequestStatus.AGUARDANDO_FORNECEDOR) {
       throw new AppError(
-        'Anexe certificados após registrar o envio ao fornecedor.',
+        'Anexe o documento após registrar o envio ao fornecedor.',
         400,
       );
     }
@@ -558,7 +655,7 @@ export class CertificateRequestService {
 
     if (existingCertificates > 0) {
       throw new AppError(
-        'Já existe um PDF de certificados anexado nesta solicitação.',
+        'Já existe um PDF de NF com certificados anexado nesta solicitação.',
         400,
       );
     }
@@ -568,13 +665,6 @@ export class CertificateRequestService {
       AttachmentType.CERTIFICADO,
       certificateFile.buffer,
       certificateFile.filename,
-    );
-
-    const invoiceStoragePath = await saveCertificateRequestFile(
-      requestId,
-      AttachmentType.NOTA_FISCAL,
-      invoiceFile.buffer,
-      invoiceFile.filename,
     );
 
     await this.prisma.$transaction(async (tx) => {
@@ -589,41 +679,18 @@ export class CertificateRequestService {
         },
       });
 
-      const existingInvoice = await tx.requestAttachment.findFirst({
-        where: {
-          requestId,
-          type: AttachmentType.NOTA_FISCAL,
-          lotIndex: null,
-        },
+      await this.replaceInvoiceAttachment(tx, {
+        requestId,
+        userId,
+        fileName: certificateFile.filename,
+        storagePath,
       });
-
-      if (existingInvoice) {
-        await tx.requestAttachment.update({
-          where: { id: existingInvoice.id },
-          data: {
-            fileName: invoiceFile.filename,
-            storagePath: invoiceStoragePath,
-            uploadedByUserId: userId,
-            uploadedAt: new Date(),
-          },
-        });
-      } else {
-        await tx.requestAttachment.create({
-          data: {
-            requestId,
-            type: AttachmentType.NOTA_FISCAL,
-            fileName: invoiceFile.filename,
-            storagePath: invoiceStoragePath,
-            uploadedByUserId: userId,
-          },
-        });
-      }
 
       await tx.requestHistoryEvent.create({
         data: {
           requestId,
           eventType: RequestHistoryEventType.CERTIFICADO_ANEXADO,
-          description: `PDF único com os certificados anexado: ${certificateFile.filename}. Nota fiscal retornada: ${invoiceFile.filename}.`,
+          description: `NF com certificados anexada pelo compras: ${certificateFile.filename}.`,
           actorUserId: userId,
         },
       });
@@ -680,6 +747,13 @@ export class CertificateRequestService {
           lotLabel: 'Todos os lotes',
           uploadedByUserId: userId,
         },
+      });
+
+      await this.replaceInvoiceAttachment(tx, {
+        requestId,
+        userId,
+        fileName: certificateFile.filename,
+        storagePath,
       });
 
       await tx.requestHistoryEvent.create({

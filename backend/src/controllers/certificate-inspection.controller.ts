@@ -56,6 +56,29 @@ function canAccessConferenceRequest(
   return false;
 }
 
+function canAttachConferencePrint(
+  request: { createdByUserId: number; status: CertificateRequestStatus },
+  user: { id: number; role: UserRole },
+): boolean {
+  if (user.role === UserRole.SUPERADMIN) {
+    return true;
+  }
+
+  if (user.role !== UserRole.STOCK_OPERATOR) {
+    return false;
+  }
+
+  if (request.status === CertificateRequestStatus.CANCELADA) {
+    return false;
+  }
+
+  if (request.status === CertificateRequestStatus.CONCLUIDA) {
+    return true;
+  }
+
+  return request.createdByUserId === user.id;
+}
+
 export async function listCompletedCertificateRequestsController(
   req: FastifyRequest,
   reply: FastifyReply,
@@ -92,7 +115,7 @@ export async function attachConferencePrintController(
   const requestService = new CertificateRequestService(req.server.prisma);
   const existing = await requestService.findById(requestId);
 
-  if (!canAccessConferenceRequest(existing, req.user)) {
+  if (!canAttachConferencePrint(existing, req.user)) {
     throw new AppError('Acesso negado.', 403);
   }
 
@@ -146,7 +169,7 @@ export async function attachConferencePrintPasteController(
   const requestService = new CertificateRequestService(req.server.prisma);
   const existing = await requestService.findById(requestId);
 
-  if (!canAccessConferenceRequest(existing, req.user)) {
+  if (!canAttachConferencePrint(existing, req.user)) {
     throw new AppError('Acesso negado.', 403);
   }
 

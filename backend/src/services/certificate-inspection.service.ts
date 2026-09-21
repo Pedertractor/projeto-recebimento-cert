@@ -95,11 +95,8 @@ export class CertificateInspectionService {
       throw new AppError('Solicitação não encontrada.', 404);
     }
 
-    if (request.status !== CertificateRequestStatus.CONCLUIDA) {
-      throw new AppError(
-        'Só é possível anexar impressões em solicitações concluídas.',
-        400,
-      );
+    if (request.status === CertificateRequestStatus.CANCELADA) {
+      throw new AppError('Não é possível anexar impressões em uma NF cancelada.', 400);
     }
 
     if (lotIndex < 1 || lotIndex > request.expectedCertificates) {

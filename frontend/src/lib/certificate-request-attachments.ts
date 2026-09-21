@@ -9,15 +9,12 @@ function hasPurchaseResponse(
   );
 }
 
-/** NF retornada pelo compras na resposta — usada na conferência. */
+/** Documento válido da conferência: PDF do compras, senão a NF do estoque. */
 export function getComparisonInvoiceAttachment(
   attachments: RequestAttachment[] | undefined,
 ): RequestAttachment | null {
-  if (!hasPurchaseResponse(attachments)) {
-    return null;
-  }
-
   return (
+    getPurchaseCertificateAttachment(attachments) ??
     attachments?.find((attachment) => attachment.type === 'NOTA_FISCAL') ??
     null
   );

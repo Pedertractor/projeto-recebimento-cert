@@ -15,6 +15,7 @@ import { DocumentUploadField } from '@/components/ui/document-upload-field';
 import { HttpClientError } from '@/lib/http-client';
 import {
   getComparisonInvoiceAttachment,
+  getPurchaseCertificateAttachment,
   getStockReferenceInvoiceAttachment,
 } from '@/lib/certificate-request-attachments';
 import {
@@ -45,8 +46,7 @@ export function CertificateRequestDetailView({
   viewer,
 }: CertificateRequestDetailViewProps) {
   const queryClient = useQueryClient();
-  const [certificateFile, setCertificateFile] = useState<File | null>(null);
-  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
+  const [combinedDocument, setCombinedDocument] = useState<File | null>(null);
   const isPurchaseView = viewer === 'purchase';
 
   const requestQuery = useQuery({
@@ -89,29 +89,17 @@ export function CertificateRequestDetailView({
 
   const attachCertificateMutation = useMutation({
     mutationFn: () => {
-      if (!certificateFile) {
-        throw new Error('Selecione o PDF com os certificados.');
-      }
-
-      if (!invoiceFile) {
-        throw new Error('Selecione a nota fiscal retornada.');
+      if (!combinedDocument) {
+        throw new Error('Selecione o PDF com a NF e os certificados.');
       }
 
       return attachCertificate(requestId, {
-        certificateFile,
-        invoiceFile,
+        certificateFile: combinedDocument,
       });
     },
-    onSuccess: async (updatedRequest) => {
-      if (updatedRequest.status === 'CONCLUIDA') {
-        toast.success(
-          'Certificado e nota fiscal anexados. Solicitação concluída.',
-        );
-      } else {
-        toast.success('Certificado e nota fiscal anexados.');
-      }
-      setCertificateFile(null);
-      setInvoiceFile(null);
+    onSuccess: async () => {
+      toast.success('Documento confirmado. Solicitação concluída.');
+      setCombinedDocument(null);
       await invalidateQueries();
     },
     onError: (error) => {
@@ -220,8 +208,8 @@ export function CertificateRequestDetailView({
               {request.expectedCertificates} lote
               {request.expectedCertificates === 1 ? '' : 's'} na NF
               {attachedCount > 0
-                ? ' — PDF de certificados anexado'
-                : ' — aguardando PDF único com todos os certificados'}
+                ? ' — NF com certificados anexada'
+                : ' — aguardando PDF único com NF e certificados'}
               {canCompleteRequest ? ' — pronta para conclusão' : null}
             </p>
           </div>
@@ -245,18 +233,18 @@ export function CertificateRequestDetailView({
           <InvoiceAttachmentCard
             attachment={invoiceAttachment}
             subtitle={
-              isPurchaseView
-                ? 'Anexe na resposta ao concluir a solicitação'
-                : getComparisonInvoiceAttachment(request.attachments)
-                  ? 'Retorno do compras — usada na conferência'
+              getPurchaseCertificateAttachment(request.attachments)
+                ? 'Documento confirmado pelo compras'
+                : isPurchaseView
+                  ? 'Anexe um único PDF com a NF e os certificados'
                   : invoiceAttachment
-                    ? 'Referência opcional enviada pelo estoque'
+                    ? 'Referência enviada pelo estoque'
                     : undefined
             }
             emptyMessage={
               isPurchaseView
-                ? 'Anexe a nota fiscal ao responder a solicitação.'
-                : 'Aguardando nota fiscal retornada pelo compras.'
+                ? 'Anexe um único PDF com a NF e os certificados.'
+                : 'Aguardando documento retornado pelo compras.'
             }
           />
         </div>
@@ -298,36 +286,35 @@ export function CertificateRequestDetailView({
           <div className="space-y-5">
             <div className="flex items-center gap-2">
               <FileUp className="size-4 text-brand" />
-              <h2 className="text-base font-semibold">Anexar certificados</h2>
+              <h2 className="text-base font-semibold">
+                Anexar NF com certificados
+              </h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              Envie a nota fiscal e um único PDF contendo os certificados dos{' '}
+              Envie um único PDF contendo a nota fiscal e os certificados dos{' '}
               {request.expectedCertificates} lote
-              {request.expectedCertificates === 1 ? '' : 's'} desta NF. A
-              solicitação será concluída ao anexar os arquivos.
+              {request.expectedCertificates === 1 ? '' : 's'} desta NF. Depois,
+              confirme que este é o documento correto para concluir a
+              solicitação.
             </p>
 
             <DocumentUploadField
-              id="invoiceFile"
-              label="Nota fiscal"
-              accept=".pdf,.png,.jpg,.jpeg,.webp"
-              value={invoiceFile}
-              onChange={setInvoiceFile}
-              placeholder="Selecione a NF"
-              hint="PDF ou imagem, até 10 MB"
-              buttonLabel="Escolher NF"
-            />
-
-            <DocumentUploadField
-              id="certificateFile"
-              label="PDF com todos os certificados"
+              id="combinedDocument"
+              label="NF com certificados"
               accept=".pdf"
-              value={certificateFile}
-              onChange={setCertificateFile}
+              value={combinedDocument}
+              onChange={setCombinedDocument}
               placeholder="Selecione o PDF"
               hint="Um único PDF, até 10 MB"
               buttonLabel="Escolher PDF"
             />
+
+            {combinedDocument ? (
+              <p className="text-sm text-muted-foreground">
+                Confirme que o arquivo <strong>{combinedDocument.name}</strong>{' '}
+                é a NF com os certificados desta solicitação.
+              </p>
+            ) : null}
 
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               {canCompleteRequest ? (
@@ -347,18 +334,16 @@ export function CertificateRequestDetailView({
               <Button
                 className="bg-brand text-brand-foreground hover:bg-brand/90"
                 disabled={
-                  !certificateFile ||
-                  !invoiceFile ||
-                  attachCertificateMutation.isPending
+                  !combinedDocument || attachCertificateMutation.isPending
                 }
                 onClick={() => attachCertificateMutation.mutate()}
               >
                 {attachCertificateMutation.isPending ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
-                  <FileUp className="size-4" />
+                  <CheckCircle2 className="size-4" />
                 )}
-                Anexar e concluir
+                Confirmar documento
               </Button>
             </div>
           </div>
@@ -368,7 +353,7 @@ export function CertificateRequestDetailView({
       {certificateAttachments.length > 0 ? (
         <section className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6">
           <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-            PDF de certificados
+            PDF de NF com certificados
           </h2>
           <div className="mt-4 space-y-2">
             {certificateAttachments.map((attachment) => (

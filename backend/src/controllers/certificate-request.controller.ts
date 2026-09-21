@@ -171,6 +171,32 @@ export async function updateCertificateRequestController(
   return reply.send(request);
 }
 
+export async function upsertInvoiceController(
+  req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
+  reply: FastifyReply,
+) {
+  const { files } = await parseMultipartRequest(req);
+  const invoiceFile = files.invoiceFile;
+
+  if (!invoiceFile) {
+    throw new AppError('Anexe o arquivo da nota fiscal.');
+  }
+
+  const service = new CertificateRequestService(req.server.prisma);
+  const existing = await service.findById(req.params.id);
+
+  if (!canAccessCertificateRequest(existing, req.user)) {
+    throw new AppError('Acesso negado.', 403);
+  }
+
+  const request = await service.upsertInvoice(
+    req.params.id,
+    req.user.id,
+    invoiceFile,
+  );
+  return reply.send(request);
+}
+
 export async function registerSupplierContactController(
   req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
   reply: FastifyReply,
@@ -197,14 +223,9 @@ export async function attachCertificateController(
   const { fields, files } = await parseMultipartRequest(req);
 
   const certificateFile = files.certificateFile;
-  const invoiceFile = files.invoiceFile;
 
   if (!certificateFile) {
-    throw new AppError('Anexe o PDF com os certificados.');
-  }
-
-  if (!invoiceFile) {
-    throw new AppError('Anexe a nota fiscal retornada na resposta.');
+    throw new AppError('Anexe o PDF com a NF e os certificados.');
   }
 
   const parsed = attachCertificateFieldsSchema.safeParse(fields);
@@ -223,7 +244,6 @@ export async function attachCertificateController(
     req.params.id,
     req.user.id,
     certificateFile,
-    invoiceFile,
     parsed.data.lotLabel,
   );
 

@@ -20,6 +20,7 @@ import {
   registerSupplierContactController,
   requestDocumentFromPurchaseController,
   updateCertificateRequestController,
+  upsertInvoiceController,
 } from '../controllers/certificate-request.controller.js';
 import {
   attachConferencePrintPasteSchema,
@@ -201,6 +202,29 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
   );
 
   fastify.post<{ Params: CertificateRequestIdParams }>(
+    '/:id/invoice',
+    {
+      schema: {
+        summary: 'Attach or replace invoice file for stock operator',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        consumes: ['multipart/form-data'],
+        params: certificateRequestIdParamsSchema,
+        response: {
+          200: certificateRequestResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    upsertInvoiceController,
+  );
+
+  fastify.post<{ Params: CertificateRequestIdParams }>(
     '/:id/supplier-contact',
     {
       schema: {
@@ -226,7 +250,7 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
     '/:id/certificates',
     {
       schema: {
-        summary: 'Attach certificate to certificate request',
+        summary: 'Attach combined invoice and certificates PDF',
         tags: ['CertificateRequest'],
         security: [{ cookieAuth: [] }],
         consumes: ['multipart/form-data'],
