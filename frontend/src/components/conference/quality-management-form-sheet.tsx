@@ -1,10 +1,27 @@
-import { forwardRef } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import {
   formatInspectionOkNok,
   formatReportStatus,
   getInspectionFieldValue,
   type QualityManagementFormColumn,
 } from '@/lib/quality-management-form';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
 type QualityManagementFormSheetProps = {
@@ -14,66 +31,106 @@ type QualityManagementFormSheetProps = {
 
 type FormRowDefinition = {
   label: string;
-  getValue: (column: QualityManagementFormColumn) => string;
+  render: (column: QualityManagementFormColumn) => ReactNode;
 };
+
+function FormStatusBadge({
+  value,
+  type,
+}: {
+  value: 'OK' | 'NOK' | null | undefined;
+  type: 'ok-nok' | 'report';
+}) {
+  if (!value) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  const isOk = value === 'OK';
+  const label =
+    type === 'ok-nok'
+      ? formatInspectionOkNok(value)
+      : formatReportStatus(value);
+
+  return (
+    <Badge
+      variant={isOk ? 'default' : 'destructive'}
+      className="font-semibold uppercase"
+    >
+      {label}
+    </Badge>
+  );
+}
 
 const FORM_ROWS: FormRowDefinition[] = [
   {
-    label: 'DATA DO RECEBIM.',
-    getValue: (column) =>
+    label: 'Data do recebimento',
+    render: (column) =>
       getInspectionFieldValue(column.inspection, 'receiptDate'),
   },
   {
-    label: 'DESCRIÇÃO DO MATERIAL',
-    getValue: (column) =>
+    label: 'Descrição do material',
+    render: (column) =>
       getInspectionFieldValue(column.inspection, 'materialDescription'),
   },
   {
-    label: 'RM:',
-    getValue: (column) => getInspectionFieldValue(column.inspection, 'rm'),
+    label: 'RM',
+    render: (column) => getInspectionFieldValue(column.inspection, 'rm'),
   },
   {
-    label: 'Nº CERTIFICADO',
-    getValue: (column) =>
+    label: 'Nº certificado',
+    render: (column) =>
       getInspectionFieldValue(column.inspection, 'certificateNumber'),
   },
   {
-    label: 'COMPOSIÇÃO QUIMICA OK ou N.OK',
-    getValue: (column) =>
-      formatInspectionOkNok(column.inspection?.chemicalComposition),
+    label: 'Composição química',
+    render: (column) => (
+      <FormStatusBadge
+        value={column.inspection?.chemicalComposition}
+        type="ok-nok"
+      />
+    ),
   },
   {
-    label: 'QUANTIDADE ESPECIFICADA NA NOTA FISCAL',
-    getValue: (column) =>
+    label: 'Quantidade especificada na NF',
+    render: (column) =>
       getInspectionFieldValue(column.inspection, 'quantitySpecified'),
   },
   {
-    label: 'QUANTIDADE ENCONTRADA NO RECEBIMENTO',
-    getValue: (column) =>
+    label: 'Quantidade encontrada no recebimento',
+    render: (column) =>
       getInspectionFieldValue(column.inspection, 'quantityFound'),
   },
   {
-    label: 'DIMENSIONAL ESPECIFICADO NF:',
-    getValue: (column) =>
+    label: 'Dimensional especificado NF',
+    render: (column) =>
       getInspectionFieldValue(column.inspection, 'dimensionalSpecified'),
   },
   {
-    label: 'DIMENSIONAL ENCONTRADO NO RECEBIMENTO',
-    getValue: (column) =>
+    label: 'Dimensional encontrado no recebimento',
+    render: (column) =>
       getInspectionFieldValue(column.inspection, 'dimensionalFound'),
   },
   {
-    label: 'VISUAL ENCONT. OK ou N.OK',
-    getValue: (column) =>
-      formatInspectionOkNok(column.inspection?.visualInspection),
+    label: 'Visual',
+    render: (column) => (
+      <FormStatusBadge
+        value={column.inspection?.visualInspection}
+        type="ok-nok"
+      />
+    ),
   },
   {
-    label: 'LAUDO AP. ou REP.',
-    getValue: (column) => formatReportStatus(column.inspection?.reportStatus),
+    label: 'Laudo',
+    render: (column) => (
+      <FormStatusBadge
+        value={column.inspection?.reportStatus}
+        type="report"
+      />
+    ),
   },
   {
-    label: 'RECEBEDOR RESP.',
-    getValue: (column) =>
+    label: 'Recebedor responsável',
+    render: (column) =>
       getInspectionFieldValue(column.inspection, 'receiverResponsible'),
   },
 ];
@@ -86,102 +143,94 @@ export const QualityManagementFormSheet = forwardRef<
     <div
       ref={ref}
       className={cn(
-        'quality-management-form-sheet bg-white text-black print:bg-white print:text-black',
+        'quality-management-form-sheet print:bg-white print:text-black',
         className,
       )}
     >
-      <div className="overflow-x-auto border border-black">
-        <table className="w-full min-w-[720px] border-collapse text-[11px] leading-tight">
-          <thead>
-            <tr>
-              <th
-                rowSpan={2}
-                className="w-52 border border-black bg-white p-2 align-middle"
-              >
-                <div className="flex flex-col items-start gap-1 text-left">
-                  <img
-                    src="/pedertractor_tractorcomponents_azul.svg"
-                    alt="Peder Tractor"
-                    className="w-full"
-                  />
-                </div>
-              </th>
-              <th
-                colSpan={columns.length}
-                className="border border-black bg-white px-3 py-2 text-center"
-              >
-                <p className="text-[11px] font-bold uppercase">
-                  Formulário do sistema de gestão da qualidade
-                </p>
-                <p className="mt-1 text-[10px] font-semibold uppercase">
-                  Verificação / inspeção de recebimento de matéria prima para
-                  chapas de laser
-                </p>
-              </th>
-              <th
-                rowSpan={2}
-                className="w-28 border border-black bg-white p-2 align-middle"
-              >
-                <div className="flex flex-col gap-2 text-center text-[10px] font-bold">
-                  <span>FORM- 084</span>
-                  <span>Revisão: 04</span>
-                </div>
-              </th>
-            </tr>
-            <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.lotIndex}
-                  className="min-w-28 border border-black bg-white px-2 py-2 text-center align-top"
-                >
-                  <p className="font-bold uppercase">Fornecedor</p>
-                  <p className="mt-1 font-semibold uppercase">
-                    {column.supplierName}
-                  </p>
-                  <p className="mt-1 text-[10px] font-normal normal-case text-neutral-700">
-                    {column.lotLabel}
-                  </p>
-                </th>
-              ))}
-            </tr>
-            <tr>
-              <td
-                colSpan={columns.length + 2}
-                className="border border-black bg-white px-3 py-1 text-left font-semibold uppercase"
-              >
-                Distribuição: S.G.Q./ RECEBIMENTO
-              </td>
-            </tr>
-          </thead>
-          <tbody>
-            {FORM_ROWS.map((row) => (
-              <tr key={row.label}>
-                <td className="border border-black bg-white px-2 py-1.5 text-left font-semibold uppercase">
-                  {row.label}
-                </td>
-                {columns.map((column) => (
-                  <td
-                    key={`${row.label}-${column.lotIndex}`}
-                    className="border border-black bg-white px-2 py-1.5 text-center align-middle"
-                  >
-                    {row.getValue(column)}
-                  </td>
-                ))}
-                <td className="border border-black bg-white" />
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Card className="overflow-hidden rounded-lg border shadow-sm print:rounded-none print:shadow-none print:ring-1 print:ring-black">
+        <CardHeader className="gap-4 border-b bg-muted/30 pb-4 print:bg-white">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <img
+              src="/pedertractor_tractorcomponents_azul.svg"
+              alt="Peder Tractor"
+              className="h-12 w-auto shrink-0"
+            />
+            <div className="flex-1 text-center sm:px-4">
+              <CardTitle className="text-sm font-bold uppercase sm:text-base">
+                Formulário do sistema de gestão da qualidade
+              </CardTitle>
+              <CardDescription className="mt-1 text-xs font-medium uppercase">
+                Verificação / inspeção de recebimento de matéria prima para
+                chapas de laser
+              </CardDescription>
+            </div>
+            <div className="flex flex-col items-center gap-1 sm:items-end">
+              <Badge variant="outline" className="font-bold">
+                FORM-084
+              </Badge>
+              <span className="text-xs font-medium text-muted-foreground">
+                Revisão: 04
+              </span>
+            </div>
+          </div>
+          <Badge variant="secondary" className="w-fit font-medium">
+            Distribuição: S.G.Q. / Recebimento
+          </Badge>
+        </CardHeader>
 
-      <p className="mt-3 text-[10px] leading-relaxed text-neutral-800">
-        <span className="font-bold uppercase">Nota:</span> Para preencher este
-        formulário utilize as informações contidas nos seguintes documentos:
-        instrução de trabalho IT-034, instrução de trabalho IT-083, Nota fiscal
-        do Produto e o Certificado. Caso haja alguma não conformidade, o produto
-        deve ser identificado, segregado e o departamento de compras deve ser
-        comunicado.
-      </p>
+        <CardContent className="p-0">
+          <Table className="min-w-180 text-xs">
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="sticky left-0 z-10 min-w-52 bg-muted/50 font-semibold">
+                  Campo
+                </TableHead>
+                {columns.map((column) => (
+                  <TableHead
+                    key={column.lotIndex}
+                    className="min-w-40 text-center align-top"
+                  >
+                    <p className="font-semibold uppercase">
+                      {column.supplierName}
+                    </p>
+                    <p className="mt-0.5 text-[10px] font-normal normal-case text-muted-foreground">
+                      {column.lotLabel}
+                    </p>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {FORM_ROWS.map((row) => (
+                <TableRow key={row.label} className="hover:bg-muted/30">
+                  <TableCell className="sticky left-0 z-10 bg-background font-medium text-muted-foreground">
+                    {row.label}
+                  </TableCell>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={`${row.label}-${column.lotIndex}`}
+                      className="text-center"
+                    >
+                      {row.render(column)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+
+        <CardFooter className="border-t bg-muted/20 text-[10px] leading-relaxed text-muted-foreground print:bg-white">
+          <p>
+            <span className="font-semibold uppercase text-foreground">Nota:</span>{' '}
+            Para preencher este formulário utilize as informações contidas nos
+            seguintes documentos: instrução de trabalho IT-034, instrução de
+            trabalho IT-083, Nota fiscal do Produto e o Certificado. Caso haja
+            alguma não conformidade, o produto deve ser identificado, segregado
+            e o departamento de compras deve ser comunicado.
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 });
