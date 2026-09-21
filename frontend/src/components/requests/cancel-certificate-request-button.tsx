@@ -39,12 +39,22 @@ export function CancelCertificateRequestButton({
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
+  const revertingPurchaseRequest = request.status === 'AGUARDANDO_COMPRAS';
+
   const cancelMutation = useMutation({
     mutationFn: () => cancelCertificateRequest(request.id),
-    onSuccess: async () => {
-      toast.success(`Solicitação #${request.id} cancelada.`);
+    onSuccess: async (updatedRequest) => {
+      toast.success(
+        revertingPurchaseRequest
+          ? 'Solicitação ao compras cancelada. Você pode solicitar novamente.'
+          : `Solicitação #${request.id} cancelada.`,
+      );
       setOpen(false);
       onCancelled?.();
+      queryClient.setQueryData(
+        certificateRequestDetailQueryKey(request.id),
+        updatedRequest,
+      );
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: certificateRequestsListQueryKey,
@@ -93,9 +103,9 @@ export function CancelCertificateRequestButton({
           <DialogHeader>
             <DialogTitle>Cancelar solicitação #{request.id}?</DialogTitle>
             <DialogDescription>
-              Esta ação só é permitida enquanto o compras ainda não registrou o
-              envio ao fornecedor. A solicitação ficará com status cancelada e
-              não poderá ser retomada.
+              {revertingPurchaseRequest
+                ? 'Esta ação só é permitida enquanto o compras ainda não registrou o envio ao fornecedor. A NF voltará ao status cadastrada e você poderá solicitar os documentos novamente.'
+                : 'A solicitação ficará com status cancelada e não poderá ser retomada.'}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

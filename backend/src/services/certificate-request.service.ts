@@ -434,7 +434,21 @@ export class CertificateRequestService {
       throw new AppError('NF não encontrada.', 404);
     }
 
-    if (request.status !== CertificateRequestStatus.CADASTRADA) {
+    const hadPurchaseRequestSent =
+      request.status === CertificateRequestStatus.CANCELADA
+        ? (await this.prisma.requestHistoryEvent.count({
+            where: {
+              requestId,
+              eventType: RequestHistoryEventType.EMAIL_COMPRAS_ENVIADO,
+            },
+          })) > 0
+        : false;
+
+    const canRequestDocument =
+      request.status === CertificateRequestStatus.CADASTRADA ||
+      hadPurchaseRequestSent;
+
+    if (!canRequestDocument) {
       throw new AppError(
         'Esta NF já possui uma solicitação de documento em andamento.',
         400,
@@ -458,6 +472,15 @@ export class CertificateRequestService {
     let rawToken = randomBytes(32).toString('hex');
 
     await this.prisma.$transaction(async (tx) => {
+      if (request.status === CertificateRequestStatus.CANCELADA) {
+        await tx.certificateRequest.update({
+          where: { id: requestId },
+          data: {
+            status: CertificateRequestStatus.CADASTRADA,
+          },
+        });
+      }
+
       await tx.certificateRequest.update({
         where: { id: requestId },
         data: {
@@ -818,11 +841,16 @@ export class CertificateRequestService {
       throw new AppError('Acesso negado.', 403);
     }
 
+    const revertingPurchaseRequest =
+      request.status === CertificateRequestStatus.AGUARDANDO_COMPRAS;
+
     await this.prisma.$transaction(async (tx) => {
       await tx.certificateRequest.update({
         where: { id: requestId },
         data: {
-          status: CertificateRequestStatus.CANCELADA,
+          status: revertingPurchaseRequest
+            ? CertificateRequestStatus.CADASTRADA
+            : CertificateRequestStatus.CANCELADA,
         },
       });
 
@@ -830,7 +858,9 @@ export class CertificateRequestService {
         data: {
           requestId,
           eventType: RequestHistoryEventType.SOLICITACAO_CANCELADA,
-          description: 'Solicitação cancelada pelo estoque.',
+          description: revertingPurchaseRequest
+            ? 'Solicitação ao compras cancelada pelo estoque. A NF voltou ao status cadastrada.'
+            : 'Solicitação cancelada pelo estoque.',
           actorUserId: userId,
         },
       });
