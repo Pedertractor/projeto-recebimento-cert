@@ -31,7 +31,7 @@ const PALETTE_OPTIONS: Array<{
 ];
 
 export function AdminThemeToggle({ className }: { className?: string }) {
-  const { theme, canToggleTheme, setTheme } = useAdminTheme();
+  const { theme, setTheme } = useAdminTheme();
 
   return (
     <div className={cn('flex shrink-0 items-center', className)}>

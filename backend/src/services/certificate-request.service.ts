@@ -15,6 +15,7 @@ import type {
 } from '../schemas/certificate-request.schemas.js';
 import { saveCertificateRequestFile } from '../utils/certificate-request-storage.js';
 import { hashToken } from '../utils/token-hash.js';
+import { resolveQualityDocumentForRequest } from '../utils/quality-document-public.js';
 import {
   sendCompletedCertificateRequestEmail,
   sendNewCertificateRequestEmail,
@@ -43,6 +44,11 @@ const certificateRequestInclude = {
     },
   },
   historyEvents: { orderBy: { occurredAt: 'asc' as const } },
+  qualityDocument: {
+    include: {
+      uploadedBy: { select: { id: true, name: true } },
+    },
+  },
 } satisfies Prisma.CertificateRequestInclude;
 
 type RequestWithRelations = Prisma.CertificateRequestGetPayload<{
@@ -235,7 +241,32 @@ export class CertificateRequestService {
       throw new AppError('Solicitação não encontrada.', 404);
     }
 
-    return toPublicRequest(request);
+    const publicRequest = toPublicRequest(request);
+
+    try {
+      const qualityDocument = await resolveQualityDocumentForRequest(
+        this.prisma,
+        request,
+      );
+
+      return {
+        ...publicRequest,
+        qualityDocumentId: request.qualityDocumentId,
+        qualityDocumentLocked: Boolean(request.qualityDocumentId),
+        qualityDocument,
+      };
+    } catch (error) {
+      if (error instanceof AppError && error.statusCode === 404) {
+        return {
+          ...publicRequest,
+          qualityDocumentId: request.qualityDocumentId,
+          qualityDocumentLocked: Boolean(request.qualityDocumentId),
+          qualityDocument: null,
+        };
+      }
+
+      throw error;
+    }
   }
 
   async create(

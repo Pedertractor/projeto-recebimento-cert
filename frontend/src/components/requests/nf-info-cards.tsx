@@ -171,21 +171,25 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
               {qualityDocument?.displayName ?? 'Documento de qualidade'}
             </p>
             <p className="text-xs text-muted-foreground">
-              Versão atual usada na conferência
+              {request.qualityDocumentLocked
+                ? 'Versão vinculada a esta NF após conclusão das conferências'
+                : 'Versão atual usada na conferência'}
             </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            asChild
-            variant="ghost"
-            size="icon-xs"
-            aria-label="Atualizar documento de qualidade"
-          >
-            <Link to="/doc-qualidade">
-              <Pencil className="size-3.5" />
-            </Link>
-          </Button>
+          {!request.qualityDocumentLocked ? (
+            <Button
+              asChild
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Atualizar documento de qualidade"
+            >
+              <Link to="/doc-qualidade">
+                <Pencil className="size-3.5" />
+              </Link>
+            </Button>
+          ) : null}
           {qualityDocument ? (
             <Button asChild variant="outline" size="sm">
               <a

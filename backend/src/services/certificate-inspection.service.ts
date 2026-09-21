@@ -13,6 +13,10 @@ import {
 import { AppError } from '../lib/errors.js';
 import type { SubmitCertificateInspectionFields } from '../schemas/certificate-inspection.schemas.js';
 import { saveCertificateRequestFile } from '../utils/certificate-request-storage.js';
+import {
+  getCurrentQualityDocumentRecord,
+  toPublicQualityDocument,
+} from '../utils/quality-document-public.js';
 
 type InspectionWithDocument = CertificateInspection & {
   qualityDocument: Pick<QualityDocument, 'id' | 'displayName' | 'year' | 'versionNumber'>;
@@ -53,28 +57,27 @@ export class CertificateInspectionService {
   constructor(private readonly prisma: PrismaClient) {}
 
   async getCurrentQualityDocument() {
-    const document = await this.prisma.qualityDocument.findFirst({
-      orderBy: [{ year: 'desc' }, { versionNumber: 'desc' }],
-      include: {
-        uploadedBy: { select: { id: true, name: true } },
-      },
-    });
+    const document = await getCurrentQualityDocumentRecord(this.prisma);
+    return toPublicQualityDocument(document);
+  }
 
-    if (!document) {
-      throw new AppError('Nenhum documento de qualidade cadastrado.', 404);
-    }
-
-    return {
-      id: document.id,
-      year: document.year,
-      versionNumber: document.versionNumber,
-      displayName: document.displayName,
-      fileName: document.fileName,
-      storagePath: document.storagePath,
-      uploadedByUserId: document.uploadedByUserId,
-      uploadedByName: document.uploadedBy.name,
-      createdAt: document.createdAt.toISOString(),
-    };
+  private countInspectedLots(
+    attachments: Array<{
+      type: AttachmentType;
+      lotIndex: number | null;
+      inspection: unknown | null;
+    }>,
+  ): number {
+    return new Set(
+      attachments
+        .filter(
+          (attachment) =>
+            attachment.type === AttachmentType.IMPRESSAO_CONFERENCIA &&
+            attachment.inspection != null &&
+            attachment.lotIndex != null,
+        )
+        .map((attachment) => attachment.lotIndex),
+    ).size;
   }
 
   async attachConferencePrint(
@@ -172,12 +175,14 @@ export class CertificateInspectionService {
       throw new AppError('Solicitação não disponível para conferência.', 400);
     }
 
-    const qualityDocument = await this.prisma.qualityDocument.findFirst({
-      orderBy: [{ year: 'desc' }, { versionNumber: 'desc' }],
-    });
+    const qualityDocument = request.qualityDocumentId
+      ? await this.prisma.qualityDocument.findUnique({
+          where: { id: request.qualityDocumentId },
+        })
+      : await getCurrentQualityDocumentRecord(this.prisma);
 
     if (!qualityDocument) {
-      throw new AppError('Nenhum documento de qualidade cadastrado.', 404);
+      throw new AppError('Documento de qualidade da NF não encontrado.', 404);
     }
 
     const receiptDate = new Date(`${fields.receiptDate}T00:00:00.000Z`);
@@ -259,6 +264,29 @@ export class CertificateInspectionService {
               ? `Conferência concluída com reprovação (${lotLabel}).`
               : `Conferência concluída com aprovação (${lotLabel}).`,
             actorUserId: userId,
+          },
+        });
+      }
+
+      const refreshedRequest = await tx.certificateRequest.findUnique({
+        where: { id: requestId },
+        include: {
+          attachments: {
+            include: { inspection: true },
+          },
+        },
+      });
+
+      if (
+        refreshedRequest &&
+        !refreshedRequest.qualityDocumentId &&
+        this.countInspectedLots(refreshedRequest.attachments) >=
+          refreshedRequest.expectedCertificates
+      ) {
+        await tx.certificateRequest.update({
+          where: { id: requestId },
+          data: {
+            qualityDocumentId: qualityDocument.id,
           },
         });
       }

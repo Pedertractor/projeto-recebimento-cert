@@ -122,6 +122,8 @@ model CertificateRequest {
   submittedAt          DateTime                 @default(now()) @map("submitted_at")
   supplierContactAt    DateTime?                @map("supplier_contact_at")
   completedAt          DateTime?                @map("completed_at")
+  qualityDocumentId    String?                  @map("quality_document_id")
+  qualityDocument      QualityDocument?         @relation(fields: [qualityDocumentId], references: [id])
   createdAt            DateTime                 @default(now()) @map("created_at")
   updatedAt            DateTime                 @updatedAt @map("updated_at")
 
@@ -129,6 +131,7 @@ model CertificateRequest {
   historyEvents RequestHistoryEvent[]
   magicLink     MagicLink?
 
+  @@index([qualityDocumentId])
   @@map("certificate_requests")
 }
 
@@ -188,6 +191,7 @@ model QualityDocument {
   createdAt        DateTime @default(now()) @map("created_at")
 
   certificateInspections CertificateInspection[]
+  certificateRequests    CertificateRequest[]
 
   @@unique([year, versionNumber])
   @@index([year])

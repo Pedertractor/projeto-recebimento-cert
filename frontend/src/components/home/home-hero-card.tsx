@@ -3,19 +3,6 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { APP_LOGO_SRC, BrandMark } from '@/components/brand-mark';
-import { useWebSession } from '@/hooks/auth/use-web-session';
-
-function firstName(fullName: string | null | undefined): string {
-  const part = fullName?.trim().split(/\s+/)[0];
-  return part ?? '';
-}
-
-function greetingPhrase(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Bom dia';
-  if (hour < 18) return 'Boa tarde';
-  return 'Boa noite';
-}
 
 const CARD_RADIUS = 24;
 const BUTTON_RADIUS = 18;
@@ -72,8 +59,6 @@ export function HomeHeroCard({
   actionTo,
   fill = false,
 }: HomeHeroCardProps) {
-  const { data: user } = useWebSession();
-  const displayName = firstName(user?.name);
   const clipId = useId().replace(/:/g, '');
   const wrapRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);

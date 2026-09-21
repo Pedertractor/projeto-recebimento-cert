@@ -16,10 +16,6 @@ import {
   getCertificateRequest,
   submitCertificateInspection,
 } from '@/services/certificate-requests/certificate-request.service';
-import {
-  currentQualityDocumentQueryKey,
-  getCurrentQualityDocument,
-} from '@/services/quality-documents/quality-document.service';
 import type { CertificateComparisonFormValues } from '@/schemas/certificate-comparison.schema';
 
 export function CertificateComparisonPage() {
@@ -34,11 +30,6 @@ export function CertificateComparisonPage() {
     queryKey: certificateRequestDetailQueryKey(requestId),
     queryFn: () => getCertificateRequest(requestId),
     enabled: Number.isFinite(requestId) && requestId > 0,
-  });
-
-  const qualityDocumentQuery = useQuery({
-    queryKey: currentQualityDocumentQueryKey,
-    queryFn: getCurrentQualityDocument,
   });
 
   const attachment = useMemo(
@@ -84,7 +75,7 @@ export function CertificateComparisonPage() {
     },
   });
 
-  if (requestQuery.isLoading || qualityDocumentQuery.isLoading) {
+  if (requestQuery.isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -92,11 +83,12 @@ export function CertificateComparisonPage() {
     );
   }
 
+  const qualityDocument = requestQuery.data?.qualityDocument;
+
   if (
     requestQuery.isError ||
-    qualityDocumentQuery.isError ||
     !requestQuery.data ||
-    !qualityDocumentQuery.data ||
+    !qualityDocument ||
     !attachment
   ) {
     return (
@@ -162,9 +154,9 @@ export function CertificateComparisonPage() {
       <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
         <ComparisonDocumentPreview
           title="Documento de qualidade"
-          subtitle={qualityDocumentQuery.data.displayName}
-          fileName={qualityDocumentQuery.data.fileName}
-          storagePath={qualityDocumentQuery.data.storagePath}
+          subtitle={qualityDocument.displayName}
+          fileName={qualityDocument.fileName}
+          storagePath={qualityDocument.storagePath}
         />
         <ComparisonDocumentPreview
           title="Certificado do lote"

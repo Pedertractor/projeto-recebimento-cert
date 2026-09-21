@@ -19,10 +19,6 @@ import {
   certificateRequestDetailQueryKey,
   getCertificateRequest,
 } from '@/services/certificate-requests/certificate-request.service';
-import {
-  currentQualityDocumentQueryKey,
-  getCurrentQualityDocument,
-} from '@/services/quality-documents/quality-document.service';
 import type { RequestAttachment } from '@/types/certificate-request';
 
 function getPrintForLot(
@@ -50,11 +46,6 @@ export function NotaFiscalDetailPage() {
     queryKey: certificateRequestDetailQueryKey(requestId),
     queryFn: () => getCertificateRequest(requestId),
     enabled: Number.isFinite(requestId) && requestId > 0,
-  });
-
-  const qualityDocumentQuery = useQuery({
-    queryKey: currentQualityDocumentQueryKey,
-    queryFn: getCurrentQualityDocument,
   });
 
   const request = requestQuery.data;
@@ -119,7 +110,7 @@ export function NotaFiscalDetailPage() {
     (_, index) => index + 1,
   );
 
-  const qualityDocument = qualityDocumentQuery.data;
+  const qualityDocument = request.qualityDocument ?? undefined;
   const printsMismatch =
     conferencePrintCount > 0 &&
     conferencePrintCount !== request.expectedCertificates;
@@ -194,10 +185,7 @@ export function NotaFiscalDetailPage() {
         </div>
       </div>
 
-      <QualityManagementFormSection
-        columns={qualityFormColumns}
-        invoiceNumber={request.invoiceNumber}
-      />
+      <QualityManagementFormSection columns={qualityFormColumns} />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   RequestHistoryEventType,
 } from '../generated/prisma/enums.js';
 import { certificateInspectionSchema } from './certificate-inspection.schemas.js';
+import { qualityDocumentSchema } from './quality-document.schemas.js';
 
 export const certificateRequestStatusSchema = z.enum(CertificateRequestStatus);
 export const attachmentTypeSchema = z.enum(AttachmentType);
@@ -56,6 +57,9 @@ export const certificateRequestSchema = z.object({
   historyEvents: z.array(historyEventSchema).optional(),
   attachedCertificatesCount: z.number().optional(),
   inspectedCertificatesCount: z.number().optional(),
+  qualityDocumentId: z.string().nullable().optional(),
+  qualityDocumentLocked: z.boolean().optional(),
+  qualityDocument: qualityDocumentSchema.nullable().optional(),
 });
 
 export type PublicCertificateRequest = z.infer<typeof certificateRequestSchema>;

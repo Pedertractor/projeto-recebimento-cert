@@ -193,8 +193,20 @@ export function CertificateRequestDetailView({
         ) : null}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
-        <section className="flex h-full min-h-0 flex-col rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6 lg:col-span-2">
+      <div
+        className={
+          invoiceAttachment
+            ? 'grid gap-6 lg:grid-cols-3 lg:items-stretch'
+            : 'grid gap-6'
+        }
+      >
+        <section
+          className={
+            invoiceAttachment
+              ? 'flex h-full min-h-0 flex-col rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6 lg:col-span-2'
+              : 'flex h-full min-h-0 flex-col rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6'
+          }
+        >
           <h2 className="shrink-0 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
             Detalhes
           </h2>
@@ -203,23 +215,14 @@ export function CertificateRequestDetailView({
           </div>
         </section>
 
-        <div className="h-full lg:col-span-1">
-          <InvoiceAttachmentCard
-            attachment={invoiceAttachment}
-            subtitle={
-              invoiceAttachment
-                ? 'Último documento anexado — estoque ou compras'
-                : isPurchaseView
-                  ? 'Anexe um único PDF com a NF e os certificados'
-                  : undefined
-            }
-            emptyMessage={
-              isPurchaseView
-                ? 'Anexe um único PDF com a NF e os certificados.'
-                : 'Aguardando documento retornado pelo compras.'
-            }
-          />
-        </div>
+        {invoiceAttachment ? (
+          <div className="h-full lg:col-span-1">
+            <InvoiceAttachmentCard
+              attachment={invoiceAttachment}
+              subtitle="Último documento anexado — estoque ou compras"
+            />
+          </div>
+        ) : null}
       </div>
 
       {canRegisterSupplierContact ? (

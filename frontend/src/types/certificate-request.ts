@@ -1,3 +1,5 @@
+import type { QualityDocument } from '@/types/quality-document';
+
 export type CertificateRequestStatus =
   | 'CADASTRADA'
   | 'AGUARDANDO_COMPRAS'
@@ -80,6 +82,9 @@ export type CertificateRequest = {
   historyEvents?: RequestHistoryEvent[];
   attachedCertificatesCount?: number;
   inspectedCertificatesCount?: number;
+  qualityDocumentId?: string | null;
+  qualityDocumentLocked?: boolean;
+  qualityDocument?: QualityDocument | null;
 };
 
 export type CreateCertificateRequestPayload = {
