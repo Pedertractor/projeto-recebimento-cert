@@ -164,10 +164,10 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
       </div>
 
       <div className="flex items-center justify-between rounded-2xl bg-card px-5 py-4 shadow-sm ring-1 ring-border/60">
-        <div className="flex items-center gap-3">
-          <FileText className="size-5 text-brand" />
-          <div>
-            <p className="text-sm font-medium">
+        <div className="flex min-w-0 items-center gap-3">
+          <FileText className="size-5 shrink-0 text-brand" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">
               {qualityDocument?.displayName ?? 'Documento de qualidade'}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -175,8 +175,13 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Button asChild variant="ghost" size="icon-xs" aria-label="Atualizar documento de qualidade">
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Atualizar documento de qualidade"
+          >
             <Link to="/doc-qualidade">
               <Pencil className="size-3.5" />
             </Link>

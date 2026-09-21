@@ -5,10 +5,12 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from 'react';
-import { ExternalLink, FileText, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
+import { FileText, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 
+import { PdfPageViewer } from '@/components/conference/pdf-page-viewer';
 import { Button } from '@/components/ui/button';
 import { resolveAttachmentUrl } from '@/utils/attachment-url';
+import { isImageFile, isPdfFile } from '@/utils/file-type';
 import { cn } from '@/lib/utils';
 
 type ComparisonDocumentPreviewProps = {
@@ -21,14 +23,6 @@ type ComparisonDocumentPreviewProps = {
 const MIN_SCALE = 1;
 const MAX_SCALE = 8;
 const ZOOM_STEP = 0.35;
-
-function isImageFile(fileName: string): boolean {
-  return /\.(png|jpe?g|webp)$/i.test(fileName);
-}
-
-function isPdfFile(fileName: string): boolean {
-  return /\.pdf$/i.test(fileName);
-}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -54,8 +48,8 @@ export function ComparisonDocumentPreview({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
 
-  const canPreview = isImageFile(fileName) || isPdfFile(fileName);
-  const view = { scale, position };
+  const canPreview = isImageFile(fileName);
+  const isPdf = isPdfFile(fileName);
 
   function applyZoom(nextScale: number, originX: number, originY: number): void {
     const clamped = clamp(nextScale, MIN_SCALE, MAX_SCALE);
@@ -103,12 +97,12 @@ export function ComparisonDocumentPreview({
       const originX = event.clientX - rect.left;
       const originY = event.clientY - rect.top;
       const direction = event.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-      applyZoom(view.scale + direction, originX, originY);
+      applyZoom(scale + direction, originX, originY);
     }
 
     viewport.addEventListener('wheel', handleWheel, { passive: false });
     return () => viewport.removeEventListener('wheel', handleWheel);
-  }, [canPreview, view.position.x, view.position.y, view.scale]);
+  }, [canPreview, scale, position.x, position.y]);
 
   function handleDoubleClick(event: MouseEvent<HTMLDivElement>): void {
     if (!canPreview) {
@@ -171,49 +165,50 @@ export function ComparisonDocumentPreview({
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            disabled={!canPreview || scale <= MIN_SCALE}
-            onClick={() => zoomBy(-ZOOM_STEP)}
-            title="Diminuir zoom"
-          >
-            <ZoomOut className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            disabled={!canPreview || scale >= MAX_SCALE}
-            onClick={() => zoomBy(ZOOM_STEP)}
-            title="Aumentar zoom"
-          >
-            <ZoomIn className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            disabled={!canPreview || scale === MIN_SCALE}
-            onClick={resetZoom}
-            title="Resetar zoom"
-          >
-            <RotateCcw className="size-4" />
-          </Button>
-          <a
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex size-8 items-center justify-center rounded-lg text-brand ring-1 ring-border/60 transition-colors hover:bg-brand/10"
-            aria-label={`Abrir ${title}`}
-            title="Abrir em nova aba"
-          >
-            <ExternalLink className="size-4" />
-          </a>
+          {canPreview ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                disabled={scale <= MIN_SCALE}
+                onClick={() => zoomBy(-ZOOM_STEP)}
+                title="Diminuir zoom"
+              >
+                <ZoomOut className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                disabled={scale >= MAX_SCALE}
+                onClick={() => zoomBy(ZOOM_STEP)}
+                title="Aumentar zoom"
+              >
+                <ZoomIn className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                disabled={scale === MIN_SCALE}
+                onClick={resetZoom}
+                title="Resetar zoom"
+              >
+                <RotateCcw className="size-4" />
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
 
+      {isPdf ? (
+        <PdfPageViewer
+          pdfUrl={url}
+          className="mt-4 min-h-80 lg:min-h-125"
+          expandDialogTitle={subtitle ?? title}
+        />
+      ) : (
       <div
         ref={viewportRef}
         className={cn(
@@ -236,15 +231,6 @@ export function ComparisonDocumentPreview({
               transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             }}
           />
-        ) : isPdfFile(fileName) ? (
-          <iframe
-            src={url}
-            title={fileName}
-            className="pointer-events-none size-full origin-top-left border-0"
-            style={{
-              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-            }}
-          />
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-2 p-4 text-center">
             <FileText className="size-8 text-muted-foreground" />
@@ -261,6 +247,7 @@ export function ComparisonDocumentPreview({
           </p>
         ) : null}
       </div>
+      )}
     </section>
   );
 }

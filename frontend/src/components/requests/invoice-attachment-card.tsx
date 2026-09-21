@@ -131,6 +131,7 @@ export function InvoiceAttachmentCard({
                 />
               ) : isPdfFile(attachment.fileName) ? (
                 <PdfPageViewer
+                  key={`${attachment.id}-${attachment.uploadedAt}`}
                   pdfUrl={resolveAttachmentUrl(attachment.storagePath)}
                   showCopyButton
                   expandDialogTitle="Nota fiscal"

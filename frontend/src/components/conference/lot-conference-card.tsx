@@ -136,20 +136,23 @@ export function LotConferenceCard({
   }
 
   return (
-    <article className="flex flex-col rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/60">
-      <div className="flex items-start justify-between gap-2">
-        <div>
+    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/60">
+      <div className="flex min-w-0 items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">Lote {lotIndex}</p>
           {purchaseCertificate ? (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              PDF do compras: {purchaseCertificate.fileName}
+            <p
+              className="mt-0.5 truncate text-xs text-muted-foreground"
+              title={purchaseCertificate.fileName}
+            >
+              PDF: {purchaseCertificate.fileName}
             </p>
           ) : null}
         </div>
         {statusLabel ? (
           <span
             className={cn(
-              'rounded-full px-2.5 py-0.5 text-xs font-semibold',
+              'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold',
               statusLabel === 'OK' && 'bg-emerald-100 text-emerald-800',
               statusLabel === 'NOK' && 'bg-red-100 text-red-800',
               statusLabel === 'Pendente' && 'bg-amber-100 text-amber-800',
@@ -207,7 +210,7 @@ export function LotConferenceCard({
               className="max-h-40 w-full object-contain"
             />
           ) : printAttachment ? (
-            <p className="px-3 text-center text-xs text-muted-foreground">
+            <p className="truncate px-3 text-center text-xs text-muted-foreground">
               {printAttachment.fileName}
             </p>
           ) : null}

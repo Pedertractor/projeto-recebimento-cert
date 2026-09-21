@@ -220,6 +220,32 @@ export function PdfPageViewer({
                   <Loader2 className="size-5 animate-spin text-muted-foreground" />
                 </div>
               ) : null}
+              {totalPages > 0 ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    className="absolute top-1/2 left-2 z-10 -translate-y-1/2 bg-background/90 shadow-sm"
+                    disabled={pageNumber <= 1}
+                    aria-label="Página anterior"
+                    onClick={() => goToPage(pageNumber - 1)}
+                  >
+                    <ChevronLeft className="size-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    className="absolute top-1/2 right-2 z-10 -translate-y-1/2 bg-background/90 shadow-sm"
+                    disabled={pageNumber >= totalPages}
+                    aria-label="Próxima página"
+                    onClick={() => goToPage(pageNumber + 1)}
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </>
+              ) : null}
             </>
           ) : null}
         </div>

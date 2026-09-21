@@ -7,17 +7,12 @@ import { toast } from 'sonner';
 import { CancelCertificateRequestButton } from '@/components/requests/cancel-certificate-request-button';
 import { CertificateRequestSummary } from '@/components/requests/certificate-request-summary';
 import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-card';
-import { RequestAttachmentActions } from '@/components/requests/request-attachment-actions';
 import { RequestHistoryTimeline } from '@/components/requests/request-history-timeline';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { Button } from '@/components/ui/button';
 import { DocumentUploadField } from '@/components/ui/document-upload-field';
 import { HttpClientError } from '@/lib/http-client';
-import {
-  getComparisonInvoiceAttachment,
-  getPurchaseCertificateAttachment,
-  getStockReferenceInvoiceAttachment,
-} from '@/lib/certificate-request-attachments';
+import { getComparisonInvoiceAttachment } from '@/lib/certificate-request-attachments';
 import {
   attachCertificate,
   certificateRequestDetailQueryKey,
@@ -28,17 +23,12 @@ import {
   purchaseCertificateRequestsListQueryKey,
   registerSupplierContact,
 } from '@/services/certificate-requests/certificate-request.service';
-import type { RequestAttachment } from '@/types/certificate-request';
 
 type CertificateRequestDetailViewProps = {
   requestId: number;
   backHref: string;
   viewer: 'stock' | 'purchase';
 };
-
-function AttachmentListItem({ attachment }: { attachment: RequestAttachment }) {
-  return <RequestAttachmentActions attachment={attachment} />;
-}
 
 export function CertificateRequestDetailView({
   requestId,
@@ -130,24 +120,8 @@ export function CertificateRequestDetailView({
 
   const request = requestQuery.data;
 
-  const invoiceAttachment = useMemo(() => {
-    const comparison = getComparisonInvoiceAttachment(request?.attachments);
-    if (comparison) {
-      return comparison;
-    }
-
-    if (isPurchaseView || request?.status === 'CONCLUIDA') {
-      return null;
-    }
-
-    return getStockReferenceInvoiceAttachment(request?.attachments);
-  }, [isPurchaseView, request?.attachments, request?.status]);
-
-  const certificateAttachments = useMemo(
-    () =>
-      request?.attachments?.filter(
-        (attachment) => attachment.type === 'CERTIFICADO',
-      ) ?? [],
+  const invoiceAttachment = useMemo(
+    () => getComparisonInvoiceAttachment(request?.attachments),
     [request?.attachments],
   );
 
@@ -233,13 +207,11 @@ export function CertificateRequestDetailView({
           <InvoiceAttachmentCard
             attachment={invoiceAttachment}
             subtitle={
-              getPurchaseCertificateAttachment(request.attachments)
-                ? 'Documento confirmado pelo compras'
+              invoiceAttachment
+                ? 'Último documento anexado — estoque ou compras'
                 : isPurchaseView
                   ? 'Anexe um único PDF com a NF e os certificados'
-                  : invoiceAttachment
-                    ? 'Referência enviada pelo estoque'
-                    : undefined
+                  : undefined
             }
             emptyMessage={
               isPurchaseView
@@ -346,19 +318,6 @@ export function CertificateRequestDetailView({
                 Confirmar documento
               </Button>
             </div>
-          </div>
-        </section>
-      ) : null}
-
-      {certificateAttachments.length > 0 ? (
-        <section className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6">
-          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-            PDF de NF com certificados
-          </h2>
-          <div className="mt-4 space-y-2">
-            {certificateAttachments.map((attachment) => (
-              <AttachmentListItem key={attachment.id} attachment={attachment} />
-            ))}
           </div>
         </section>
       ) : null}

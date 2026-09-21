@@ -1,37 +1,32 @@
 import type { RequestAttachment } from '@/types/certificate-request';
 
-function hasPurchaseResponse(
-  attachments: RequestAttachment[] | undefined,
-): boolean {
+function isMainInvoiceAttachment(attachment: RequestAttachment): boolean {
   return (
-    attachments?.some((attachment) => attachment.type === 'CERTIFICADO') ??
-    false
+    attachment.type === 'NOTA_FISCAL' || attachment.type === 'CERTIFICADO'
   );
 }
 
-/** Documento válido da conferência: PDF do compras, senão a NF do estoque. */
+/** Única NF da solicitação: o documento anexado mais recentemente. */
 export function getComparisonInvoiceAttachment(
   attachments: RequestAttachment[] | undefined,
 ): RequestAttachment | null {
-  return (
-    getPurchaseCertificateAttachment(attachments) ??
-    attachments?.find((attachment) => attachment.type === 'NOTA_FISCAL') ??
-    null
-  );
-}
+  const documents =
+    attachments?.filter((attachment) => isMainInvoiceAttachment(attachment)) ??
+    [];
 
-/** NF opcional enviada pelo estoque na abertura da solicitação. */
-export function getStockReferenceInvoiceAttachment(
-  attachments: RequestAttachment[] | undefined,
-): RequestAttachment | null {
-  if (hasPurchaseResponse(attachments)) {
+  if (documents.length === 0) {
     return null;
   }
 
-  return (
-    attachments?.find((attachment) => attachment.type === 'NOTA_FISCAL') ??
-    null
+  return documents.reduce((latest, current) =>
+    current.uploadedAt > latest.uploadedAt ? current : latest,
   );
+}
+
+export function getStockReferenceInvoiceAttachment(
+  attachments: RequestAttachment[] | undefined,
+): RequestAttachment | null {
+  return getComparisonInvoiceAttachment(attachments);
 }
 
 export function getPurchaseCertificateAttachment(
