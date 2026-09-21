@@ -309,7 +309,7 @@ function NfEditDialog({
 
   const suppliersQuery = useQuery({
     queryKey: suppliersListQueryKey,
-    queryFn: listSuppliers,
+    queryFn: () => listSuppliers(),
     enabled: field === 'supplier',
   });
   const suppliers = suppliersQuery.data ?? [];

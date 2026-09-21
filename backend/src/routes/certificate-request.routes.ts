@@ -34,6 +34,7 @@ import {
   listCertificateRequestsResponseSchema,
   updateCertificateRequestSchema,
   type CertificateRequestIdParams,
+  type UpdateCertificateRequestFields,
 } from '../schemas/certificate-request.schemas.js';
 import { commonErrors } from '../schemas/error.schemas.js';
 
@@ -178,7 +179,10 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
     createCertificateRequestController,
   );
 
-  fastify.patch<{ Params: CertificateRequestIdParams }>(
+  fastify.patch<{
+    Params: CertificateRequestIdParams;
+    Body: UpdateCertificateRequestFields;
+  }>(
     '/:id',
     {
       schema: {

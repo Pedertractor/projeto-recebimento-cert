@@ -1,3 +1,4 @@
+import type { Multipart, MultipartFile } from '@fastify/multipart';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { CertificateRequestStatus, UserRole } from '../generated/prisma/enums.js';
 import { AppError } from '../lib/errors.js';
@@ -15,6 +16,21 @@ import { CertificateRequestService } from '../services/certificate-request.servi
 
 type MultipartFields = Record<string, string>;
 
+function isMultipartFile(value: Multipart): value is MultipartFile {
+  return 'toBuffer' in value;
+}
+
+function multipartFieldString(
+  fieldValue: Multipart | Multipart[] | undefined,
+): string {
+  const item = Array.isArray(fieldValue) ? fieldValue[0] : fieldValue;
+  if (!item || isMultipartFile(item)) {
+    return '';
+  }
+
+  return String(item.value ?? '');
+}
+
 async function parseConferencePrintMultipart(
   request: FastifyRequest,
 ): Promise<{ fields: MultipartFields; file: { buffer: Buffer; filename: string } | null }> {
@@ -26,10 +42,7 @@ async function parseConferencePrintMultipart(
 
   const fields: MultipartFields = {};
   for (const [fieldName, fieldValue] of Object.entries(data.fields)) {
-    const resolvedValue = Array.isArray(fieldValue)
-      ? fieldValue[0]?.value
-      : fieldValue?.value;
-    fields[fieldName] = String(resolvedValue ?? '');
+    fields[fieldName] = multipartFieldString(fieldValue);
   }
 
   const buffer = await data.toBuffer();

@@ -79,6 +79,8 @@ export function QualityDocumentTimeline({
                   fileName: document.fileName,
                   storagePath: document.storagePath,
                   lotLabel: null,
+                  lotIndex: null,
+                  validity: 'VALID',
                   uploadedAt: document.createdAt,
                 }}
                 compact

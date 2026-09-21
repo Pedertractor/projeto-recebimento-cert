@@ -91,9 +91,11 @@ export function ComparisonDocumentPreview({
       return;
     }
 
+    const element = viewport;
+
     function handleWheel(event: WheelEvent): void {
       event.preventDefault();
-      const rect = viewport.getBoundingClientRect();
+      const rect = element.getBoundingClientRect();
       const originX = event.clientX - rect.left;
       const originY = event.clientY - rect.top;
       const direction = event.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;

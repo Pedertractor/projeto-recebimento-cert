@@ -1,5 +1,5 @@
 import z from 'zod';
-import { ViewKind } from '../generated/prisma/enums.js';
+import { VIEW_KINDS, ViewKind } from '../types/view-kind.js';
 
 export const externalPartImageSchema = z.object({
   id: z.number(),
@@ -56,7 +56,7 @@ export type GetRegisteredPartByCodeParams = z.infer<
 export const partViewSchema = z.object({
   id: z.number(),
   partId: z.number(),
-  kind: z.enum(ViewKind),
+  kind: z.enum(VIEW_KINDS),
   version: z.number().int().positive(),
   imagePath: z.string().nullable(),
   createdAt: z.string(),
@@ -104,23 +104,15 @@ export type GetPartByIdParams = z.infer<typeof getPartByIdParamsSchema>;
 
 export const updatePartViewImageParamsSchema = z.object({
   partId: z.coerce.number().int().positive(),
-  kind: z.enum(ViewKind),
+  kind: z.enum(VIEW_KINDS),
 });
 
 export type UpdatePartViewImageParams = z.infer<
   typeof updatePartViewImageParamsSchema
 >;
 
-export const VIEW_KINDS = [
-  ViewKind.FRONT,
-  ViewKind.TOP,
-  ViewKind.BOTTOM,
-  ViewKind.RIGHT,
-  ViewKind.LEFT,
-  ViewKind.REAR,
-] as const;
-
-export type ViewKindValue = (typeof VIEW_KINDS)[number];
+export { VIEW_KINDS, ViewKind };
+export type { ViewKindValue } from '../types/view-kind.js';
 
 export const createPartFieldsSchema = z.object({
   basePartId: z.coerce.number().int().positive(),
@@ -136,7 +128,7 @@ export const createPartBodySchema = createPartFieldsSchema.extend({
   views: z
     .array(
       z.object({
-        kind: z.enum(ViewKind),
+        kind: z.enum(VIEW_KINDS),
         imagePath: z.string().min(1),
       }),
     )

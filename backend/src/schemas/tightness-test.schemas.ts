@@ -1,10 +1,10 @@
 import z from 'zod';
-import { ViewKind } from '../generated/prisma/enums.js';
+import { VIEW_KINDS } from '../types/view-kind.js';
 
 const hexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Cor inválida.');
 
 export const tightnessTestAreaSchema = z.object({
-  viewKind: z.enum(ViewKind),
+  viewKind: z.enum(VIEW_KINDS),
   color: hexColorSchema,
   coordinates: z
     .array(z.string().trim().min(1, 'Informe a coordenada.'))
@@ -74,7 +74,7 @@ export const tightnessTestListItemSchema = z.object({
   views: z.array(
     z.object({
       id: z.number(),
-      kind: z.enum(ViewKind),
+      kind: z.enum(VIEW_KINDS),
       version: z.number(),
       imagePath: z.string().nullable(),
     }),
@@ -96,7 +96,7 @@ export const tightnessTestDetailDefectTypeSchema = z.object({
 export const tightnessTestDetailAreaSchema = z.object({
   id: z.number(),
   partViewId: z.number(),
-  viewKind: z.enum(ViewKind),
+  viewKind: z.enum(VIEW_KINDS),
   viewVersion: z.number(),
   color: z.string(),
   coordinates: z.array(z.string()),
@@ -106,7 +106,7 @@ export const tightnessTestDetailAreaSchema = z.object({
 
 export const tightnessTestDetailPartViewSchema = z.object({
   id: z.number(),
-  kind: z.enum(ViewKind),
+  kind: z.enum(VIEW_KINDS),
   version: z.number(),
   imagePath: z.string().nullable(),
 });

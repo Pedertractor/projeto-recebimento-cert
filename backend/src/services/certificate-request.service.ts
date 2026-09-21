@@ -1,14 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import type {
-  CertificateInspection,
-  CertificateRequest,
   Prisma,
   PrismaClient,
-  QualityDocument,
-  RequestAttachment,
-  RequestHistoryEvent,
-  Supplier,
-  User,
 } from '../generated/prisma/client.js';
 import {
   AttachmentType,
@@ -32,23 +25,34 @@ import {
 } from './email.service.js';
 import { UserService } from './user.service.js';
 
-type AttachmentWithInspection = RequestAttachment & {
-  inspection:
-    | (CertificateInspection & {
-        qualityDocument: Pick<
-          QualityDocument,
-          'id' | 'displayName' | 'year' | 'versionNumber'
-        >;
-      })
-    | null;
-};
+const certificateRequestInclude = {
+  supplier: true,
+  createdBy: { select: { id: true, name: true, email: true } },
+  attachments: {
+    orderBy: { uploadedAt: 'asc' as const },
+    include: {
+      inspection: {
+        include: {
+          qualityDocument: {
+            select: {
+              id: true,
+              displayName: true,
+              year: true,
+              versionNumber: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  historyEvents: { orderBy: { occurredAt: 'asc' as const } },
+} satisfies Prisma.CertificateRequestInclude;
 
-type RequestWithRelations = CertificateRequest & {
-  supplier: Supplier;
-  createdBy: Pick<User, 'id' | 'name' | 'email'>;
-  attachments: AttachmentWithInspection[];
-  historyEvents: RequestHistoryEvent[];
-};
+type RequestWithRelations = Prisma.CertificateRequestGetPayload<{
+  include: typeof certificateRequestInclude;
+}>;
+
+type AttachmentWithInspection = RequestWithRelations['attachments'][number];
 
 function toPublicInspection(
   inspection: NonNullable<AttachmentWithInspection['inspection']>,
@@ -149,29 +153,8 @@ function toPublicRequest(request: RequestWithRelations) {
 export class CertificateRequestService {
   constructor(private readonly prisma: PrismaClient) {}
 
-  private includeRelations(): Prisma.CertificateRequestInclude {
-    return {
-      supplier: true,
-      createdBy: { select: { id: true, name: true, email: true } },
-      attachments: {
-        orderBy: { uploadedAt: 'asc' },
-        include: {
-          inspection: {
-            include: {
-              qualityDocument: {
-                select: {
-                  id: true,
-                  displayName: true,
-                  year: true,
-                  versionNumber: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      historyEvents: { orderBy: { occurredAt: 'asc' } },
-    };
+  private includeRelations() {
+    return certificateRequestInclude;
   }
 
   private async replaceMainInvoiceDocument(
