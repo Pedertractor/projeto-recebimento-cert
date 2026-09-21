@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 
-import { LotConferenceCard } from '@/components/conference/lot-conference-card';
 import { InvoiceCertificatePrompt } from '@/components/conference/invoice-certificate-prompt';
+import { LotConferenceCard } from '@/components/conference/lot-conference-card';
 import { QualityManagementFormSection } from '@/components/conference/quality-management-form-section';
 import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-card';
 import { NfInfoCards } from '@/components/requests/nf-info-cards';
+import { PurchaseRequestWaitingBanner } from '@/components/requests/purchase-request-waiting-banner';
 import { Button } from '@/components/ui/button';
 import {
   getComparisonInvoiceAttachment,
@@ -122,8 +123,6 @@ export function NotaFiscalDetailPage() {
   const printsMismatch =
     conferencePrintCount > 0 &&
     conferencePrintCount !== request.expectedCertificates;
-  const needsCertificateDecision =
-    !purchaseCertificate && request.status === 'CADASTRADA';
   const waitingPurchaseDocument =
     !purchaseCertificate &&
     (request.status === 'AGUARDANDO_COMPRAS' ||
@@ -161,15 +160,8 @@ export function NotaFiscalDetailPage() {
             </p>
           </div>
 
-          {needsCertificateDecision ? (
-            <InvoiceCertificatePrompt requestId={request.id} />
-          ) : null}
-
           {waitingPurchaseDocument ? (
-            <div className="rounded-2xl bg-amber-50 px-4 py-4 text-sm text-amber-950 ring-1 ring-amber-200">
-              Solicitação enviada ao compras. Quando o documento chegar, ele
-              substitui a nota fiscal desta tela.
-            </div>
+            <PurchaseRequestWaitingBanner request={request} />
           ) : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -183,6 +175,8 @@ export function NotaFiscalDetailPage() {
               />
             ))}
           </div>
+
+          <InvoiceCertificatePrompt request={request} />
         </section>
 
         <div className="space-y-4">
@@ -195,7 +189,7 @@ export function NotaFiscalDetailPage() {
                 ? 'Último documento anexado — estoque ou compras'
                 : undefined
             }
-            emptyMessage="Nenhuma nota fiscal anexada. Você pode incluir depois ou vincular o PDF com NF e certificados."
+            emptyMessage="Nenhuma nota fiscal anexada. Você pode incluir depois."
           />
         </div>
       </div>

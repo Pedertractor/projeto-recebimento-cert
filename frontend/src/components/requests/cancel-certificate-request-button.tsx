@@ -20,14 +20,21 @@ import {
   pendingPurchaseCertificateRequestsQueryKey,
   purchaseCertificateRequestsListQueryKey,
 } from '@/services/certificate-requests/certificate-request.service';
+import { cn } from '@/lib/utils';
 import type { CertificateRequest } from '@/types/certificate-request';
 
 type CancelCertificateRequestButtonProps = {
   request: CertificateRequest;
+  label?: string;
+  className?: string;
+  onCancelled?: () => void;
 };
 
 export function CancelCertificateRequestButton({
   request,
+  label = 'Cancelar',
+  className,
+  onCancelled,
 }: CancelCertificateRequestButtonProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -37,6 +44,7 @@ export function CancelCertificateRequestButton({
     onSuccess: async () => {
       toast.success(`Solicitação #${request.id} cancelada.`);
       setOpen(false);
+      onCancelled?.();
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: certificateRequestsListQueryKey,
@@ -74,10 +82,10 @@ export function CancelCertificateRequestButton({
         type="button"
         variant="ghost"
         size="sm"
-        className="text-destructive hover:text-destructive"
+        className={cn('text-destructive hover:text-destructive', className)}
         onClick={() => setOpen(true)}
       >
-        Cancelar
+        {label}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

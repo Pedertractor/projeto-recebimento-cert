@@ -1,8 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import type {
-  Prisma,
-  PrismaClient,
-} from '../generated/prisma/client.js';
+import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
 import {
   AttachmentType,
   CertificateRequestStatus,
@@ -164,7 +161,8 @@ export class CertificateRequestService {
       userId: number;
       fileName: string;
       storagePath: string;
-      type: typeof AttachmentType.NOTA_FISCAL | typeof AttachmentType.CERTIFICADO;
+      type:
+        typeof AttachmentType.NOTA_FISCAL | typeof AttachmentType.CERTIFICADO;
     },
   ) {
     await tx.requestAttachment.deleteMany({
@@ -341,12 +339,15 @@ export class CertificateRequestService {
       fields.expectedCertificates != null &&
       fields.expectedCertificates < request.expectedCertificates
     ) {
-      const highestLotIndex = request.attachments.reduce((highest, attachment) => {
-        if (attachment.lotIndex == null) {
-          return highest;
-        }
-        return Math.max(highest, attachment.lotIndex);
-      }, 0);
+      const highestLotIndex = request.attachments.reduce(
+        (highest, attachment) => {
+          if (attachment.lotIndex == null) {
+            return highest;
+          }
+          return Math.max(highest, attachment.lotIndex);
+        },
+        0,
+      );
 
       if (fields.expectedCertificates < highestLotIndex) {
         throw new AppError(
@@ -397,7 +398,10 @@ export class CertificateRequestService {
     }
 
     if (request.status === CertificateRequestStatus.CANCELADA) {
-      throw new AppError('Não é possível atualizar a NF de uma solicitação cancelada.', 400);
+      throw new AppError(
+        'Não é possível atualizar a NF de uma solicitação cancelada.',
+        400,
+      );
     }
 
     const storagePath = await saveCertificateRequestFile(
@@ -445,7 +449,10 @@ export class CertificateRequestService {
     });
 
     if (existingCertificate > 0) {
-      throw new AppError('Esta NF já possui o PDF de certificados vinculado.', 400);
+      throw new AppError(
+        'Esta NF já possui o PDF de certificados vinculado.',
+        400,
+      );
     }
 
     let rawToken = randomBytes(32).toString('hex');
