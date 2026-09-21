@@ -33,10 +33,6 @@ const PALETTE_OPTIONS: Array<{
 export function AdminThemeToggle({ className }: { className?: string }) {
   const { theme, canToggleTheme, setTheme } = useAdminTheme();
 
-  if (!canToggleTheme) {
-    return null;
-  }
-
   return (
     <div className={cn('flex shrink-0 items-center', className)}>
       <Popover>

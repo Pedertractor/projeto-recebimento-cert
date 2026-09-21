@@ -3,6 +3,19 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { APP_LOGO_SRC, BrandMark } from '@/components/brand-mark';
+import { useWebSession } from '@/hooks/auth/use-web-session';
+
+function firstName(fullName: string | null | undefined): string {
+  const part = fullName?.trim().split(/\s+/)[0];
+  return part ?? '';
+}
+
+function greetingPhrase(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
 
 const CARD_RADIUS = 24;
 const BUTTON_RADIUS = 18;
@@ -59,6 +72,8 @@ export function HomeHeroCard({
   actionTo,
   fill = false,
 }: HomeHeroCardProps) {
+  const { data: user } = useWebSession();
+  const displayName = firstName(user?.name);
   const clipId = useId().replace(/:/g, '');
   const wrapRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
@@ -115,9 +130,7 @@ export function HomeHeroCard({
       : '';
   const isStacked = logoSize.width >= size.width - 2;
   const greenWidth = isStacked ? size.width : logoSize.width || size.width / 2;
-  const greenHeight = isStacked
-    ? logoSize.height || size.height
-    : size.height;
+  const greenHeight = isStacked ? logoSize.height || size.height : size.height;
 
   return (
     <section
@@ -141,7 +154,11 @@ export function HomeHeroCard({
                 <path d={path} />
               </clipPath>
             </defs>
-            <path d={path} className="fill-card stroke-border" strokeWidth="1" />
+            <path
+              d={path}
+              className="fill-card stroke-border"
+              strokeWidth="1"
+            />
             <rect
               x="0"
               y="0"
@@ -158,7 +175,8 @@ export function HomeHeroCard({
         <div
           ref={logoRef}
           className="flex h-full min-h-full flex-col items-center justify-center gap-4 px-6 py-8"
-        >
+          >
+         
           <BrandMark
             logoSrc={APP_LOGO_SRC}
             alt="Certificado de Qualidade"
@@ -177,7 +195,13 @@ export function HomeHeroCard({
           className="flex h-full items-center border-t border-border/70 px-6 py-8 lg:border-t-0 lg:border-l"
           style={{ paddingBottom: notchHeight + 16 }}
         >
-          <div className={fill ? 'flex max-w-lg flex-col gap-3' : 'flex max-w-sm flex-col gap-3'}>
+          <div
+            className={
+              fill
+                ? 'flex max-w-lg flex-col gap-3'
+                : 'flex max-w-sm flex-col gap-3'
+            }
+          >
             <h2
               className={
                 fill
@@ -199,6 +223,8 @@ export function HomeHeroCard({
           </div>
         </div>
       </div>
+
+      
 
       <div ref={buttonWrapRef} className="absolute right-0 bottom-0 z-10">
         <Link

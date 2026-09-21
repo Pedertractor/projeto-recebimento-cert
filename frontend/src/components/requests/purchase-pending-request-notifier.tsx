@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useWebSession } from '@/hooks/auth/use-web-session';
-import { canAccessPurchaseModules } from '@/lib/role-access';
 import {
   listPendingPurchaseCertificateRequests,
   pendingPurchaseCertificateRequestsQueryKey,
@@ -25,20 +24,20 @@ const SESSION_STORAGE_KEY = 'cq-purchase-pending-dialog-dismissed';
 
 export function PurchasePendingRequestNotifier() {
   const { data: user } = useWebSession();
-  const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
+  const isPurchaseOperator = user?.role === 'PURCHASE_OPERATOR';
   const [open, setOpen] = useState(false);
 
   const pendingQuery = useQuery({
     queryKey: pendingPurchaseCertificateRequestsQueryKey,
     queryFn: listPendingPurchaseCertificateRequests,
-    enabled: canUsePurchaseModules,
+    enabled: isPurchaseOperator,
   });
 
   const pendingRequests = pendingQuery.data ?? [];
   const latestRequest = pendingRequests[0] ?? null;
 
   useEffect(() => {
-    if (!canUsePurchaseModules || pendingQuery.isLoading || !latestRequest) {
+    if (!isPurchaseOperator || pendingQuery.isLoading || !latestRequest) {
       return;
     }
 
@@ -46,9 +45,9 @@ export function PurchasePendingRequestNotifier() {
     if (!dismissed) {
       setOpen(true);
     }
-  }, [canUsePurchaseModules, pendingQuery.isLoading, latestRequest]);
+  }, [isPurchaseOperator, pendingQuery.isLoading, latestRequest]);
 
-  if (!canUsePurchaseModules || !latestRequest) {
+  if (!isPurchaseOperator || !latestRequest) {
     return null;
   }
 

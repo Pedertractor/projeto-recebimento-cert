@@ -1,6 +1,15 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Building2, ClipboardList, FilePlus, FileSearch, FileText, House, Inbox, Users } from 'lucide-react-motion';
+import {
+  Building2,
+  ClipboardList,
+  FilePlus,
+  FileSearch,
+  FileText,
+  House,
+  Inbox,
+  Users,
+} from 'lucide-react-motion';
 
 import { APP_LOGO_SRC, BrandMark } from '@/components/brand-mark';
 import { motionIconGroupProps } from '@/components/motion-icon-provider';
@@ -19,7 +28,10 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useWebSession } from '@/hooks/auth/use-web-session';
-import { canAccessPurchaseModules, canAccessStockModules } from '@/lib/role-access';
+import {
+  canAccessPurchaseModules,
+  canAccessStockModules,
+} from '@/lib/role-access';
 import { isSuperAdminRole } from '@/lib/user-labels';
 
 type SidebarNavItem = {
