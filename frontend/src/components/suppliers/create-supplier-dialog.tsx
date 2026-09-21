@@ -114,6 +114,10 @@ export function CreateSupplierDialog({
     },
   });
 
+  if (isControlled && !open) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}

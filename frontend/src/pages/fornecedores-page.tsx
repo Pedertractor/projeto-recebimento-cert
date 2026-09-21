@@ -154,15 +154,17 @@ export function FornecedoresPage() {
         </div>
       ) : null}
 
-      <CreateSupplierDialog
-        supplier={selected}
-        open={selected != null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelected(null);
-          }
-        }}
-      />
+      {selected ? (
+        <CreateSupplierDialog
+          supplier={selected}
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelected(null);
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }
