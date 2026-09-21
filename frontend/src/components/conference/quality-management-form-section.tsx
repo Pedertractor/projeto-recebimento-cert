@@ -55,7 +55,7 @@ export function QualityManagementFormSection({
             Consolida as conferências de todos os lotes no padrão FORM-084.
           </p>
         </div>
-        <Button
+        {/* <Button
           type="button"
           variant="outline"
           className="shrink-0"
@@ -68,7 +68,7 @@ export function QualityManagementFormSection({
             <Download className="size-4" />
           )}
           Baixar PDF
-        </Button>
+        </Button> */}
       </div>
       <QualityManagementFormSheet ref={formRef} columns={columns} />
     </section>

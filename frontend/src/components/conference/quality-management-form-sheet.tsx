@@ -69,8 +69,7 @@ const FORM_ROWS: FormRowDefinition[] = [
   },
   {
     label: 'LAUDO AP. ou REP.',
-    getValue: (column) =>
-      formatReportStatus(column.inspection?.reportStatus),
+    getValue: (column) => formatReportStatus(column.inspection?.reportStatus),
   },
   {
     label: 'RECEBEDOR RESP.',
@@ -100,12 +99,11 @@ export const QualityManagementFormSheet = forwardRef<
                 className="w-52 border border-black bg-white p-2 align-middle"
               >
                 <div className="flex flex-col items-start gap-1 text-left">
-                  <span className="text-[10px] font-bold tracking-wide">
-                    PEDERTRACTOR
-                  </span>
-                  <span className="text-[9px] font-semibold uppercase">
-                    Tractor Components
-                  </span>
+                  <img
+                    src="/pedertractor_tractorcomponents_azul.svg"
+                    alt="Peder Tractor"
+                    className="w-full"
+                  />
                 </div>
               </th>
               <th
