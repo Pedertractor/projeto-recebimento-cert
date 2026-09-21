@@ -3,6 +3,8 @@ import { SupplierService } from '../services/supplier.service.js';
 import type {
   CreateSupplierBody,
   ListSuppliersQuery,
+  SupplierIdParams,
+  UpdateSupplierBody,
 } from '../schemas/supplier.schemas.js';
 
 export async function listSuppliersController(
@@ -21,4 +23,13 @@ export async function createSupplierController(
   const service = new SupplierService(req.server.prisma);
   const supplier = await service.create(req.body);
   return reply.status(201).send(supplier);
+}
+
+export async function updateSupplierController(
+  req: FastifyRequest<{ Params: SupplierIdParams; Body: UpdateSupplierBody }>,
+  reply: FastifyReply,
+) {
+  const service = new SupplierService(req.server.prisma);
+  const supplier = await service.update(req.params.id, req.body);
+  return reply.send(supplier);
 }

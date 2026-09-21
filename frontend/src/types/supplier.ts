@@ -12,3 +12,5 @@ export type CreateSupplierPayload = {
   cnpj: string;
   description?: string;
 };
+
+export type UpdateSupplierPayload = CreateSupplierPayload;

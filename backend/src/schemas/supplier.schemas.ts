@@ -27,6 +27,9 @@ export const createSupplierBodySchema = z.object({
 
 export type CreateSupplierBody = z.infer<typeof createSupplierBodySchema>;
 
+export const updateSupplierBodySchema = createSupplierBodySchema;
+export type UpdateSupplierBody = CreateSupplierBody;
+
 export const createSupplierResponseSchema = supplierSchema;
 
 export const supplierIdParamsSchema = z.object({

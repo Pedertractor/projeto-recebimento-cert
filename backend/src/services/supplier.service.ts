@@ -1,11 +1,10 @@
 import type { PrismaClient, Supplier } from '../generated/prisma/client.js';
 import { AppError } from '../lib/errors.js';
-import type { CreateSupplierBody } from '../schemas/supplier.schemas.js';
-import {
-  formatCnpj,
-  getCnpjValidationMessage,
-  normalizeCnpj,
-} from '../utils/cnpj.js';
+import type {
+  CreateSupplierBody,
+  UpdateSupplierBody,
+} from '../schemas/supplier.schemas.js';
+import { formatCnpj, normalizeCnpj } from '../utils/cnpj.js';
 
 function toPublicSupplier(supplier: Supplier) {
   return {
@@ -16,6 +15,14 @@ function toPublicSupplier(supplier: Supplier) {
     createdAt: supplier.createdAt.toISOString(),
     updatedAt: supplier.updatedAt.toISOString(),
   };
+}
+
+function resolveCnpj(value: string): string {
+  const digits = normalizeCnpj(value);
+  if (!digits) {
+    throw new AppError('Informe o CNPJ.');
+  }
+  return formatCnpj(digits);
 }
 
 export class SupplierService {
@@ -29,7 +36,10 @@ export class SupplierService {
         ? {
             OR: [
               { name: { contains: query, mode: 'insensitive' } },
-              { cnpj: { contains: normalizeCnpj(query) } },
+              { cnpj: { contains: query, mode: 'insensitive' } },
+              ...(normalizeCnpj(query)
+                ? [{ cnpj: { contains: normalizeCnpj(query) } }]
+                : []),
             ],
           }
         : undefined,
@@ -41,12 +51,7 @@ export class SupplierService {
 
   async create(data: CreateSupplierBody) {
     const name = data.name.trim();
-    const cnpj = normalizeCnpj(data.cnpj);
-    const cnpjError = getCnpjValidationMessage(cnpj);
-
-    if (cnpjError) {
-      throw new AppError(cnpjError);
-    }
+    const cnpj = resolveCnpj(data.cnpj);
 
     const existing = await this.prisma.supplier.findUnique({
       where: { cnpj },
@@ -59,7 +64,36 @@ export class SupplierService {
     const supplier = await this.prisma.supplier.create({
       data: {
         name,
-        cnpj: formatCnpj(cnpj),
+        cnpj,
+        description: data.description?.trim() || null,
+      },
+    });
+
+    return toPublicSupplier(supplier);
+  }
+
+  async update(id: number, data: UpdateSupplierBody) {
+    await this.findById(id);
+
+    const name = data.name.trim();
+    const cnpj = resolveCnpj(data.cnpj);
+
+    const existing = await this.prisma.supplier.findFirst({
+      where: {
+        cnpj,
+        id: { not: id },
+      },
+    });
+
+    if (existing) {
+      throw new AppError('Já existe um fornecedor com este CNPJ.');
+    }
+
+    const supplier = await this.prisma.supplier.update({
+      where: { id },
+      data: {
+        name,
+        cnpj,
         description: data.description?.trim() || null,
       },
     });

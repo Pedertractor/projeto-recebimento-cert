@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { HomeActionTile } from '@/components/home/home-action-tile';
 import { HomeHeroCard } from '@/components/home/home-hero-card';
 import { PurchaseHomePanel } from '@/components/home/purchase-home-panel';
-import { CreateSupplierDialog } from '@/components/suppliers/create-supplier-dialog';
 import { useWebSession } from '@/hooks/auth/use-web-session';
 import {
   canAccessPurchaseModules,
@@ -168,13 +167,10 @@ export function HomePage() {
           description="Padrões usados na conferência"
           to="/doc-qualidade"
         />
-        <CreateSupplierDialog
-          trigger={
-            <HomeActionTile
-              title="Novo fornecedor"
-              description="Cadastro para usar nas NFs"
-            />
-          }
+        <HomeActionTile
+          title="Fornecedores"
+          description="Listar e editar cadastros"
+          to="/fornecedores"
         />
       </aside>
     </div>

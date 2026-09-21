@@ -10,6 +10,7 @@ import { AdminThemeProvider } from '@/providers/admin-theme-provider';
 import { LoginPage } from '@/pages/auth/login-page';
 import { CertificateComparisonPage } from '@/pages/certificate-comparison-page';
 import { DocQualidadePage } from '@/pages/doc-qualidade-page';
+import { FornecedoresPage } from '@/pages/fornecedores-page';
 import { HomePage } from '@/pages/home-page';
 import { MinhasSolicitacoesPage } from '@/pages/minhas-solicitacoes-page';
 import { NotaFiscalDetailPage } from '@/pages/nota-fiscal-detail-page';
@@ -60,6 +61,7 @@ export function AppRouter() {
                     path="/notas-fiscais/:id/comparacao/:attachmentId"
                     element={<CertificateComparisonPage />}
                   />
+                  <Route path="/fornecedores" element={<FornecedoresPage />} />
                 </Route>
                 <Route element={<RequirePurchaseOperator />}>
                   <Route

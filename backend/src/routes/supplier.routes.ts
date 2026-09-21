@@ -3,14 +3,19 @@ import { UserRole } from '../generated/prisma/enums.js';
 import {
   createSupplierController,
   listSuppliersController,
+  updateSupplierController,
 } from '../controllers/supplier.controller.js';
 import {
   createSupplierBodySchema,
   createSupplierResponseSchema,
   listSuppliersQuerySchema,
   listSuppliersResponseSchema,
+  supplierIdParamsSchema,
+  updateSupplierBodySchema,
   type CreateSupplierBody,
   type ListSuppliersQuery,
+  type SupplierIdParams,
+  type UpdateSupplierBody,
 } from '../schemas/supplier.schemas.js';
 import { commonErrors } from '../schemas/error.schemas.js';
 
@@ -56,5 +61,28 @@ export function supplierRoutes(fastify: FastifyInstance) {
       ],
     },
     createSupplierController,
+  );
+
+  fastify.patch<{ Params: SupplierIdParams; Body: UpdateSupplierBody }>(
+    '/:id',
+    {
+      schema: {
+        summary: 'Update supplier',
+        tags: ['Supplier'],
+        security: [{ cookieAuth: [] }],
+        params: supplierIdParamsSchema,
+        body: updateSupplierBodySchema,
+        response: {
+          200: createSupplierResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    updateSupplierController,
   );
 }

@@ -1,5 +1,9 @@
 import { httpClient } from '@/lib/http-client';
-import type { Supplier, CreateSupplierPayload } from '@/types/supplier';
+import type {
+  Supplier,
+  CreateSupplierPayload,
+  UpdateSupplierPayload,
+} from '@/types/supplier';
 
 export const suppliersListQueryKey = ['suppliers'] as const;
 
@@ -11,4 +15,14 @@ export function listSuppliers(search?: string): Promise<Supplier[]> {
 
 export function createSupplier(payload: CreateSupplierPayload): Promise<Supplier> {
   return httpClient.post<Supplier, CreateSupplierPayload>('/suppliers', payload);
+}
+
+export function updateSupplier(
+  id: number,
+  payload: UpdateSupplierPayload,
+): Promise<Supplier> {
+  return httpClient.patch<Supplier, UpdateSupplierPayload>(
+    `/suppliers/${id}`,
+    payload,
+  );
 }
