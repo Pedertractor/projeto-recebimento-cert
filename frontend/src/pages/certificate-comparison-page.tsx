@@ -59,9 +59,9 @@ export function CertificateComparisonPage() {
     },
     onSuccess: async (inspection) => {
       if (inspection.isValid) {
-        toast.success('Conferência concluída com aprovação.');
+        toast.success('Conferência salva com aprovação.');
       } else {
-        toast.error('Conferência concluída com reprovação. Certificado invalidado.');
+        toast.error('Conferência salva com reprovação. Certificado invalidado.');
       }
 
       await Promise.all([
@@ -133,9 +133,11 @@ export function CertificateComparisonPage() {
         visualInspection: inspection.visualInspection,
         reportStatus: inspection.reportStatus,
         receiverResponsible: inspection.receiverResponsible,
+        receiverEmployeeId: inspection.receiverEmployeeId ?? null,
       }
     : {
         receiverResponsible: user?.name ?? '',
+        receiverEmployeeId: user?.employeeId ?? null,
       };
 
   return (
@@ -174,7 +176,16 @@ export function CertificateComparisonPage() {
 
       <CertificateComparisonForm
         defaultValues={defaultValues}
-        readOnly={Boolean(inspection)}
+        hasSavedInspection={Boolean(inspection)}
+        currentUser={
+          user
+            ? {
+                name: user.name,
+                employeeId: user.employeeId,
+                unit: user.unit,
+              }
+            : undefined
+        }
         isSubmitting={submitMutation.isPending}
         onSubmit={(values) => submitMutation.mutate(values)}
       />

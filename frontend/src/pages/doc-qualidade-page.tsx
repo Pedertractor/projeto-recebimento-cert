@@ -77,100 +77,113 @@ export function DocQualidadePage() {
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Doc qualidade</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Versões imutáveis por ano, vinculadas às notas fiscais.
-        </p>
-      </div>
+    <div className="relative mx-auto flex min-h-[calc(100dvh-7.5rem)] w-full max-w-3xl flex-col gap-8">
+      <img
+        src="/pedertractor_tractorcomponents_azul.svg"
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-1/2 z-0 w-[min(92%,40rem)] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-[0.03] select-none"
+      />
 
-      <section className="space-y-8">
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-sm font-medium">Nova versão</h2>
-            <p className="mt-1 text-xs text-muted-foreground">{previewName}</p>
-          </div>
+      <div className="relative z-10 flex flex-col gap-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Doc qualidade
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Versões imutáveis por ano, vinculadas às notas fiscais.
+          </p>
+        </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="space-y-1.5 sm:w-28">
-              <Label htmlFor="qualityDocumentYear">Ano</Label>
-              <Input
-                id="qualityDocumentYear"
-                type="number"
-                min={2000}
-                max={2100}
-                value={year}
-                onChange={(event) => setYear(event.target.value)}
-              />
+        <section className="space-y-8">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-sm font-medium">Nova versão</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {previewName}
+              </p>
             </div>
 
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <Label htmlFor="qualityDocumentFile">Documento</Label>
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="space-y-1.5 sm:w-28">
+                <Label htmlFor="qualityDocumentYear">Ano</Label>
                 <Input
-                  readOnly
-                  value={documentFile?.name ?? ''}
-                  placeholder="Nenhum arquivo selecionado"
-                  className="min-w-0 flex-1 bg-muted/20"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Escolher
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  id="qualityDocumentFile"
-                  type="file"
-                  accept=".pdf,.png,.jpg,.jpeg,.webp"
-                  className="hidden"
-                  onChange={(event) => {
-                    setDocumentFile(event.target.files?.[0] ?? null);
-                  }}
+                  id="qualityDocumentYear"
+                  type="number"
+                  min={2000}
+                  max={2100}
+                  value={year}
+                  onChange={(event) => setYear(event.target.value)}
                 />
               </div>
-            </div>
 
-            <Button
-              className="bg-brand text-brand-foreground hover:bg-brand/90 sm:shrink-0"
-              disabled={
-                !documentFile || !isValidYear || createMutation.isPending
-              }
-              onClick={() => createMutation.mutate()}
-            >
-              {createMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
-              Publicar
-            </Button>
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Label htmlFor="qualityDocumentFile">Documento</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    readOnly
+                    value={documentFile?.name ?? ''}
+                    placeholder="Nenhum arquivo selecionado"
+                    className="min-w-0 flex-1 bg-muted/20"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Escolher
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    id="qualityDocumentFile"
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp"
+                    className="hidden"
+                    onChange={(event) => {
+                      setDocumentFile(event.target.files?.[0] ?? null);
+                    }}
+                  />
+                </div>
+              </div>
+
+              <Button
+                className="bg-brand text-brand-foreground hover:bg-brand/90 sm:shrink-0"
+                disabled={
+                  !documentFile || !isValidYear || createMutation.isPending
+                }
+                onClick={() => createMutation.mutate()}
+              >
+                {createMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : null}
+                Publicar
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Versões publicadas
-          </h2>
+          <div className="space-y-4">
+            <h2 className="text-sm font-medium text-muted-foreground">
+              Versões publicadas
+            </h2>
 
-          {documentsQuery.isLoading ? (
-            <div className="flex min-h-[12vh] items-center justify-center">
-              <Loader2 className="size-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : null}
+            {documentsQuery.isLoading ? (
+              <div className="flex min-h-[12vh] items-center justify-center">
+                <Loader2 className="size-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : null}
 
-          {documentsQuery.isError ? (
-            <p className="text-sm text-destructive">
-              Não foi possível carregar as versões.
-            </p>
-          ) : null}
+            {documentsQuery.isError ? (
+              <p className="text-sm text-destructive">
+                Não foi possível carregar as versões.
+              </p>
+            ) : null}
 
-          {documentsQuery.isSuccess ? (
-            <QualityDocumentTimeline documents={documentsQuery.data} />
-          ) : null}
-        </div>
-      </section>
+            {documentsQuery.isSuccess ? (
+              <QualityDocumentTimeline documents={documentsQuery.data} />
+            ) : null}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

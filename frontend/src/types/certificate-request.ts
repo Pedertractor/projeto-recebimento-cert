@@ -32,6 +32,7 @@ export type CertificateInspection = {
   visualInspection: InspectionCheckResult;
   reportStatus: InspectionCheckResult;
   receiverResponsible: string;
+  receiverEmployeeId?: number | null;
   inspectedByUserId: number;
   inspectedAt: string;
   isValid: boolean;

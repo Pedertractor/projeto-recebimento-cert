@@ -139,7 +139,7 @@ export function userRoutes(fastify: FastifyInstance) {
       },
       onRequest: [
         fastify.authenticate,
-        fastify.authorize(UserRole.SUPERADMIN),
+        fastify.authorize(UserRole.SUPERADMIN, UserRole.STOCK_OPERATOR),
       ],
     },
     getEmployeeInfoController,

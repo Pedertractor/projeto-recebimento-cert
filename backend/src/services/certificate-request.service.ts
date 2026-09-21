@@ -76,6 +76,7 @@ function toPublicInspection(
     visualInspection: inspection.visualInspection,
     reportStatus: inspection.reportStatus,
     receiverResponsible: inspection.receiverResponsible,
+    receiverEmployeeId: inspection.receiverEmployeeId ?? null,
     inspectedByUserId: inspection.inspectedByUserId,
     inspectedAt: inspection.inspectedAt.toISOString(),
     isValid,

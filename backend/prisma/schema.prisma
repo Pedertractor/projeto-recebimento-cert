@@ -213,6 +213,7 @@ model CertificateInspection {
   visualInspection    InspectionCheckResult @map("visual_inspection")
   reportStatus        InspectionCheckResult @map("report_status")
   receiverResponsible String                @map("receiver_responsible")
+  receiverEmployeeId  Int?                  @map("receiver_employee_id")
   inspectedByUserId   Int                   @map("inspected_by_user_id")
   inspectedBy         User                  @relation("CertificateInspectionInspectedBy", fields: [inspectedByUserId], references: [id])
   inspectedAt         DateTime              @default(now()) @map("inspected_at")

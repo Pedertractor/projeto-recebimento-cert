@@ -40,6 +40,7 @@ export const certificateComparisonFormSchema = z.object({
     .string()
     .trim()
     .min(1, 'Informe o recebedor responsável.'),
+  receiverEmployeeId: z.number().int().positive().nullable().optional(),
 });
 
 export type CertificateComparisonFormValues = z.infer<

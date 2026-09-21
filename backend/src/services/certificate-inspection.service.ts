@@ -42,6 +42,7 @@ function toPublicInspection(inspection: InspectionWithDocument) {
     visualInspection: inspection.visualInspection,
     reportStatus: inspection.reportStatus,
     receiverResponsible: inspection.receiverResponsible,
+    receiverEmployeeId: inspection.receiverEmployeeId,
     inspectedByUserId: inspection.inspectedByUserId,
     inspectedAt: inspection.inspectedAt.toISOString(),
     isValid,
@@ -163,15 +164,11 @@ export class CertificateInspectionService {
       throw new AppError('Este anexo não pode ser conferido.', 400);
     }
 
-    if (attachment.inspection) {
-      throw new AppError('Este certificado já foi conferido.', 400);
-    }
-
     const request = await this.prisma.certificateRequest.findUnique({
       where: { id: requestId },
     });
 
-    if (!request || request.status !== CertificateRequestStatus.CONCLUIDA) {
+    if (!request || request.status === CertificateRequestStatus.CANCELADA) {
       throw new AppError('Solicitação não disponível para conferência.', 400);
     }
 
@@ -194,55 +191,77 @@ export class CertificateInspectionService {
       fields.reportStatus === InspectionCheckResult.NOK;
 
     const lotLabel = attachment.lotLabel ?? `Lote ${attachment.lotIndex}`;
+    const isUpdate = Boolean(attachment.inspection);
+
+    const inspectionData = {
+      qualityDocumentId: qualityDocument.id,
+      receiptDate,
+      materialDescription: fields.materialDescription.trim(),
+      rm: fields.rm.trim(),
+      certificateNumber: fields.certificateNumber.trim(),
+      chemicalComposition: fields.chemicalComposition,
+      quantitySpecified: fields.quantitySpecified.trim(),
+      quantityFound: fields.quantityFound.trim(),
+      dimensionalSpecified: fields.dimensionalSpecified.trim(),
+      dimensionalFound: fields.dimensionalFound.trim(),
+      visualInspection: fields.visualInspection,
+      reportStatus: fields.reportStatus,
+      receiverResponsible: fields.receiverResponsible.trim(),
+      receiverEmployeeId: fields.receiverEmployeeId ?? null,
+    };
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.certificateInspection.create({
-        data: {
-          attachmentId,
-          requestId,
-          qualityDocumentId: qualityDocument.id,
-          receiptDate,
-          materialDescription: fields.materialDescription.trim(),
-          rm: fields.rm.trim(),
-          certificateNumber: fields.certificateNumber.trim(),
-          chemicalComposition: fields.chemicalComposition,
-          quantitySpecified: fields.quantitySpecified.trim(),
-          quantityFound: fields.quantityFound.trim(),
-          dimensionalSpecified: fields.dimensionalSpecified.trim(),
-          dimensionalFound: fields.dimensionalFound.trim(),
-          visualInspection: fields.visualInspection,
-          reportStatus: fields.reportStatus,
-          receiverResponsible: fields.receiverResponsible.trim(),
-          inspectedByUserId: userId,
-        },
-      });
-
-      if (hasNok) {
-        await tx.requestAttachment.update({
-          where: { id: attachmentId },
-          data: { validity: AttachmentValidity.INVALID },
-        });
-
-        await tx.requestHistoryEvent.create({
+      if (isUpdate && attachment.inspection) {
+        await tx.certificateInspection.update({
+          where: { id: attachment.inspection.id },
           data: {
+            ...inspectionData,
+            inspectedAt: new Date(),
+          },
+        });
+      } else {
+        await tx.certificateInspection.create({
+          data: {
+            attachmentId,
             requestId,
-            eventType: RequestHistoryEventType.CERTIFICADO_INVALIDADO,
-            description: `Certificado invalidado na conferência (${lotLabel}).`,
-            actorUserId: userId,
+            inspectedByUserId: userId,
+            ...inspectionData,
           },
         });
       }
 
-      await tx.requestHistoryEvent.create({
+      await tx.requestAttachment.update({
+        where: { id: attachmentId },
         data: {
-          requestId,
-          eventType: RequestHistoryEventType.CONFERENCIA_REALIZADA,
-          description: hasNok
-            ? `Conferência concluída com reprovação (${lotLabel}).`
-            : `Conferência concluída com aprovação (${lotLabel}).`,
-          actorUserId: userId,
+          validity: hasNok
+            ? AttachmentValidity.INVALID
+            : AttachmentValidity.VALID,
         },
       });
+
+      if (!isUpdate) {
+        if (hasNok) {
+          await tx.requestHistoryEvent.create({
+            data: {
+              requestId,
+              eventType: RequestHistoryEventType.CERTIFICADO_INVALIDADO,
+              description: `Certificado invalidado na conferência (${lotLabel}).`,
+              actorUserId: userId,
+            },
+          });
+        }
+
+        await tx.requestHistoryEvent.create({
+          data: {
+            requestId,
+            eventType: RequestHistoryEventType.CONFERENCIA_REALIZADA,
+            description: hasNok
+              ? `Conferência concluída com reprovação (${lotLabel}).`
+              : `Conferência concluída com aprovação (${lotLabel}).`,
+            actorUserId: userId,
+          },
+        });
+      }
     });
 
     const inspection = await this.prisma.certificateInspection.findUnique({

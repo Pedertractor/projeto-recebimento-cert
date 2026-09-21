@@ -21,6 +21,7 @@ export const certificateInspectionSchema = z.object({
   visualInspection: inspectionCheckResultSchema,
   reportStatus: inspectionCheckResultSchema,
   receiverResponsible: z.string(),
+  receiverEmployeeId: z.number().nullable().optional(),
   inspectedByUserId: z.number(),
   inspectedAt: z.string(),
   isValid: z.boolean(),
@@ -66,6 +67,7 @@ export const submitCertificateInspectionSchema = z.object({
     .string()
     .trim()
     .min(1, 'Informe o recebedor responsável.'),
+  receiverEmployeeId: z.number().int().positive().nullable().optional(),
 });
 
 export type SubmitCertificateInspectionFields = z.infer<
