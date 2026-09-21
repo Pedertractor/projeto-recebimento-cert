@@ -1,4 +1,5 @@
 export type CertificateRequestStatus =
+  | 'CADASTRADA'
   | 'AGUARDANDO_COMPRAS'
   | 'AGUARDANDO_FORNECEDOR'
   | 'CONCLUIDA'
@@ -86,4 +87,12 @@ export type CreateCertificateRequestPayload = {
   expectedCertificates: number;
   notes?: string;
   invoiceFile?: File;
+};
+
+export type UpdateCertificateRequestPayload = {
+  supplierId?: number;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  expectedCertificates?: number;
+  notes?: string;
 };

@@ -1,24 +1,19 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  ArrowLeft,
-  ExternalLink,
-  FileText,
-  Loader2,
-} from 'lucide-react';
+import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 
 import { LotConferenceCard } from '@/components/conference/lot-conference-card';
+import { InvoiceCertificatePrompt } from '@/components/conference/invoice-certificate-prompt';
 import { PurchaseCertificatePdfPanel } from '@/components/conference/purchase-certificate-pdf-panel';
 import { QualityManagementFormSection } from '@/components/conference/quality-management-form-section';
 import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-card';
+import { NfInfoCards } from '@/components/requests/nf-info-cards';
 import { Button } from '@/components/ui/button';
-import { formatRequestDate } from '@/lib/certificate-request-labels';
-import { formatCnpjInput } from '@/utils/cnpj';
 import {
   getComparisonInvoiceAttachment,
   getPurchaseCertificateAttachment,
+  getStockReferenceInvoiceAttachment,
 } from '@/lib/certificate-request-attachments';
 import { getQualityManagementFormColumns } from '@/lib/quality-management-form';
 import {
@@ -29,7 +24,6 @@ import {
   currentQualityDocumentQueryKey,
   getCurrentQualityDocument,
 } from '@/services/quality-documents/quality-document.service';
-import { resolveAttachmentUrl } from '@/utils/attachment-url';
 import type { RequestAttachment } from '@/types/certificate-request';
 
 function getPrintForLot(
@@ -65,10 +59,12 @@ export function NotaFiscalDetailPage() {
   });
 
   const request = requestQuery.data;
-  const invoiceAttachment = useMemo(
-    () => getComparisonInvoiceAttachment(request?.attachments),
-    [request?.attachments],
-  );
+  const invoiceAttachment = useMemo(() => {
+    return (
+      getComparisonInvoiceAttachment(request?.attachments) ??
+      getStockReferenceInvoiceAttachment(request?.attachments)
+    );
+  }, [request?.attachments]);
 
   const purchaseCertificate = useMemo(
     () => getPurchaseCertificate(request?.attachments),
@@ -130,6 +126,12 @@ export function NotaFiscalDetailPage() {
   const printsMismatch =
     conferencePrintCount > 0 &&
     conferencePrintCount !== request.expectedCertificates;
+  const needsCertificateDecision =
+    !purchaseCertificate && request.status === 'CADASTRADA';
+  const waitingPurchaseDocument =
+    !purchaseCertificate &&
+    (request.status === 'AGUARDANDO_COMPRAS' ||
+      request.status === 'AGUARDANDO_FORNECEDOR');
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -140,75 +142,7 @@ export function NotaFiscalDetailPage() {
         </Link>
       </Button>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl bg-brand px-5 py-4 text-brand-foreground shadow-sm">
-            <p className="text-xs uppercase tracking-wide opacity-80">NF</p>
-            <p className="mt-1 text-2xl font-semibold">
-              {request.invoiceNumber}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-brand px-5 py-4 text-brand-foreground shadow-sm">
-            <p className="text-xs uppercase tracking-wide opacity-80">
-              Data NF
-            </p>
-            <p className="mt-1 text-2xl font-semibold">
-              {formatRequestDate(request.invoiceDate)}
-            </p>
-          </div>
-        </div>
-        <div className="rounded-2xl bg-brand px-5 py-4 text-brand-foreground shadow-sm lg:min-w-44">
-          <p className="text-xs uppercase tracking-wide opacity-80">
-            Certificados
-          </p>
-          <p className="mt-1 text-2xl font-semibold">
-            {request.expectedCertificates}
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-2xl bg-card px-5 py-4 shadow-sm ring-1 ring-border/60">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Fornecedor
-            </p>
-            <p className="font-medium">{request.supplier.name}</p>
-            <p className="text-sm text-muted-foreground">
-              {formatCnpjInput(request.supplier.cnpj)}
-            </p>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Qtd de lotes: {request.expectedCertificates}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between rounded-2xl bg-card px-5 py-4 shadow-sm ring-1 ring-border/60">
-        <div className="flex items-center gap-3">
-          <FileText className="size-5 text-brand" />
-          <div>
-            <p className="text-sm font-medium">
-              {qualityDocument?.displayName ?? 'Documento de qualidade'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Versão atual usada na conferência
-            </p>
-          </div>
-        </div>
-        {qualityDocument ? (
-          <Button asChild variant="outline" size="sm">
-            <a
-              href={resolveAttachmentUrl(qualityDocument.storagePath)}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ExternalLink className="size-4" />
-              Abrir
-            </a>
-          </Button>
-        ) : null}
-      </div>
+      <NfInfoCards request={request} qualityDocument={qualityDocument} />
 
       {printsMismatch ? (
         <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -230,6 +164,18 @@ export function NotaFiscalDetailPage() {
               de qualidade.
             </p>
           </div>
+
+          {needsCertificateDecision ? (
+            <InvoiceCertificatePrompt requestId={request.id} />
+          ) : null}
+
+          {waitingPurchaseDocument ? (
+            <div className="rounded-2xl bg-amber-50 px-4 py-4 text-sm text-amber-950 ring-1 ring-amber-200">
+              Solicitação enviada ao compras. Quando o documento chegar, ele
+              aparece em PDF dos certificados.
+            </div>
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-2">
             {lotIndexes.map((lotIndex) => (
               <LotConferenceCard
@@ -251,8 +197,14 @@ export function NotaFiscalDetailPage() {
           ) : null}
           <InvoiceAttachmentCard
             attachment={invoiceAttachment}
-            subtitle="Retorno do compras — usada na conferência"
-            emptyMessage="Aguardando nota fiscal retornada pelo compras."
+            subtitle={
+              purchaseCertificate
+                ? 'Documento usado na conferência'
+                : invoiceAttachment
+                  ? 'Referência anexada no cadastro da NF'
+                  : undefined
+            }
+            emptyMessage="Nenhuma nota fiscal anexada. Você pode incluir depois ou vincular o PDF com NF e certificados."
           />
         </div>
       </div>

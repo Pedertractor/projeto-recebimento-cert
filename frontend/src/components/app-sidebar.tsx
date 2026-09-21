@@ -103,11 +103,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           isActive: (path) => path.startsWith('/doc-qualidade'),
         },
         {
-          label: 'Solicitar certificado',
-          href: '/solicitar-certificado',
-          tooltip: 'Solicitar certificado',
+          label: 'Cadastrar NF',
+          href: '/cadastrar-nf',
+          tooltip: 'Cadastrar NF de materiais',
           icon: FilePlus,
-          isActive: (path) => path.startsWith('/solicitar-certificado'),
+          isActive: (path) =>
+            path.startsWith('/cadastrar-nf') ||
+            path.startsWith('/solicitar-certificado'),
         },
         {
           label: 'Minhas solicitações',

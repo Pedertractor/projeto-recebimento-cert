@@ -6,6 +6,7 @@ import type {
   CertificateInspection,
   CertificateRequest,
   CreateCertificateRequestPayload,
+  UpdateCertificateRequestPayload,
 } from '@/types/certificate-request';
 import type { CertificateComparisonFormValues } from '@/schemas/certificate-comparison.schema';
 
@@ -70,6 +71,16 @@ export function listCompletedCertificateRequests(): Promise<
 
 export function getCertificateRequest(id: number): Promise<CertificateRequest> {
   return httpClient.get<CertificateRequest>(`/certificate-requests/${id}`);
+}
+
+export function updateCertificateRequest(
+  requestId: number,
+  payload: UpdateCertificateRequestPayload,
+): Promise<CertificateRequest> {
+  return httpClient.patch<CertificateRequest, UpdateCertificateRequestPayload>(
+    `/certificate-requests/${requestId}`,
+    payload,
+  );
 }
 
 export async function createCertificateRequest(
@@ -137,6 +148,44 @@ export async function attachCertificate(
 
   const response = await axios.post<CertificateRequest>(
     `${env.apiUrl}/certificate-requests/${requestId}/certificates`,
+    formData,
+    {
+      withCredentials: true,
+      headers: {
+        'x-csrf-token': getWebCsrfToken() ?? '',
+      },
+    },
+  );
+
+  return response.data;
+}
+
+export async function requestDocumentFromPurchase(
+  requestId: number,
+): Promise<CertificateRequest> {
+  const response = await axios.post<CertificateRequest>(
+    `${env.apiUrl}/certificate-requests/${requestId}/request-document`,
+    {},
+    {
+      withCredentials: true,
+      headers: {
+        'x-csrf-token': getWebCsrfToken() ?? '',
+      },
+    },
+  );
+
+  return response.data;
+}
+
+export async function linkCertificatePdf(
+  requestId: number,
+  certificateFile: File,
+): Promise<CertificateRequest> {
+  const formData = new FormData();
+  formData.append('certificateFile', certificateFile);
+
+  const response = await axios.post<CertificateRequest>(
+    `${env.apiUrl}/certificate-requests/${requestId}/link-certificate`,
     formData,
     {
       withCredentials: true,

@@ -61,7 +61,7 @@ export async function listCompletedCertificateRequestsController(
   reply: FastifyReply,
 ) {
   const service = new CertificateRequestService(req.server.prisma);
-  const requests = await service.listCompleted();
+  const requests = await service.listCompleted(req.user.id);
   return reply.send(requests);
 }
 

@@ -49,6 +49,7 @@ type HomeHeroCardProps = {
   description: string;
   actionLabel: string;
   actionTo: string;
+  fill?: boolean;
 };
 
 export function HomeHeroCard({
@@ -56,6 +57,7 @@ export function HomeHeroCard({
   description,
   actionLabel,
   actionTo,
+  fill = false,
 }: HomeHeroCardProps) {
   const clipId = useId().replace(/:/g, '');
   const wrapRef = useRef<HTMLElement>(null);
@@ -120,7 +122,11 @@ export function HomeHeroCard({
   return (
     <section
       ref={wrapRef}
-      className="relative flex min-h-56 flex-col sm:min-h-72 lg:min-h-80"
+      className={
+        fill
+          ? 'relative flex h-full min-h-0 w-full flex-1 flex-col'
+          : 'relative flex min-h-56 flex-col sm:min-h-72 lg:min-h-80'
+      }
     >
       <svg
         aria-hidden
@@ -156,7 +162,11 @@ export function HomeHeroCard({
           <BrandMark
             logoSrc={APP_LOGO_SRC}
             alt="Certificado de Qualidade"
-            className="h-28 w-28 object-contain sm:h-36 sm:w-36 lg:h-40 lg:w-40"
+            className={
+              fill
+                ? 'h-[clamp(7rem,22vmin,16rem)] w-[clamp(7rem,22vmin,16rem)] object-contain'
+                : 'h-28 w-28 object-contain sm:h-36 sm:w-36 lg:h-40 lg:w-40'
+            }
           />
           <p className="text-center text-xs tracking-wide text-brand-foreground/75">
             Pedertractor &amp; TractorComponents
@@ -167,11 +177,23 @@ export function HomeHeroCard({
           className="flex h-full items-center border-t border-border/70 px-6 py-8 lg:border-t-0 lg:border-l"
           style={{ paddingBottom: notchHeight + 16 }}
         >
-          <div className="flex max-w-sm flex-col gap-3">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          <div className={fill ? 'flex max-w-lg flex-col gap-3' : 'flex max-w-sm flex-col gap-3'}>
+            <h2
+              className={
+                fill
+                  ? 'text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl'
+                  : 'text-xl font-semibold tracking-tight text-foreground sm:text-2xl'
+              }
+            >
               {title}
             </h2>
-            <p className="text-sm text-muted-foreground sm:text-base">
+            <p
+              className={
+                fill
+                  ? 'text-sm text-muted-foreground sm:text-base lg:text-lg'
+                  : 'text-sm text-muted-foreground sm:text-base'
+              }
+            >
               {description}
             </p>
           </div>

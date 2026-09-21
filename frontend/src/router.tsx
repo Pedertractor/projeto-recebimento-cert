@@ -33,8 +33,12 @@ export function AppRouter() {
                 <Route element={<RequireStockOperator />}>
                   <Route path="/doc-qualidade" element={<DocQualidadePage />} />
                   <Route
-                    path="/solicitar-certificado"
+                    path="/cadastrar-nf"
                     element={<SolicitarCertificadoPage />}
+                  />
+                  <Route
+                    path="/solicitar-certificado"
+                    element={<Navigate to="/cadastrar-nf" replace />}
                   />
                   <Route
                     path="/minhas-solicitacoes"

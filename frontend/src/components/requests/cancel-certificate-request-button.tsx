@@ -61,7 +61,10 @@ export function CancelCertificateRequestButton({
     },
   });
 
-  if (request.status !== 'AGUARDANDO_COMPRAS') {
+  if (
+    request.status !== 'AGUARDANDO_COMPRAS' &&
+    request.status !== 'CADASTRADA'
+  ) {
     return null;
   }
 

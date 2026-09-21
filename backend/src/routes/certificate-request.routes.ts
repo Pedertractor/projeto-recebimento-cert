@@ -12,11 +12,14 @@ import {
   completeCertificateRequestController,
   createCertificateRequestController,
   getCertificateRequestController,
+  linkCertificatePdfController,
   listCertificateRequestsController,
   listPendingPurchaseCertificateRequestsController,
   listPurchaseCertificateRequestsController,
   listRecentCertificateRequestsController,
   registerSupplierContactController,
+  requestDocumentFromPurchaseController,
+  updateCertificateRequestController,
 } from '../controllers/certificate-request.controller.js';
 import {
   attachConferencePrintPasteSchema,
@@ -28,6 +31,7 @@ import {
   certificateRequestIdParamsSchema,
   certificateRequestResponseSchema,
   listCertificateRequestsResponseSchema,
+  updateCertificateRequestSchema,
   type CertificateRequestIdParams,
 } from '../schemas/certificate-request.schemas.js';
 import { commonErrors } from '../schemas/error.schemas.js';
@@ -173,6 +177,29 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
     createCertificateRequestController,
   );
 
+  fastify.patch<{ Params: CertificateRequestIdParams }>(
+    '/:id',
+    {
+      schema: {
+        summary: 'Update certificate request invoice data',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        params: certificateRequestIdParamsSchema,
+        body: updateCertificateRequestSchema,
+        response: {
+          200: certificateRequestResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    updateCertificateRequestController,
+  );
+
   fastify.post<{ Params: CertificateRequestIdParams }>(
     '/:id/supplier-contact',
     {
@@ -216,6 +243,51 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
       ],
     },
     attachCertificateController,
+  );
+
+  fastify.post<{ Params: CertificateRequestIdParams }>(
+    '/:id/request-document',
+    {
+      schema: {
+        summary: 'Request certificate PDF from purchase operator',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        params: certificateRequestIdParamsSchema,
+        response: {
+          200: certificateRequestResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    requestDocumentFromPurchaseController,
+  );
+
+  fastify.post<{ Params: CertificateRequestIdParams }>(
+    '/:id/link-certificate',
+    {
+      schema: {
+        summary: 'Link combined invoice and certificates PDF from stock',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        consumes: ['multipart/form-data'],
+        params: certificateRequestIdParamsSchema,
+        response: {
+          200: certificateRequestResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    linkCertificatePdfController,
   );
 
   fastify.post<{ Params: CertificateRequestIdParams }>(

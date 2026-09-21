@@ -23,11 +23,11 @@ export function MinhasSolicitacoesPage() {
             Minhas solicitações
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Acompanhe o andamento das solicitações abertas pelo estoque.
+            Acompanhe as solicitações de documento enviadas ao compras.
           </p>
         </div>
         <Button asChild className="bg-brand text-brand-foreground hover:bg-brand/90">
-          <Link to="/solicitar-certificado">Nova solicitação</Link>
+          <Link to="/cadastrar-nf">Cadastrar NF</Link>
         </Button>
       </div>
 

@@ -19,7 +19,10 @@ import {
 } from '../generated/prisma/enums.js';
 import { env } from '../config/env.js';
 import { AppError } from '../lib/errors.js';
-import type { CreateCertificateRequestFields } from '../schemas/certificate-request.schemas.js';
+import type {
+  CreateCertificateRequestFields,
+  UpdateCertificateRequestFields,
+} from '../schemas/certificate-request.schemas.js';
 import { saveCertificateRequestFile } from '../utils/certificate-request-storage.js';
 import { hashToken } from '../utils/token-hash.js';
 import {
@@ -160,7 +163,10 @@ export class CertificateRequestService {
 
   async listForStock(userId: number) {
     const requests = await this.prisma.certificateRequest.findMany({
-      where: { createdByUserId: userId },
+      where: {
+        createdByUserId: userId,
+        status: { not: CertificateRequestStatus.CADASTRADA },
+      },
       include: this.includeRelations(),
       orderBy: { submittedAt: 'desc' },
     });
@@ -168,11 +174,17 @@ export class CertificateRequestService {
     return requests.map(toPublicRequest);
   }
 
-  async listCompleted() {
+  async listCompleted(userId: number) {
     const requests = await this.prisma.certificateRequest.findMany({
-      where: { status: CertificateRequestStatus.CONCLUIDA },
+      where: {
+        status: { not: CertificateRequestStatus.CANCELADA },
+        OR: [
+          { status: CertificateRequestStatus.CONCLUIDA },
+          { createdByUserId: userId },
+        ],
+      },
       include: this.includeRelations(),
-      orderBy: { completedAt: 'desc' },
+      orderBy: [{ completedAt: 'desc' }, { submittedAt: 'desc' }],
     });
 
     return requests.map(toPublicRequest);
@@ -221,11 +233,6 @@ export class CertificateRequestService {
       throw new AppError('Data da NF inválida.');
     }
 
-    const rawToken = randomBytes(32).toString('hex');
-    const tokenHash = hashToken(rawToken);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
-
     const request = await this.prisma.$transaction(async (tx) => {
       const created = await tx.certificateRequest.create({
         data: {
@@ -234,7 +241,7 @@ export class CertificateRequestService {
           invoiceDate,
           expectedCertificates: fields.expectedCertificates,
           notes: fields.notes?.trim() || null,
-          status: CertificateRequestStatus.AGUARDANDO_COMPRAS,
+          status: CertificateRequestStatus.CADASTRADA,
           createdByUserId: userId,
         },
       });
@@ -264,23 +271,158 @@ export class CertificateRequestService {
         data: {
           requestId: created.id,
           eventType: RequestHistoryEventType.SOLICITACAO_CRIADA,
-          description: 'Solicitação aberta pelo estoque.',
+          description: 'NF de materiais cadastrada pelo estoque.',
           actorUserId: userId,
-        },
-      });
-
-      await tx.magicLink.create({
-        data: {
-          requestId: created.id,
-          tokenHash,
-          expiresAt,
         },
       });
 
       return created.id;
     });
 
-    const fullRequest = await this.findById(request);
+    return this.findById(request);
+  }
+
+  async update(
+    requestId: number,
+    _userId: number,
+    fields: UpdateCertificateRequestFields,
+  ) {
+    const request = await this.prisma.certificateRequest.findUnique({
+      where: { id: requestId },
+      include: { attachments: true },
+    });
+
+    if (!request) {
+      throw new AppError('NF não encontrada.', 404);
+    }
+
+    if (request.status === CertificateRequestStatus.CANCELADA) {
+      throw new AppError('Não é possível editar uma NF cancelada.', 400);
+    }
+
+    if (fields.supplierId && fields.supplierId !== request.supplierId) {
+      const supplier = await this.prisma.supplier.findUnique({
+        where: { id: fields.supplierId },
+      });
+
+      if (!supplier) {
+        throw new AppError('Fornecedor não encontrado.', 404);
+      }
+    }
+
+    if (
+      fields.expectedCertificates != null &&
+      fields.expectedCertificates < request.expectedCertificates
+    ) {
+      const highestLotIndex = request.attachments.reduce((highest, attachment) => {
+        if (attachment.lotIndex == null) {
+          return highest;
+        }
+        return Math.max(highest, attachment.lotIndex);
+      }, 0);
+
+      if (fields.expectedCertificates < highestLotIndex) {
+        throw new AppError(
+          `Já existem anexos no lote ${highestLotIndex}. Não é possível reduzir para ${fields.expectedCertificates} lote(s).`,
+        );
+      }
+    }
+
+    let invoiceDate: Date | undefined;
+    if (fields.invoiceDate) {
+      invoiceDate = new Date(`${fields.invoiceDate}T00:00:00.000Z`);
+      if (Number.isNaN(invoiceDate.getTime())) {
+        throw new AppError('Data da NF inválida.');
+      }
+    }
+
+    await this.prisma.certificateRequest.update({
+      where: { id: requestId },
+      data: {
+        ...(fields.supplierId ? { supplierId: fields.supplierId } : {}),
+        ...(fields.invoiceNumber
+          ? { invoiceNumber: fields.invoiceNumber.trim() }
+          : {}),
+        ...(invoiceDate ? { invoiceDate } : {}),
+        ...(fields.expectedCertificates != null
+          ? { expectedCertificates: fields.expectedCertificates }
+          : {}),
+        ...(fields.notes !== undefined
+          ? { notes: fields.notes.trim() || null }
+          : {}),
+      },
+    });
+
+    return this.findById(requestId);
+  }
+
+  async requestDocumentFromPurchase(requestId: number, userId: number) {
+    const request = await this.prisma.certificateRequest.findUnique({
+      where: { id: requestId },
+      include: { magicLink: true },
+    });
+
+    if (!request) {
+      throw new AppError('NF não encontrada.', 404);
+    }
+
+    if (request.status !== CertificateRequestStatus.CADASTRADA) {
+      throw new AppError(
+        'Esta NF já possui uma solicitação de documento em andamento.',
+        400,
+      );
+    }
+
+    const existingCertificate = await this.prisma.requestAttachment.count({
+      where: {
+        requestId,
+        type: AttachmentType.CERTIFICADO,
+      },
+    });
+
+    if (existingCertificate > 0) {
+      throw new AppError('Esta NF já possui o PDF de certificados vinculado.', 400);
+    }
+
+    let rawToken = randomBytes(32).toString('hex');
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.certificateRequest.update({
+        where: { id: requestId },
+        data: {
+          status: CertificateRequestStatus.AGUARDANDO_COMPRAS,
+          submittedAt: new Date(),
+        },
+      });
+
+      if (request.magicLink) {
+        rawToken = randomBytes(32).toString('hex');
+        await tx.magicLink.update({
+          where: { id: request.magicLink.id },
+          data: {
+            tokenHash: hashToken(rawToken),
+            usedAt: null,
+            expiresAt: (() => {
+              const expiresAt = new Date();
+              expiresAt.setDate(expiresAt.getDate() + 30);
+              return expiresAt;
+            })(),
+          },
+        });
+      } else {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+        await tx.magicLink.create({
+          data: {
+            requestId,
+            tokenHash: hashToken(rawToken),
+            expiresAt,
+          },
+        });
+      }
+    });
+
+    const fullRequest = await this.findById(requestId);
     const magicLinkUrl = `${env.APP_BASE_URL}/solicitacoes/${fullRequest.id}?token=${rawToken}`;
 
     const userService = new UserService(this.prisma);
@@ -309,8 +451,8 @@ export class CertificateRequestService {
         requestId: fullRequest.id,
         eventType: RequestHistoryEventType.EMAIL_COMPRAS_ENVIADO,
         description: emailDispatch.recipients.length
-          ? `E-mail enviado para ${emailDispatch.recipients.join(', ')}.`
-          : 'E-mail registrado (nenhum operador de compras com e-mail cadastrado).',
+          ? `Solicitação de documento enviada ao compras (${emailDispatch.recipients.join(', ')}).`
+          : 'Solicitação de documento registrada (nenhum operador de compras com e-mail cadastrado).',
         actorUserId: userId,
       },
     });
@@ -322,7 +464,10 @@ export class CertificateRequestService {
     const requests = await this.prisma.certificateRequest.findMany({
       where: {
         status: {
-          not: CertificateRequestStatus.CANCELADA,
+          notIn: [
+            CertificateRequestStatus.CANCELADA,
+            CertificateRequestStatus.CADASTRADA,
+          ],
         },
       },
       include: this.includeRelations(),
@@ -487,7 +632,74 @@ export class CertificateRequestService {
     return this.completeRequest(requestId, userId);
   }
 
-  async completeRequest(requestId: number, userId: number) {
+  async linkCertificatePdf(
+    requestId: number,
+    userId: number,
+    certificateFile: { buffer: Buffer; filename: string },
+  ) {
+    const request = await this.prisma.certificateRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!request) {
+      throw new AppError('NF não encontrada.', 404);
+    }
+
+    if (request.status !== CertificateRequestStatus.CADASTRADA) {
+      throw new AppError(
+        'Vincule o PDF enquanto a NF ainda não foi enviada ao compras.',
+        400,
+      );
+    }
+
+    const existingCertificates = await this.prisma.requestAttachment.count({
+      where: {
+        requestId,
+        type: AttachmentType.CERTIFICADO,
+      },
+    });
+
+    if (existingCertificates > 0) {
+      throw new AppError('Já existe um PDF de certificados vinculado nesta NF.', 400);
+    }
+
+    const storagePath = await saveCertificateRequestFile(
+      requestId,
+      AttachmentType.CERTIFICADO,
+      certificateFile.buffer,
+      certificateFile.filename,
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.requestAttachment.create({
+        data: {
+          requestId,
+          type: AttachmentType.CERTIFICADO,
+          fileName: certificateFile.filename,
+          storagePath,
+          lotLabel: 'Todos os lotes',
+          uploadedByUserId: userId,
+        },
+      });
+
+      await tx.requestHistoryEvent.create({
+        data: {
+          requestId,
+          eventType: RequestHistoryEventType.CERTIFICADO_ANEXADO,
+          description: `PDF com a NF e os certificados vinculado pelo estoque: ${certificateFile.filename}.`,
+          actorUserId: userId,
+        },
+      });
+    });
+
+    return this.completeRequest(requestId, userId, { notifyStock: false });
+  }
+
+  async completeRequest(
+    requestId: number,
+    userId: number,
+    options?: { notifyStock?: boolean },
+  ) {
     const request = await this.prisma.certificateRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -505,7 +717,10 @@ export class CertificateRequestService {
       return this.findById(requestId);
     }
 
-    if (request.status !== CertificateRequestStatus.AGUARDANDO_FORNECEDOR) {
+    if (
+      request.status !== CertificateRequestStatus.AGUARDANDO_FORNECEDOR &&
+      request.status !== CertificateRequestStatus.CADASTRADA
+    ) {
       throw new AppError(
         'A solicitação não pode ser concluída neste status.',
         400,
@@ -544,29 +759,33 @@ export class CertificateRequestService {
       });
     });
 
-    const requestUrl = `${env.APP_BASE_URL}/minhas-solicitacoes`;
+    const notifyStock = options?.notifyStock ?? true;
 
-    await sendCompletedCertificateRequestEmail({
-      requestId,
-      supplierName: request.supplier.name,
-      invoiceNumber: request.invoiceNumber,
-      attachedCertificatesCount,
-      stockOperatorName: request.createdBy.name,
-      stockOperatorEmail: request.createdBy.email,
-      completedAt: completedAt.toISOString(),
-      requestUrl,
-    });
+    const requestUrl = `${env.APP_BASE_URL}/notas-fiscais/${requestId}`;
 
-    await this.prisma.requestHistoryEvent.create({
-      data: {
+    if (notifyStock) {
+      await sendCompletedCertificateRequestEmail({
         requestId,
-        eventType: RequestHistoryEventType.EMAIL_ESTOQUE_ENVIADO,
-        description: request.createdBy.email
-          ? `E-mail enviado para ${request.createdBy.email}.`
-          : 'E-mail registrado (destinatário não configurado).',
-        actorUserId: userId,
-      },
-    });
+        supplierName: request.supplier.name,
+        invoiceNumber: request.invoiceNumber,
+        attachedCertificatesCount,
+        stockOperatorName: request.createdBy.name,
+        stockOperatorEmail: request.createdBy.email,
+        completedAt: completedAt.toISOString(),
+        requestUrl,
+      });
+
+      await this.prisma.requestHistoryEvent.create({
+        data: {
+          requestId,
+          eventType: RequestHistoryEventType.EMAIL_ESTOQUE_ENVIADO,
+          description: request.createdBy.email
+            ? `E-mail enviado para ${request.createdBy.email}.`
+            : 'E-mail registrado (destinatário não configurado).',
+          actorUserId: userId,
+        },
+      });
+    }
 
     return this.findById(requestId);
   }
@@ -580,7 +799,10 @@ export class CertificateRequestService {
       throw new AppError('Solicitação não encontrada.', 404);
     }
 
-    if (request.status !== CertificateRequestStatus.AGUARDANDO_COMPRAS) {
+    if (
+      request.status !== CertificateRequestStatus.AGUARDANDO_COMPRAS &&
+      request.status !== CertificateRequestStatus.CADASTRADA
+    ) {
       throw new AppError(
         'Só é possível cancelar antes do compras registrar o envio ao fornecedor.',
         400,

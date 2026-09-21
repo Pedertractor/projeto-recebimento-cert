@@ -7,8 +7,12 @@ import { AppError } from '../lib/errors.js';
 import {
   attachCertificateFieldsSchema,
   createCertificateRequestFieldsSchema,
+  updateCertificateRequestSchema,
 } from '../schemas/certificate-request.schemas.js';
-import type { CertificateRequestIdParams } from '../schemas/certificate-request.schemas.js';
+import type {
+  CertificateRequestIdParams,
+  UpdateCertificateRequestFields,
+} from '../schemas/certificate-request.schemas.js';
 import { CertificateRequestService } from '../services/certificate-request.service.js';
 
 type MultipartFields = Record<string, string>;
@@ -62,7 +66,7 @@ function canAccessCertificateRequest(
   }
 
   if (user.role === UserRole.PURCHASE_OPERATOR) {
-    return true;
+    return request.status !== CertificateRequestStatus.CADASTRADA;
   }
 
   if (user.role === UserRole.STOCK_OPERATOR) {
@@ -144,6 +148,29 @@ export async function createCertificateRequestController(
   return reply.status(201).send(request);
 }
 
+export async function updateCertificateRequestController(
+  req: FastifyRequest<{
+    Params: CertificateRequestIdParams;
+    Body: UpdateCertificateRequestFields;
+  }>,
+  reply: FastifyReply,
+) {
+  const parsed = updateCertificateRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new AppError(parsed.error.issues[0]?.message ?? 'Dados inválidos.');
+  }
+
+  const service = new CertificateRequestService(req.server.prisma);
+  const existing = await service.findById(req.params.id);
+
+  if (!canAccessCertificateRequest(existing, req.user)) {
+    throw new AppError('Acesso negado.', 403);
+  }
+
+  const request = await service.update(req.params.id, req.user.id, parsed.data);
+  return reply.send(request);
+}
+
 export async function registerSupplierContactController(
   req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
   reply: FastifyReply,
@@ -215,6 +242,52 @@ export async function completeCertificateRequestController(
   }
 
   const request = await service.completeRequest(req.params.id, req.user.id);
+  return reply.send(request);
+}
+
+export async function requestDocumentFromPurchaseController(
+  req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
+  reply: FastifyReply,
+) {
+  const service = new CertificateRequestService(req.server.prisma);
+  const existing = await service.findById(req.params.id);
+
+  if (!canAccessCertificateRequest(existing, req.user)) {
+    throw new AppError('Acesso negado.', 403);
+  }
+
+  const request = await service.requestDocumentFromPurchase(
+    req.params.id,
+    req.user.id,
+  );
+
+  return reply.send(request);
+}
+
+export async function linkCertificatePdfController(
+  req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
+  reply: FastifyReply,
+) {
+  const { files } = await parseMultipartRequest(req);
+  const certificateFile = files.certificateFile;
+
+  if (!certificateFile) {
+    throw new AppError('Anexe o PDF com a NF e os certificados.');
+  }
+
+  const service = new CertificateRequestService(req.server.prisma);
+  const existing = await service.findById(req.params.id);
+
+  if (!canAccessCertificateRequest(existing, req.user)) {
+    throw new AppError('Acesso negado.', 403);
+  }
+
+  const request = await service.linkCertificatePdf(
+    req.params.id,
+    req.user.id,
+    certificateFile,
+  );
+
   return reply.send(request);
 }
 

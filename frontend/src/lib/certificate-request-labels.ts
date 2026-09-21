@@ -4,6 +4,8 @@ export function certificateRequestStatusLabel(
   status: CertificateRequestStatus,
 ): string {
   switch (status) {
+    case 'CADASTRADA':
+      return 'NF cadastrada';
     case 'AGUARDANDO_COMPRAS':
       return 'Aguardando compras';
     case 'AGUARDANDO_FORNECEDOR':
@@ -19,6 +21,8 @@ export function certificateRequestStatusClassName(
   status: CertificateRequestStatus,
 ): string {
   switch (status) {
+    case 'CADASTRADA':
+      return 'bg-brand-muted text-brand border-brand/20';
     case 'AGUARDANDO_COMPRAS':
       return 'bg-amber-100 text-amber-900 border-amber-200';
     case 'AGUARDANDO_FORNECEDOR':
@@ -53,7 +57,7 @@ export function formatRequestDateTime(value: string): string {
 export function requestHistoryEventLabel(eventType: string): string {
   switch (eventType) {
     case 'SOLICITACAO_CRIADA':
-      return 'Solicitação criada';
+      return 'NF cadastrada';
     case 'EMAIL_COMPRAS_ENVIADO':
       return 'E-mail enviado ao compras';
     case 'ENVIO_FORNECEDOR_REGISTRADO':

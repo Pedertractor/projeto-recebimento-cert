@@ -98,6 +98,23 @@ export type CreateCertificateRequestFields = z.infer<
   typeof createCertificateRequestFieldsSchema
 >;
 
+export const updateCertificateRequestSchema =
+  createCertificateRequestFieldsSchema
+    .partial()
+    .refine(
+      (value) =>
+        value.supplierId !== undefined ||
+        value.invoiceNumber !== undefined ||
+        value.invoiceDate !== undefined ||
+        value.expectedCertificates !== undefined ||
+        value.notes !== undefined,
+      'Informe ao menos um campo para atualizar.',
+    );
+
+export type UpdateCertificateRequestFields = z.infer<
+  typeof updateCertificateRequestSchema
+>;
+
 export const attachCertificateFieldsSchema = z.object({
   lotLabel: z.string().trim().max(100).optional(),
 });

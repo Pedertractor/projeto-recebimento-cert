@@ -23,6 +23,7 @@ enum UserRole {
 }
 
 enum CertificateRequestStatus {
+  CADASTRADA
   AGUARDANDO_COMPRAS
   AGUARDANDO_FORNECEDOR
   CONCLUIDA
@@ -115,7 +116,7 @@ model CertificateRequest {
   invoiceDate          DateTime                 @map("invoice_date") @db.Date
   expectedCertificates Int                      @default(1) @map("expected_certificates")
   notes                String?
-  status               CertificateRequestStatus @default(AGUARDANDO_COMPRAS)
+  status               CertificateRequestStatus @default(CADASTRADA)
   createdByUserId      Int                      @map("created_by_user_id")
   createdBy            User                     @relation("CertificateRequestCreatedBy", fields: [createdByUserId], references: [id])
   submittedAt          DateTime                 @default(now()) @map("submitted_at")
