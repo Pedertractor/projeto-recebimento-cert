@@ -6,6 +6,12 @@ import {
 
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
+/** Preview in the viewer — lighter for navigation. */
+export const PDF_PREVIEW_RENDER_SCALE = 1.5;
+
+/** Copy/import for conference — higher resolution for zoom during inspection. */
+export const CONFERENCE_PRINT_RENDER_SCALE = 2;
+
 let workerConfigured = false;
 
 function configurePdfWorker(): void {
@@ -27,7 +33,7 @@ export async function loadPdfDocument(url: string): Promise<PDFDocumentProxy> {
 export async function renderPdfPageToCanvas(
   document: PDFDocumentProxy,
   pageNumber: number,
-  scale = 1.5,
+  scale = PDF_PREVIEW_RENDER_SCALE,
 ): Promise<HTMLCanvasElement> {
   const page = await document.getPage(pageNumber);
   const viewport = page.getViewport({ scale });
@@ -53,7 +59,7 @@ export async function renderPdfPageToCanvas(
 export async function renderPdfPageToBlob(
   document: PDFDocumentProxy,
   pageNumber: number,
-  scale = 1.5,
+  scale = PDF_PREVIEW_RENDER_SCALE,
 ): Promise<Blob> {
   const canvas = await renderPdfPageToCanvas(document, pageNumber, scale);
 
@@ -73,7 +79,7 @@ export async function renderPdfPageToFile(
   document: PDFDocumentProxy,
   pageNumber: number,
   fileName: string,
-  scale = 1.5,
+  scale = CONFERENCE_PRINT_RENDER_SCALE,
 ): Promise<File> {
   const blob = await renderPdfPageToBlob(document, pageNumber, scale);
   return new File([blob], fileName, { type: 'image/png' });
@@ -82,7 +88,7 @@ export async function renderPdfPageToFile(
 export async function copyPdfPageToClipboard(
   document: PDFDocumentProxy,
   pageNumber: number,
-  scale = 1.5,
+  scale = CONFERENCE_PRINT_RENDER_SCALE,
 ): Promise<void> {
   const blob = await renderPdfPageToBlob(document, pageNumber, scale);
 

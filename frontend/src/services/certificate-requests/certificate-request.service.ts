@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { env } from '@/config/env';
 import { getWebCsrfToken, httpClient } from '@/lib/http-client';
-import { fileToBase64 } from '@/utils/file-to-base64';
 import type {
   CertificateInspection,
   CertificateRequest,
@@ -247,17 +246,22 @@ export async function attachConferencePrint(
     throw new Error('A imagem colada está vazia. Copie o print novamente.');
   }
 
-  const imageBase64 = await fileToBase64(payload.printFile);
+  const formData = new FormData();
+  formData.append('lotIndex', String(payload.lotIndex));
+  formData.append('printFile', payload.printFile);
 
-  return httpClient.post<CertificateRequest>(
-    `/certificate-requests/${requestId}/conference-prints/paste`,
+  const response = await axios.post<CertificateRequest>(
+    `${env.apiUrl}/certificate-requests/${requestId}/conference-prints`,
+    formData,
     {
-      lotIndex: payload.lotIndex,
-      imageBase64,
-      mimeType: payload.printFile.type || 'image/png',
-      fileName: payload.printFile.name || `lote-${payload.lotIndex}-print.png`,
+      withCredentials: true,
+      headers: {
+        'x-csrf-token': getWebCsrfToken() ?? '',
+      },
     },
   );
+
+  return response.data;
 }
 
 export async function submitCertificateInspection(

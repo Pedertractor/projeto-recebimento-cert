@@ -169,8 +169,8 @@ export async function attachConferencePrintPasteController(
     throw new AppError('Imagem colada vazia.', 400);
   }
 
-  if (buffer.length > 10 * 1024 * 1024) {
-    throw new AppError('Imagem colada excede o limite de 10 MB.', 400);
+  if (buffer.length > 15 * 1024 * 1024) {
+    throw new AppError('Imagem colada excede o limite de 15 MB.', 400);
   }
 
   const mimeType = parsed.data.mimeType || 'image/png';

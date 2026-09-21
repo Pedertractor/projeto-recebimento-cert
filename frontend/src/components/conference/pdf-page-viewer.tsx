@@ -19,6 +19,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 import {
   copyPdfPageToClipboard,
   loadPdfDocument,
+  PDF_PREVIEW_RENDER_SCALE,
   renderPdfPageToBlob,
 } from '@/utils/pdf-page-image';
 import { cn } from '@/lib/utils';
@@ -118,7 +119,11 @@ export function PdfPageViewer({
       setIsRendering(true);
 
       try {
-        const blob = await renderPdfPageToBlob(document!, pageNumber);
+        const blob = await renderPdfPageToBlob(
+          document!,
+          pageNumber,
+          PDF_PREVIEW_RENDER_SCALE,
+        );
         if (cancelled) {
           return;
         }

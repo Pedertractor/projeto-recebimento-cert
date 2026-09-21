@@ -21,6 +21,7 @@ import { env } from './config/env.js';
 
 const app = Fastify({
   logger: true,
+  bodyLimit: 15 * 1024 * 1024,
 }).withTypeProvider<ZodTypeProvider>();
 
 app.register(cors, {
@@ -46,7 +47,7 @@ app.register(csrfProtection, {
 
 app.register(multipart, {
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: 15 * 1024 * 1024,
     files: 6,
   },
 });
