@@ -376,7 +376,7 @@ export function SolicitarCertificadoPage() {
                     {selectedFileName ?? 'Anexar o arquivo agora (opcional)'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    PDF ou imagem, até 10 MB.
+                    PDF ou imagem, até 30 MB.
                   </p>
                 </div>
                 <div className="flex gap-2">

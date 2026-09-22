@@ -11,6 +11,7 @@ import { RequestHistoryTimeline } from '@/components/requests/request-history-ti
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { Button } from '@/components/ui/button';
 import { DocumentUploadField } from '@/components/ui/document-upload-field';
+import { useWebSession } from '@/hooks/auth/use-web-session';
 import { HttpClientError } from '@/lib/http-client';
 import { getComparisonInvoiceAttachment } from '@/lib/certificate-request-attachments';
 import {
@@ -23,6 +24,7 @@ import {
   purchaseCertificateRequestsListQueryKey,
   registerSupplierContact,
 } from '@/services/certificate-requests/certificate-request.service';
+import { capitalizeAllWords } from '@/utils/capitalize';
 
 type CertificateRequestDetailViewProps = {
   requestId: number;
@@ -36,8 +38,11 @@ export function CertificateRequestDetailView({
   viewer,
 }: CertificateRequestDetailViewProps) {
   const queryClient = useQueryClient();
+  const { data: sessionUser } = useWebSession();
   const [combinedDocument, setCombinedDocument] = useState<File | null>(null);
   const isPurchaseView = viewer === 'purchase';
+  const purchaseOperatorName =
+    sessionUser?.name?.trim() || 'operador de compras';
 
   const requestQuery = useQuery({
     queryKey: certificateRequestDetailQueryKey(requestId),
@@ -225,6 +230,13 @@ export function CertificateRequestDetailView({
         ) : null}
       </div>
 
+      {invoiceAttachment && (
+        <div className="text-sm text-destructive">
+          O documento anexo está imcompleto. Solicite ao fornecedor que envie o
+          documento completo.
+        </div>
+      )}
+
       {canRegisterSupplierContact ? (
         <section className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -250,7 +262,8 @@ export function CertificateRequestDetailView({
               ) : (
                 <Mail className="size-4" />
               )}
-              Registrar envio
+              Eu, {capitalizeAllWords(purchaseOperatorName)}, enviei o e-mail ao
+              fornecedor.
             </Button>
           </div>
         </section>
@@ -280,7 +293,7 @@ export function CertificateRequestDetailView({
               value={combinedDocument}
               onChange={setCombinedDocument}
               placeholder="Selecione o PDF"
-              hint="Um único PDF, até 10 MB"
+              hint="Um único PDF, até 30 MB"
               buttonLabel="Escolher PDF"
             />
 

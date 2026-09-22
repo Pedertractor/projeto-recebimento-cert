@@ -26,7 +26,7 @@ export function DocumentUploadField({
   value,
   onChange,
   placeholder = 'Selecione um arquivo',
-  hint = 'PDF ou imagem, até 10 MB',
+  hint = 'PDF ou imagem, até 30 MB',
   buttonLabel = 'Escolher arquivo',
   error,
   className,

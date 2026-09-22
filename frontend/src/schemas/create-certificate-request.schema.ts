@@ -17,8 +17,8 @@ export const createCertificateRequestFormSchema = z.object({
   invoiceFile: z
     .instanceof(File)
     .refine(
-      (file) => file.size > 0 && file.size <= 10 * 1024 * 1024,
-      'PDF ou imagem, até 10 MB.',
+      (file) => file.size > 0 && file.size <= 30 * 1024 * 1024,
+      'PDF ou imagem, até 30 MB.',
     )
     .optional(),
 });
