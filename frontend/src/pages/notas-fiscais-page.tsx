@@ -52,12 +52,10 @@ export function NotasFiscaisPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <div className="page-container">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          NF&apos;s de materiais
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="page-heading">NF&apos;s de materiais</h1>
+        <p className="page-lead">
           Solicitações e NFs cadastradas prontas para conferência de
           certificados por lote.
         </p>

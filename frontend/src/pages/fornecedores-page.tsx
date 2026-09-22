@@ -6,6 +6,10 @@ import { CreateSupplierDialog } from '@/components/suppliers/create-supplier-dia
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  MobileListCard,
+  MobileListCardRow,
+} from '@/components/ui/mobile-list-card';
+import {
   Table,
   TableBody,
   TableCell,
@@ -53,18 +57,18 @@ export function FornecedoresPage() {
   }, [search, suppliersQuery.data]);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <div className="page-container">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Fornecedores</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+        <div className="min-w-0">
+          <h1 className="page-heading">Fornecedores</h1>
+          <p className="page-lead">
             Consulte e edite os dados dos fornecedores usados nas NFs.
           </p>
         </div>
         <CreateSupplierDialog />
       </div>
 
-      <div className="relative max-w-md">
+      <div className="relative w-full max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={search}
@@ -103,6 +107,51 @@ export function FornecedoresPage() {
               Nenhum fornecedor encontrado.
             </p>
           ) : (
+            <>
+            <div className="flex flex-col gap-3 p-3 md:hidden">
+              {filteredSuppliers.map((supplier) => (
+                <MobileListCard
+                  key={supplier.id}
+                  onClick={() => setSelected(supplier)}
+                >
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold">{supplier.name}</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 shrink-0 gap-1 px-2"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelected(supplier);
+                        }}
+                      >
+                        <Pencil className="size-3.5" />
+                        Editar
+                      </Button>
+                    </div>
+                    <div className="grid gap-2">
+                      <MobileListCardRow
+                        label="CNPJ"
+                        value={
+                          <span className="tabular-nums">{supplier.cnpj}</span>
+                        }
+                      />
+                      <MobileListCardRow
+                        label="Descrição"
+                        value={
+                          <span className="line-clamp-2 font-normal text-foreground">
+                            {supplier.description || '—'}
+                          </span>
+                        }
+                      />
+                    </div>
+                  </div>
+                </MobileListCard>
+              ))}
+            </div>
+            <div className="hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -150,6 +199,8 @@ export function FornecedoresPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
+            </>
           )}
         </div>
       ) : null}

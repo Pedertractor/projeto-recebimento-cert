@@ -133,8 +133,8 @@ export function CertificateComparisonPage() {
       };
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-      <div className="space-y-3">
+    <div className="page-container-wide">
+      <div className="min-w-0 space-y-3">
         <Button asChild variant="ghost" className="-ml-2 w-fit px-2">
           <Link to={`/notas-fiscais/${requestId}`}>
             <ArrowLeft className="size-4" />
@@ -142,10 +142,8 @@ export function CertificateComparisonPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Comparação — {lotLabel}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="page-heading">Comparação — {lotLabel}</h1>
+          <p className="page-lead">
             NF {requestQuery.data.invoiceNumber} · {requestQuery.data.supplier.name}
           </p>
         </div>

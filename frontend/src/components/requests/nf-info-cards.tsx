@@ -102,7 +102,9 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
             editLabel="Editar número da NF"
           >
             <div className="mt-1 flex flex-wrap items-center gap-3">
-              <p className="text-2xl font-semibold">{request.invoiceNumber}</p>
+              <p className="text-xl font-semibold md:text-2xl">
+                {request.invoiceNumber}
+              </p>
               <RequestStatusBadge status={request.status} />
             </div>
           </InfoCard>
@@ -112,7 +114,7 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
             onEdit={canEdit ? () => setEditField('invoiceDate') : undefined}
             editLabel="Editar data da NF"
           >
-            <p className="mt-1 text-2xl font-semibold">
+            <p className="mt-1 text-xl font-semibold md:text-2xl">
               {formatRequestDate(request.invoiceDate)}
             </p>
           </InfoCard>
@@ -124,7 +126,7 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
           onEdit={canEdit ? () => setEditField('lots') : undefined}
           editLabel="Editar quantidade de lotes"
         >
-          <p className="mt-1 text-2xl font-semibold">
+          <p className="mt-1 text-xl font-semibold md:text-2xl">
             {request.expectedCertificates}
           </p>
         </InfoCard>

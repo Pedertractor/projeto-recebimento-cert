@@ -120,7 +120,7 @@ export function NotaFiscalDetailPage() {
       request.status === 'AGUARDANDO_FORNECEDOR');
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <div className="page-container">
       <Button asChild variant="ghost" className="-ml-2 w-fit px-2">
         <Link to="/notas-fiscais">
           <ArrowLeft className="size-4" />
@@ -141,10 +141,12 @@ export function NotaFiscalDetailPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <section className="space-y-4">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <section className="order-2 min-w-0 space-y-4 lg:order-1">
           <div>
-            <h2 className="text-lg font-semibold">Certificados por lote</h2>
+            <h2 className="text-base font-semibold md:text-lg">
+              Certificados por lote
+            </h2>
             <p className="text-sm text-muted-foreground">
               Anexe uma impressão por lote e faça a comparação com o documento
               de qualidade.
@@ -170,7 +172,7 @@ export function NotaFiscalDetailPage() {
           <InvoiceCertificatePrompt request={request} />
         </section>
 
-        <div className="space-y-4">
+        <div className="order-1 min-w-0 space-y-4 lg:order-2">
           <InvoiceAttachmentCard
             attachment={invoiceAttachment}
             requestId={request.id}

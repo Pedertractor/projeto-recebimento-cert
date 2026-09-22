@@ -17,8 +17,8 @@ import {
 
 function HomeStatCard({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex min-h-[clamp(6.5rem,14vh,10rem)] flex-col justify-between px-4 py-4 sm:px-6 sm:py-5">
-      <p className="text-[clamp(1.875rem,3.5vw,3.25rem)] font-semibold leading-none tracking-tight text-brand">
+    <div className="flex min-h-[5.5rem] flex-col justify-between px-4 py-4 max-md:gap-2 md:min-h-[clamp(6.5rem,14vh,10rem)] sm:px-6 sm:py-5">
+      <p className="text-3xl font-semibold leading-none tracking-tight text-brand md:text-[clamp(1.875rem,3.5vw,3.25rem)]">
         {value}
       </p>
       <p className="text-sm text-muted-foreground sm:text-base">{label}</p>
@@ -27,7 +27,7 @@ function HomeStatCard({ value, label }: { value: number; label: string }) {
 }
 
 const homeActionTileClassName =
-  'min-h-[clamp(5.5rem,11vh,9rem)] flex-1 py-5 sm:px-5 sm:py-6';
+  'min-h-[4.75rem] flex-1 py-4 md:min-h-[clamp(5.5rem,11vh,9rem)] md:py-5 sm:px-5 sm:py-6';
 
 export function HomePage() {
   const { data: user } = useWebSession();
@@ -74,7 +74,7 @@ export function HomePage() {
   }
 
   return (
-    <div className="mx-auto grid min-h-[calc(100dvh-7.5rem)] w-full max-w-[100rem] flex-1 gap-5 py-2 lg:grid-cols-3 lg:items-stretch">
+    <div className="mx-auto grid w-full min-w-0 max-w-[100rem] flex-1 gap-4 py-1 md:min-h-[calc(100dvh-7.5rem)] md:gap-5 md:py-2 lg:grid-cols-3 lg:items-stretch">
       <div className="flex min-h-0 flex-col gap-5 lg:col-span-2">
         <div className="flex min-h-0 flex-1 flex-col">
           <HomeHeroCard

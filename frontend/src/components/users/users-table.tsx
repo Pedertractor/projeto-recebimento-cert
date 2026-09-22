@@ -1,5 +1,9 @@
 import { Badge } from '@/components/ui/badge';
 import {
+  MobileListCard,
+  MobileListCardRow,
+} from '@/components/ui/mobile-list-card';
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,7 +30,38 @@ export function UsersTable({ users, onRowClick }: UsersTableProps) {
   }
 
   return (
-    <Table>
+    <>
+      <div className="flex flex-col gap-3 p-3 md:hidden">
+        {users.map((user) => (
+          <MobileListCard key={user.id} onClick={() => onRowClick(user)}>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-semibold">{user.name ?? '—'}</p>
+                <Badge variant={user.status ? 'default' : 'destructive'}>
+                  {user.status ? 'Ativo' : 'Inativo'}
+                </Badge>
+              </div>
+              <div className="grid gap-2">
+                <MobileListCardRow label="Cartão" value={user.cardNumber} />
+                <MobileListCardRow
+                  label="Unidade"
+                  value={UNIT_LABELS[user.unit]}
+                />
+                <MobileListCardRow label="Matrícula" value={user.employeeId} />
+                <MobileListCardRow
+                  label="Perfil"
+                  value={
+                    <Badge variant="secondary">{roleLabel(user.role)}</Badge>
+                  }
+                />
+              </div>
+            </div>
+          </MobileListCard>
+        ))}
+      </div>
+
+      <div className="hidden md:block">
+      <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Nome</TableHead>
@@ -69,5 +104,7 @@ export function UsersTable({ users, onRowClick }: UsersTableProps) {
         ))}
       </TableBody>
     </Table>
+      </div>
+    </>
   );
 }

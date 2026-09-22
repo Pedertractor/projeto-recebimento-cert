@@ -77,14 +77,12 @@ export function DocQualidadePage() {
   });
 
   return (
-    <div className="relative mx-auto flex min-h-[calc(100dvh-7.5rem)] w-full max-w-3xl flex-col gap-8">
-      <div className="relative z-10 flex flex-col gap-8">
-        <div className="flex justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Doc qualidade
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+    <div className="page-container-narrow relative md:min-h-[calc(100dvh-7.5rem)] md:gap-8">
+      <div className="relative z-10 flex flex-col gap-6 md:gap-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="page-heading">Doc qualidade</h1>
+            <p className="page-lead">
               Versões imutáveis por ano, vinculadas às notas fiscais.
             </p>
           </div>
@@ -93,7 +91,7 @@ export function DocQualidadePage() {
             src="/pedertractor_tractorcomponents_azul.svg"
             alt=""
             aria-hidden
-            className="w-30"
+            className="hidden w-30 shrink-0 sm:block"
           />
         </div>
 
@@ -107,7 +105,7 @@ export function DocQualidadePage() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <div className="space-y-1.5 sm:w-28">
+              <div className="w-full space-y-1.5 sm:w-28">
                 <Label htmlFor="qualityDocumentYear">Ano</Label>
                 <Input
                   id="qualityDocumentYear"
@@ -121,7 +119,7 @@ export function DocQualidadePage() {
 
               <div className="min-w-0 flex-1 space-y-1.5">
                 <Label htmlFor="qualityDocumentFile">Documento</Label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <Input
                     readOnly
                     value={documentFile?.name ?? ''}
@@ -131,6 +129,7 @@ export function DocQualidadePage() {
                   <Button
                     type="button"
                     variant="outline"
+                    className="w-full sm:w-auto"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     Escolher
@@ -149,7 +148,7 @@ export function DocQualidadePage() {
               </div>
 
               <Button
-                className="bg-brand text-brand-foreground hover:bg-brand/90 sm:shrink-0"
+                className="w-full bg-brand text-brand-foreground hover:bg-brand/90 sm:w-auto sm:shrink-0"
                 disabled={
                   !documentFile || !isValidYear || createMutation.isPending
                 }

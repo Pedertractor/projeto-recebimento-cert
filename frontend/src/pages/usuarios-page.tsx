@@ -39,11 +39,11 @@ export function UsuariosPage() {
   } = useUsersPage();
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <div className="page-container">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Usuários</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+        <div className="min-w-0">
+          <h1 className="page-heading">Usuários</h1>
+          <p className="page-lead">
             Gerencie os usuários do sistema.
           </p>
         </div>

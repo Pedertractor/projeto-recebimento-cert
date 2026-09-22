@@ -181,9 +181,9 @@ export function CertificateRequestDetailView({
       request.status === 'CONCLUIDA');
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <div className="page-container">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           <Button asChild variant="ghost" className="-ml-2 w-fit px-2">
             <Link to={backHref}>
               <ArrowLeft className="size-4" />
@@ -192,9 +192,7 @@ export function CertificateRequestDetailView({
           </Button>
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Solicitação #{request.id}
-              </h1>
+              <h1 className="page-heading">Solicitação #{request.id}</h1>
               <RequestStatusBadge status={request.status} />
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -271,7 +269,7 @@ export function CertificateRequestDetailView({
               </p>
             </div>
             <Button
-              className="bg-brand text-brand-foreground hover:bg-brand/90"
+              className="h-auto w-full whitespace-normal bg-brand px-4 py-3 text-center text-brand-foreground hover:bg-brand/90 sm:w-auto sm:py-2"
               disabled={registerContactMutation.isPending}
               onClick={() => registerContactMutation.mutate()}
             >

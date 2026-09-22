@@ -48,11 +48,19 @@ function AppShellContent() {
       <AppSidebar />
       <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {hideHeader ? null : (
-          <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
+          <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 max-md:px-3 md:px-4">
             <div className="flex min-w-0 flex-1 items-center gap-2">
-              <SidebarTrigger className="-ml-1" />
+              <SidebarTrigger className="-ml-1 size-9 max-md:size-10" />
             </div>
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex shrink-0 items-center gap-2 md:gap-3">
+              <div className="max-w-[7.5rem] min-w-0 leading-tight sm:hidden">
+                <p className="truncate text-xs font-medium text-brand">
+                  Pedertractor
+                </p>
+                <p className="truncate text-[10px] text-foreground/70">
+                  &amp; TractorComponents
+                </p>
+              </div>
               <div className="hidden leading-tight sm:block">
                 <p className="text-sm text-brand">Pedertractor</p>
                 <p className="text-xs text-foreground/70">
@@ -70,7 +78,7 @@ function AppShellContent() {
             'app-scrollbar flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]',
             hideHeader
               ? 'overflow-hidden p-0'
-              : 'p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 md:p-6 md:pt-6 md:pb-6',
+              : 'px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-4 md:p-6 md:pt-6 md:pb-6',
           )}
           onScroll={handlePageScroll}
         >

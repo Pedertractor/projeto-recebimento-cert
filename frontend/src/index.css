@@ -142,6 +142,28 @@
   }
 }
 
+@layer components {
+  .page-container {
+    @apply mx-auto flex w-full min-w-0 flex-col gap-5 md:max-w-6xl md:gap-6;
+  }
+
+  .page-container-narrow {
+    @apply mx-auto flex w-full min-w-0 flex-col gap-5 md:max-w-3xl md:gap-6;
+  }
+
+  .page-container-wide {
+    @apply mx-auto flex w-full min-w-0 flex-col gap-5 md:max-w-7xl md:gap-6;
+  }
+
+  .page-heading {
+    @apply text-xl font-semibold tracking-tight md:text-2xl;
+  }
+
+  .page-lead {
+    @apply mt-1 text-sm text-muted-foreground;
+  }
+}
+
 @media print {
   body * {
     visibility: hidden;

@@ -18,6 +18,11 @@ import {
   certificateRequestDetailQueryKey,
 } from '@/services/certificate-requests/certificate-request.service';
 import {
+  hasPendingConferencePrint,
+  subscribePendingConferencePrint,
+  takePendingConferencePrint,
+} from '@/utils/conference-print-buffer';
+import {
   readImageFileFromClipboard,
   readImageFileFromClipboardApi,
 } from '@/utils/clipboard-image';
@@ -45,6 +50,7 @@ export function LotConferenceCard({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPasteFocused, setIsPasteFocused] = useState(false);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+  const [hasCopiedPage, setHasCopiedPage] = useState(hasPendingConferencePrint);
 
   const canImportFromPdf =
     purchaseCertificate !== null && isPdfFile(purchaseCertificate.fileName);
@@ -84,6 +90,12 @@ export function LotConferenceCard({
     };
   }, [previewUrl]);
 
+  useEffect(() => {
+    return subscribePendingConferencePrint(() => {
+      setHasCopiedPage(hasPendingConferencePrint());
+    });
+  }, []);
+
   const inspection = printAttachment?.inspection ?? null;
   const isInvalid = printAttachment?.validity === 'INVALID';
   const statusLabel = inspection
@@ -119,7 +131,22 @@ export function LotConferenceCard({
     await uploadPrintFile(pastedFile);
   }
 
+  async function applyPendingCopiedPage(): Promise<void> {
+    const pendingFile = takePendingConferencePrint();
+    if (!pendingFile) {
+      toast.message('Nenhuma página copiada. Use "Copiar página" na nota fiscal.');
+      return;
+    }
+
+    await uploadPrintFile(pendingFile);
+  }
+
   async function handlePasteButtonClick(): Promise<void> {
+    if (hasPendingConferencePrint()) {
+      await applyPendingCopiedPage();
+      return;
+    }
+
     pasteAreaRef.current?.focus();
 
     try {
@@ -132,7 +159,9 @@ export function LotConferenceCard({
       // Clipboard API may require explicit user gesture or permission.
     }
 
-    toast.message('Use Ctrl+V para colar a imagem neste lote.');
+    toast.message(
+      'Copie a página na nota fiscal ou use Ctrl+V para colar neste lote.',
+    );
   }
 
   return (
@@ -196,7 +225,9 @@ export function LotConferenceCard({
                 Cole aqui o print do certificado
               </p>
               <p className="text-xs text-muted-foreground">
-                Clique em &quot;Colar print&quot; ou use Ctrl+V
+                {hasCopiedPage
+                  ? 'Há uma página copiada da NF — use o botão abaixo.'
+                  : 'Clique em "Colar print" ou use Ctrl+V'}
               </p>
             </>
           )}
@@ -232,9 +263,29 @@ export function LotConferenceCard({
 
       {!printAttachment ? (
         <div className="mt-4 space-y-2">
+          {hasCopiedPage ? (
+            <Button
+              type="button"
+              className="w-full bg-brand text-brand-foreground hover:bg-brand/90"
+              disabled={uploadMutation.isPending}
+              onClick={() => void applyPendingCopiedPage()}
+            >
+              {uploadMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ClipboardPaste className="size-4" />
+              )}
+              Usar página copiada
+            </Button>
+          ) : null}
           <Button
             type="button"
-            className="w-full bg-brand text-brand-foreground hover:bg-brand/90"
+            variant={hasCopiedPage ? 'outline' : 'default'}
+            className={
+              hasCopiedPage
+                ? 'w-full'
+                : 'w-full bg-brand text-brand-foreground hover:bg-brand/90'
+            }
             disabled={uploadMutation.isPending}
             onClick={() => void handlePasteButtonClick()}
           >

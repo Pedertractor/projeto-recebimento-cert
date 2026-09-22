@@ -170,16 +170,28 @@ export function PdfPageViewer({
     setPageNumber(Math.min(Math.max(nextPage, 1), totalPages));
   }
 
+  const canCopyPage =
+    Boolean(document && previewUrl) &&
+    !isLoading &&
+    !isRendering &&
+    !isCopying;
+
   async function handleCopyPage(): Promise<void> {
-    if (!document) {
+    if (!document || !canCopyPage) {
       return;
     }
 
     setIsCopying(true);
 
     try {
-      await copyPdfPageToClipboard(document, pageNumber);
-      toast.success(`Página ${pageNumber} copiada. Cole no lote com Ctrl+V.`);
+      const result = await copyPdfPageToClipboard(document, pageNumber);
+      if (result === 'clipboard') {
+        toast.success(`Página ${pageNumber} copiada. Cole no lote com Ctrl+V.`);
+      } else {
+        toast.success(
+          `Página ${pageNumber} pronta. Toque em "Usar página copiada" no lote desejado.`,
+        );
+      }
     } catch (error) {
       const message =
         error instanceof Error
@@ -195,11 +207,19 @@ export function PdfPageViewer({
 
   return (
     <>
-      <div className={cn('flex min-h-0 flex-1 flex-col gap-3', className)}>
+      <div
+        className={cn(
+          'flex min-h-0 flex-col gap-2 sm:gap-3',
+          compact ? 'flex-1' : 'max-md:flex-none md:flex-1',
+          className,
+        )}
+      >
         <div
           className={cn(
-            'relative min-h-0 flex-1 overflow-hidden rounded-xl bg-muted/30 ring-1 ring-border/50',
-            compact ? 'min-h-48' : 'min-h-56',
+            'relative shrink-0 overflow-hidden rounded-xl bg-muted/30 ring-1 ring-border/50',
+            compact
+              ? 'min-h-48 md:flex-1 md:min-h-0'
+              : 'h-[min(48dvh,20rem)] md:min-h-56 md:h-auto md:flex-1',
           )}
         >
           {showInitialLoader ? (
@@ -256,57 +276,62 @@ export function PdfPageViewer({
         </div>
 
         {totalPages > 0 ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              disabled={pageNumber <= 1}
-              onClick={() => goToPage(pageNumber - 1)}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="min-w-24 text-center text-xs text-muted-foreground">
-              Página {pageNumber} de {totalPages}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              disabled={pageNumber >= totalPages}
-              onClick={() => goToPage(pageNumber + 1)}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-            {showExpandButton ? (
+          <div className="flex w-full min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-start">
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                disabled={!previewUrl}
-                onClick={() => setExpandOpen(true)}
+                size="icon-sm"
+                disabled={pageNumber <= 1}
+                onClick={() => goToPage(pageNumber - 1)}
               >
-                <Expand className="size-4" />
-                Ampliar
+                <ChevronLeft className="size-4" />
               </Button>
-            ) : null}
-            {showCopyButton ? (
+              <span className="min-w-24 text-center text-xs text-muted-foreground">
+                Página {pageNumber} de {totalPages}
+              </span>
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className={showExpandButton ? undefined : 'ml-auto'}
-                disabled={isCopying || !previewUrl}
-                onClick={() => void handleCopyPage()}
+                size="icon-sm"
+                disabled={pageNumber >= totalPages}
+                onClick={() => goToPage(pageNumber + 1)}
               >
-                {isCopying ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Copy className="size-4" />
-                )}
-                Copiar página
+                <ChevronRight className="size-4" />
               </Button>
-            ) : null}
+            </div>
+            <div className="grid w-full grid-cols-1 gap-2 sm:ml-auto sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+              {showExpandButton ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  disabled={!previewUrl}
+                  onClick={() => setExpandOpen(true)}
+                >
+                  <Expand className="size-4" />
+                  Ampliar
+                </Button>
+              ) : null}
+              {showCopyButton ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  disabled={!canCopyPage}
+                  onClick={() => void handleCopyPage()}
+                >
+                  {isCopying ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                  Copiar página
+                </Button>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </div>
@@ -371,7 +396,7 @@ export function PdfPageViewer({
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={isCopying || !previewUrl}
+                  disabled={!canCopyPage}
                   onClick={() => void handleCopyPage()}
                 >
                   {isCopying ? (

@@ -79,11 +79,11 @@ export function InvoiceAttachmentCard({
   }
 
   return (
-    <section className="flex h-full min-h-88 flex-col rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6 lg:min-h-112">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Paperclip className="size-4 text-brand" />
-          <div>
+    <section className="flex w-full min-w-0 flex-col rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/60 sm:p-6 md:h-full md:min-h-88 lg:min-h-112">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-2">
+          <Paperclip className="mt-0.5 size-4 shrink-0 text-brand" />
+          <div className="min-w-0">
             <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
               {title}
             </h2>
@@ -98,6 +98,7 @@ export function InvoiceAttachmentCard({
               type="button"
               variant="ghost"
               size="sm"
+              className="w-full shrink-0 sm:w-auto"
               disabled={updateMutation.isPending}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -119,15 +120,15 @@ export function InvoiceAttachmentCard({
         ) : null}
       </div>
 
-      <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3">
+      <div className="mt-4 flex w-full min-w-0 flex-col gap-3 md:min-h-0 md:flex-1">
         {attachment ? (
           <>
-            <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl bg-muted/30 ring-1 ring-border/50">
+            <div className="relative w-full min-w-0 rounded-xl bg-muted/30 ring-1 ring-border/50 max-md:overflow-visible md:min-h-0 md:flex-1 md:overflow-hidden">
               {isImageFile(attachment.fileName) ? (
                 <img
                   src={resolveAttachmentUrl(attachment.storagePath)}
                   alt={attachment.fileName}
-                  className="size-full object-contain"
+                  className="max-h-[min(58dvh,26rem)] w-full object-contain md:max-h-none md:size-full"
                 />
               ) : isPdfFile(attachment.fileName) ? (
                 <PdfPageViewer
@@ -135,7 +136,7 @@ export function InvoiceAttachmentCard({
                   pdfUrl={resolveAttachmentUrl(attachment.storagePath)}
                   showCopyButton
                   expandDialogTitle="Nota fiscal"
-                  className="size-full p-2"
+                  className="w-full min-h-0 max-md:flex-none md:size-full md:p-2"
                 />
               ) : (
                 <div className="flex size-full flex-col items-center justify-center gap-2 p-4 text-center">
@@ -150,15 +151,16 @@ export function InvoiceAttachmentCard({
 
             {isPdfFile(attachment.fileName) ? (
               <p className="text-xs text-muted-foreground">
-                Navegue pelas páginas e use &quot;Copiar página&quot; para colar
-                no lote, ou importe direto pelo botão em cada lote.
+                Navegue pelas páginas, toque em &quot;Copiar página&quot; e use
+                &quot;Usar página copiada&quot; no lote (no celular). No
+                computador, você também pode colar com Ctrl+V.
               </p>
             ) : null}
 
             <RequestAttachmentActions attachment={attachment} compact />
           </>
         ) : (
-          <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl bg-muted/20 px-4 py-8 text-center ring-1 ring-border/50">
+          <div className="flex w-full min-w-0 items-center justify-center rounded-xl bg-muted/20 px-4 py-10 text-center ring-1 ring-border/50 max-md:min-h-[12rem] md:min-h-0 md:flex-1">
             <p className="text-sm text-muted-foreground">{emptyMessage}</p>
           </div>
         )}

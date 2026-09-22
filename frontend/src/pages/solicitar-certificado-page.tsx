@@ -196,12 +196,10 @@ export function SolicitarCertificadoPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Cadastrar NF de materiais
-        </h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+    <div className="page-container-narrow md:gap-8">
+      <div className="min-w-0">
+        <h1 className="page-heading">Cadastrar NF de materiais</h1>
+        <p className="page-lead max-w-2xl">
           Siga as etapas. No final, anexe a nota se já tiver o arquivo ou peça
           ao compras para solicitá-la.
         </p>
@@ -491,11 +489,16 @@ export function SolicitarCertificadoPage() {
               <Button
                 type="button"
                 variant="ghost"
+                className="w-full sm:w-auto"
                 onClick={() => navigate('/')}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={mutation.isPending}>
+              <Button
+                type="submit"
+                className="w-full sm:w-auto"
+                disabled={mutation.isPending}
+              >
                 {mutation.isPending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
@@ -536,7 +539,7 @@ function FormTimelineStep({
   children: ReactNode;
 }) {
   return (
-    <li className="relative flex gap-4 pb-10 last:pb-0">
+    <li className="relative flex gap-3 pb-8 last:pb-0 max-md:gap-3 md:gap-4 md:pb-10">
       {isLast ? null : (
         <span
           aria-hidden

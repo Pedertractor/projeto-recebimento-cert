@@ -216,10 +216,13 @@ export function HomeHeroCard({
 
       
 
-      <div ref={buttonWrapRef} className="absolute right-0 bottom-0 z-10">
+      <div
+        ref={buttonWrapRef}
+        className="absolute right-0 bottom-0 z-10 max-md:inset-x-4 max-md:bottom-3 max-md:right-auto md:right-0"
+      >
         <Link
           to={actionTo}
-          className="group inline-flex items-center gap-2 bg-brand px-[clamp(1.1rem,2vw,1.75rem)] py-[clamp(0.7rem,1.4vh,1rem)] text-[clamp(0.875rem,1.05vw,1.0625rem)] font-medium text-brand-foreground shadow-sm transition-colors hover:bg-brand/90"
+          className="group inline-flex w-full items-center justify-center gap-2 bg-brand px-[clamp(1.1rem,2vw,1.75rem)] py-[clamp(0.7rem,1.4vh,1rem)] text-[clamp(0.875rem,1.05vw,1.0625rem)] font-medium text-brand-foreground shadow-sm transition-colors hover:bg-brand/90 max-md:min-h-11 md:w-auto md:justify-start"
           style={{ borderRadius: BUTTON_RADIUS }}
         >
           {actionLabel}

@@ -6,6 +6,10 @@ import { Form084PreviewDialog } from '@/components/conference/form-084-preview-d
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { Button } from '@/components/ui/button';
 import {
+  MobileListCard,
+  MobileListCardRow,
+} from '@/components/ui/mobile-list-card';
+import {
   Table,
   TableBody,
   TableCell,
@@ -60,8 +64,99 @@ export function CertificateRequestsTable({
     );
   }
 
+  function resolveStatus(request: CertificateRequest) {
+    return variant === 'conference'
+      ? getNfConferenceStatus(request)
+      : request.status;
+  }
+
   return (
     <>
+      <div className="flex flex-col gap-3 p-3 md:hidden">
+        {requests.map((request) => {
+          const status = resolveStatus(request);
+
+          return (
+            <MobileListCard
+              key={request.id}
+              onClick={() => navigate(detailPath(request.id))}
+            >
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold">Solicitação #{request.id}</p>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {request.supplier.name}
+                    </p>
+                  </div>
+                  <RequestStatusBadge status={status} />
+                </div>
+                <div className="grid gap-2">
+                  <MobileListCardRow
+                    label="Nº NF"
+                    value={request.invoiceNumber}
+                  />
+                  <MobileListCardRow
+                    label="Lotes"
+                    value={request.expectedCertificates}
+                  />
+                  {variant === 'conference' ? (
+                    <MobileListCardRow
+                      label="Comparados"
+                      value={`${getInspectedCertificatesCount(request)}/${request.expectedCertificates}`}
+                    />
+                  ) : null}
+                  <MobileListCardRow
+                    label="Data NF"
+                    value={formatRequestDate(request.invoiceDate)}
+                  />
+                  <MobileListCardRow
+                    label={variant === 'purchase' ? 'Solicitante' : 'Abertura'}
+                    value={
+                      variant === 'purchase'
+                        ? (request.createdByName ?? 'Operador de estoque')
+                        : formatRequestDate(request.submittedAt)
+                    }
+                  />
+                </div>
+                {variant === 'conference' ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1.5"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openForm084(request);
+                    }}
+                  >
+                    <FileText className="size-4" aria-hidden />
+                    Visualizar FORM-084
+                  </Button>
+                ) : null}
+                {nfShortcutPath ? (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1.5"
+                  >
+                    <Link
+                      to={nfShortcutPath(request.id)}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      Ir para NF
+                      <ArrowRight className="size-4" aria-hidden />
+                    </Link>
+                  </Button>
+                ) : null}
+              </div>
+            </MobileListCard>
+          );
+        })}
+      </div>
+
+      <div className="hidden md:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -160,6 +255,7 @@ export function CertificateRequestsTable({
           ))}
         </TableBody>
       </Table>
+      </div>
       {variant === 'conference' ? (
         <Form084PreviewDialog
           request={form084Request}

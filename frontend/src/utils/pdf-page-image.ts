@@ -4,6 +4,8 @@ import {
   type PDFDocumentProxy,
 } from 'pdfjs-dist';
 
+import { setPendingConferencePrint } from '@/utils/conference-print-buffer';
+
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 /** Preview in the viewer — lighter for navigation. */
@@ -85,20 +87,34 @@ export async function renderPdfPageToFile(
   return new File([blob], fileName, { type: 'image/png' });
 }
 
+export type CopyPdfPageResult = 'clipboard' | 'internal';
+
 export async function copyPdfPageToClipboard(
   document: PDFDocumentProxy,
   pageNumber: number,
   scale = CONFERENCE_PRINT_RENDER_SCALE,
-): Promise<void> {
+): Promise<CopyPdfPageResult> {
   const blob = await renderPdfPageToBlob(document, pageNumber, scale);
+  const file = new File([blob], `nf-pagina-${pageNumber}.png`, {
+    type: 'image/png',
+  });
 
-  if (!navigator.clipboard?.write) {
-    throw new Error('Seu navegador não suporta copiar imagens para a área de transferência.');
+  if (
+    typeof ClipboardItem !== 'undefined' &&
+    navigator.clipboard?.write
+  ) {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'image/png': blob,
+        }),
+      ]);
+      return 'clipboard';
+    } catch {
+      // Safari/iOS e outros mobile costumam falhar com image/png no clipboard.
+    }
   }
 
-  await navigator.clipboard.write([
-    new ClipboardItem({
-      'image/png': blob,
-    }),
-  ]);
+  setPendingConferencePrint(file);
+  return 'internal';
 }
