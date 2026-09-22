@@ -166,6 +166,12 @@ export function CertificateRequestDetailView({
     request.status === 'AGUARDANDO_FORNECEDOR' &&
     attachedCount >= 1;
 
+  const showPurchaseDocumentPendingSupplierEmail =
+    isPurchaseView &&
+    request.status === 'AGUARDANDO_COMPRAS' &&
+    request.supplierContactAt == null &&
+    invoiceAttachment != null;
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -230,12 +236,13 @@ export function CertificateRequestDetailView({
         ) : null}
       </div>
 
-      {invoiceAttachment && (
-        <div className="text-sm text-destructive">
-          O documento anexo está imcompleto. Solicite ao fornecedor que envie o
-          documento completo.
+      {showPurchaseDocumentPendingSupplierEmail ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+          Há um documento anexado na solicitação, mas o e-mail ao fornecedor
+          ainda não foi registrado. Envie a solicitação ao fornecedor e confirme
+          o envio na seção abaixo.
         </div>
-      )}
+      ) : null}
 
       {canRegisterSupplierContact ? (
         <section className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border/60 sm:p-6">
