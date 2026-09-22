@@ -31,6 +31,8 @@ import { useWebSession } from '@/hooks/auth/use-web-session';
 import {
   canAccessPurchaseModules,
   canAccessStockModules,
+  getDefaultRouteForRole,
+  isPurchaseOnlyOperator,
 } from '@/lib/role-access';
 import { isSuperAdminRole } from '@/lib/user-labels';
 
@@ -94,16 +96,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isSuperAdmin = isSuperAdminRole(user?.role);
   const canUseStockModules = canAccessStockModules(user?.role);
   const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
+  const purchaseOnly = isPurchaseOnlyOperator(user?.role);
+  const appRootHref = getDefaultRouteForRole(user?.role);
 
-  const homeItems: SidebarNavItem[] = [
-    {
-      label: 'Início',
-      href: '/',
-      tooltip: 'Início',
-      icon: House,
-      isActive: (path) => path === '/',
-    },
-  ];
+  const homeItems: SidebarNavItem[] = purchaseOnly
+    ? []
+    : [
+        {
+          label: 'Início',
+          href: '/',
+          tooltip: 'Início',
+          icon: House,
+          isActive: (path) => path === '/',
+        },
+      ];
 
   const stockItems: SidebarNavItem[] = canUseStockModules
     ? [
@@ -189,7 +195,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               tooltip="Confere NF"
               className="hover:bg-transparent group-data-[collapsible=icon]:justify-center"
             >
-              <Link to="/">
+              <Link to={appRootHref}>
                 <div className="flex aspect-square size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
                   <BrandMark
                     logoSrc={APP_LOGO_SRC}

@@ -1,5 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { MotionIconProvider } from '@/components/motion-icon-provider';
+import { DefaultRouteRedirect } from '@/components/auth/default-route-redirect';
+import { HomeRoute } from '@/components/auth/home-route';
 import { RequireSuperAdmin } from '@/components/auth/require-admin';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { RequirePurchaseOperator } from '@/components/auth/require-purchase-operator';
@@ -11,7 +13,6 @@ import { LoginPage } from '@/pages/auth/login-page';
 import { CertificateComparisonPage } from '@/pages/certificate-comparison-page';
 import { DocQualidadePage } from '@/pages/doc-qualidade-page';
 import { FornecedoresPage } from '@/pages/fornecedores-page';
-import { HomePage } from '@/pages/home-page';
 import { MinhasSolicitacoesPage } from '@/pages/minhas-solicitacoes-page';
 import { NotaFiscalDetailPage } from '@/pages/nota-fiscal-detail-page';
 import { NotasFiscaisPage } from '@/pages/notas-fiscais-page';
@@ -30,7 +31,7 @@ export function AppRouter() {
             <Route path="/login" element={<LoginPage />} />
             <Route element={<RequireAuth />}>
               <Route element={<AppShell />}>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<HomeRoute />} />
                 <Route element={<RequireStockOperator />}>
                   <Route path="/doc-qualidade" element={<DocQualidadePage />} />
                   <Route
@@ -78,7 +79,7 @@ export function AppRouter() {
                 </Route>
               </Route>
             </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<DefaultRouteRedirect />} />
           </Routes>
           <Toaster />
         </MotionIconProvider>

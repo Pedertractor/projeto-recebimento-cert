@@ -11,6 +11,7 @@ import type { PublicUser } from '@/types/user';
 import type { Unit } from '@/types/unit';
 import { parseCardNumberInput } from '@/utils/card-number';
 import { useWebSession } from '@/hooks/auth/use-web-session';
+import { getDefaultRouteForRole } from '@/lib/role-access';
 
 export type LoginFlowStep = 'credentials' | 'firstLoginPassword';
 
@@ -107,7 +108,7 @@ export function useLoginPage() {
       return;
     }
 
-    navigate('/', { replace: true });
+    navigate(getDefaultRouteForRole(sessionUser.role), { replace: true });
   }, [isSessionPending, isSuccess, sessionUser, navigate]);
 
   function updateField<K extends keyof LoginFormState>(
@@ -160,7 +161,7 @@ export function useLoginPage() {
       return;
     }
 
-    navigate('/', { replace: true });
+    navigate(getDefaultRouteForRole(response.user.role), { replace: true });
   }
 
   async function submitFirstLoginPassword(): Promise<void> {
@@ -186,7 +187,7 @@ export function useLoginPage() {
     });
 
     queryClient.setQueryData(webSessionQueryKey, response.user);
-    navigate('/', { replace: true });
+    navigate(getDefaultRouteForRole(response.user.role), { replace: true });
   }
 
   async function submit(): Promise<void> {

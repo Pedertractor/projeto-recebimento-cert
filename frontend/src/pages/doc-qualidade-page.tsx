@@ -78,21 +78,23 @@ export function DocQualidadePage() {
 
   return (
     <div className="relative mx-auto flex min-h-[calc(100dvh-7.5rem)] w-full max-w-3xl flex-col gap-8">
-      <img
-        src="/pedertractor_tractorcomponents_azul.svg"
-        alt=""
-        aria-hidden
-        className="pointer-events-none absolute top-1/2 left-1/2 z-0 w-[min(92%,40rem)] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-[0.03] select-none"
-      />
-
       <div className="relative z-10 flex flex-col gap-8">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Doc qualidade
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Versões imutáveis por ano, vinculadas às notas fiscais.
-          </p>
+        <div className="flex justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Doc qualidade
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Versões imutáveis por ano, vinculadas às notas fiscais.
+            </p>
+          </div>
+
+          <img
+            src="/pedertractor_tractorcomponents_azul.svg"
+            alt=""
+            aria-hidden
+            className="w-30"
+          />
         </div>
 
         <section className="space-y-8">

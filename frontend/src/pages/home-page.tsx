@@ -2,12 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 
 import { HomeActionTile } from '@/components/home/home-action-tile';
 import { HomeHeroCard } from '@/components/home/home-hero-card';
-import { PurchaseHomePanel } from '@/components/home/purchase-home-panel';
 import { useWebSession } from '@/hooks/auth/use-web-session';
-import {
-  canAccessPurchaseModules,
-  canAccessStockModules,
-} from '@/lib/role-access';
+import { canAccessStockModules } from '@/lib/role-access';
 import {
   isNfConferenceComplete,
   isNfMissingLotComparisons,
@@ -17,8 +13,6 @@ import {
   completedCertificateRequestsQueryKey,
   listCertificateRequests,
   listCompletedCertificateRequests,
-  listPurchaseCertificateRequests,
-  purchaseCertificateRequestsListQueryKey,
 } from '@/services/certificate-requests/certificate-request.service';
 
 function HomeStatCard({ value, label }: { value: number; label: string }) {
@@ -38,8 +32,6 @@ const homeActionTileClassName =
 export function HomePage() {
   const { data: user } = useWebSession();
   const canUseStockModules = canAccessStockModules(user?.role);
-  const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
-  const isPurchaseHome = canUsePurchaseModules && !canUseStockModules;
 
   const stockRequestsQuery = useQuery({
     queryKey: certificateRequestsListQueryKey,
@@ -51,12 +43,6 @@ export function HomePage() {
     queryKey: completedCertificateRequestsQueryKey,
     queryFn: listCompletedCertificateRequests,
     enabled: canUseStockModules,
-  });
-
-  const purchaseRequestsQuery = useQuery({
-    queryKey: purchaseCertificateRequestsListQueryKey,
-    queryFn: listPurchaseCertificateRequests,
-    enabled: isPurchaseHome,
   });
 
   const requests = stockRequestsQuery.data;
@@ -74,7 +60,7 @@ export function HomePage() {
   const completedNfsCount =
     conferenceRequests?.filter(isNfConferenceComplete).length ?? 0;
 
-  if (!canUseStockModules && !canUsePurchaseModules) {
+  if (!canUseStockModules) {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 py-4">
         <div className="rounded-2xl border bg-card px-6 py-8 text-center shadow-sm">
@@ -83,52 +69,6 @@ export function HomePage() {
             para o seu perfil.
           </p>
         </div>
-      </div>
-    );
-  }
-
-  if (isPurchaseHome) {
-    const purchaseRequests = purchaseRequestsQuery.data ?? [];
-    const openPurchaseRequests = purchaseRequests.filter(
-      (request) =>
-        request.status !== 'CONCLUIDA' && request.status !== 'CANCELADA',
-    );
-    const withoutEmailCount = openPurchaseRequests.filter(
-      (request) => request.status === 'AGUARDANDO_COMPRAS',
-    ).length;
-    const awaitingReplyCount = openPurchaseRequests.filter(
-      (request) => request.status === 'AGUARDANDO_FORNECEDOR',
-    ).length;
-
-    return (
-      <div className="mx-auto grid min-h-[calc(100dvh-7.5rem)] w-full max-w-[100rem] flex-1 gap-5 py-2 lg:grid-cols-3 lg:items-stretch">
-        <div className="flex min-h-0 flex-col gap-5 lg:col-span-2">
-          <div className="flex min-h-0 flex-1 flex-col">
-            <HomeHeroCard
-              fill
-              title="Solicitações de certificado"
-              description="Anexe o PDF com a NF e os certificados para concluir cada pedido."
-              actionLabel="Abrir solicitações"
-              actionTo="/compras/solicitacoes"
-            />
-          </div>
-
-          <div className="grid shrink-0 grid-cols-1 divide-y divide-border overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-            <HomeStatCard
-              value={withoutEmailCount}
-              label="Solicitações sem envio de e-mail"
-            />
-            <HomeStatCard
-              value={awaitingReplyCount}
-              label="Aguardando retorno de e-mail"
-            />
-          </div>
-        </div>
-        <PurchaseHomePanel
-          requests={purchaseRequestsQuery.data}
-          isLoading={purchaseRequestsQuery.isLoading}
-          isError={purchaseRequestsQuery.isError}
-        />
       </div>
     );
   }
