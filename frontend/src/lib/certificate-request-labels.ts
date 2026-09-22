@@ -30,6 +30,24 @@ export function getInspectedCertificatesCount(
   return lots.size;
 }
 
+export function isNfMissingLotComparisons(
+  request: CertificateRequest,
+): boolean {
+  if (request.status === 'CANCELADA') {
+    return false;
+  }
+
+  return (
+    getInspectedCertificatesCount(request) < request.expectedCertificates
+  );
+}
+
+export function isNfConferenceComplete(
+  request: CertificateRequest,
+): boolean {
+  return getNfConferenceStatus(request) === 'CONCLUIDA';
+}
+
 export function getNfConferenceStatus(
   request: CertificateRequest,
 ): NfConferenceStatus {

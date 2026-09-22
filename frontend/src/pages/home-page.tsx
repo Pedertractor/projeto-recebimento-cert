@@ -9,27 +9,17 @@ import {
   canAccessStockModules,
 } from '@/lib/role-access';
 import {
+  isNfConferenceComplete,
+  isNfMissingLotComparisons,
+} from '@/lib/certificate-request-labels';
+import {
   certificateRequestsListQueryKey,
+  completedCertificateRequestsQueryKey,
   listCertificateRequests,
+  listCompletedCertificateRequests,
   listPurchaseCertificateRequests,
   purchaseCertificateRequestsListQueryKey,
 } from '@/services/certificate-requests/certificate-request.service';
-import type { CertificateRequest } from '@/types/certificate-request';
-
-function countByStatus(
-  requests: CertificateRequest[] | undefined,
-  status: CertificateRequest['status'],
-): number {
-  return requests?.filter((request) => request.status === status).length ?? 0;
-}
-
-function countSupplierEmails(
-  requests: CertificateRequest[] | undefined,
-): number {
-  return (
-    requests?.filter((request) => request.supplierContactAt != null).length ?? 0
-  );
-}
 
 function HomeStatCard({ value, label }: { value: number; label: string }) {
   return (
@@ -54,6 +44,12 @@ export function HomePage() {
     enabled: canUseStockModules,
   });
 
+  const conferenceRequestsQuery = useQuery({
+    queryKey: completedCertificateRequestsQueryKey,
+    queryFn: listCompletedCertificateRequests,
+    enabled: canUseStockModules,
+  });
+
   const purchaseRequestsQuery = useQuery({
     queryKey: purchaseCertificateRequestsListQueryKey,
     queryFn: listPurchaseCertificateRequests,
@@ -61,15 +57,19 @@ export function HomePage() {
   });
 
   const requests = stockRequestsQuery.data;
+  const conferenceRequests = conferenceRequestsQuery.data;
 
-  const awaitingPurchaseCount = countByStatus(requests, 'AGUARDANDO_COMPRAS');
-  const supplierEmailCount = countSupplierEmails(requests);
-  const completedCount = countByStatus(requests, 'CONCLUIDA');
   const openRequestsCount =
     requests?.filter(
       (request) =>
         request.status !== 'CONCLUIDA' && request.status !== 'CANCELADA',
     ).length ?? 0;
+
+  const nfsMissingComparisonsCount =
+    conferenceRequests?.filter(isNfMissingLotComparisons).length ?? 0;
+
+  const completedNfsCount =
+    conferenceRequests?.filter(isNfConferenceComplete).length ?? 0;
 
   if (!canUseStockModules && !canUsePurchaseModules) {
     return (
@@ -139,14 +139,14 @@ export function HomePage() {
 
           <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-2xl shadow-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <HomeStatCard
-            value={awaitingPurchaseCount}
-            label="Solicitações ao compras"
+            value={openRequestsCount}
+            label="Solicitações em aberto"
           />
           <HomeStatCard
-            value={supplierEmailCount}
-            label="Envios de e-mail aos fornecedores"
+            value={nfsMissingComparisonsCount}
+            label="NFs sem comparativo em todos os lotes"
           />
-          <HomeStatCard value={completedCount} label="Concluídas" />
+          <HomeStatCard value={completedNfsCount} label="NFs concluídas" />
         </div>
       </div>
 
