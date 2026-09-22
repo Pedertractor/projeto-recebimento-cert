@@ -3,6 +3,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type DragEvent,
   type ReactNode,
 } from 'react';
 import { useForm } from 'react-hook-form';
@@ -67,6 +68,7 @@ export function SolicitarCertificadoPage() {
   const [documentChoiceError, setDocumentChoiceError] = useState<string | null>(
     null,
   );
+  const [isFileDragOver, setIsFileDragOver] = useState(false);
 
   const suppliersQuery = useQuery({
     queryKey: suppliersListQueryKey,
@@ -145,8 +147,7 @@ export function SolicitarCertificadoPage() {
     },
   });
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
-    const file = event.target.files?.[0];
+  function applyInvoiceFile(file: File | undefined): void {
     if (!file) {
       setSelectedFileName(null);
       setValue('invoiceFile', undefined, { shouldValidate: true });
@@ -155,6 +156,19 @@ export function SolicitarCertificadoPage() {
 
     setValue('invoiceFile', file, { shouldValidate: true });
     setSelectedFileName(file.name);
+  }
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
+    applyInvoiceFile(event.target.files?.[0]);
+  }
+
+  function handleFileDrop(event: DragEvent<HTMLButtonElement>): void {
+    event.preventDefault();
+    setIsFileDragOver(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      applyInvoiceFile(file);
+    }
   }
 
   function handleDocumentChoice(choice: DocumentChoice): void {
@@ -351,6 +365,10 @@ export function SolicitarCertificadoPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <DocumentChoiceCard
                 selected={documentChoice === 'have-invoice'}
+                dimmed={
+                  documentChoice !== null &&
+                  documentChoice !== 'have-invoice'
+                }
                 icon={<FileText className="size-5" />}
                 title="Tenho a nota fiscal com certificados"
                 description="Caso já tenha o arquivo, anexe o arquivo agora."
@@ -358,6 +376,10 @@ export function SolicitarCertificadoPage() {
               />
               <DocumentChoiceCard
                 selected={documentChoice === 'request-invoice'}
+                dimmed={
+                  documentChoice !== null &&
+                  documentChoice !== 'request-invoice'
+                }
                 icon={<Mail className="size-5" />}
                 title="Solicitar nota fiscal com certificados"
                 description="Solicita a nota fiscal com certificados ao compras."
@@ -370,44 +392,78 @@ export function SolicitarCertificadoPage() {
             ) : null}
 
             {documentChoice === 'have-invoice' ? (
-              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {selectedFileName ?? 'Anexar o arquivo agora (opcional)'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    PDF ou imagem, até 30 MB.
-                  </p>
-                </div>
-                <div className="flex gap-2">
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setIsFileDragOver(true);
+                  }}
+                  onDragLeave={() => setIsFileDragOver(false)}
+                  onDrop={handleFileDrop}
+                  className={cn(
+                    'flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors',
+                    isFileDragOver
+                      ? 'border-brand bg-brand-muted/40'
+                      : selectedFileName
+                        ? 'border-brand/60 bg-brand-muted/20'
+                        : 'border-muted-foreground/35 bg-muted/20 hover:border-muted-foreground/55 hover:bg-muted/35',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex size-14 items-center justify-center rounded-2xl',
+                      selectedFileName
+                        ? 'bg-brand text-brand-foreground'
+                        : 'bg-background text-muted-foreground shadow-sm ring-1 ring-border',
+                    )}
+                  >
+                    {selectedFileName ? (
+                      <FileUp className="size-7" />
+                    ) : (
+                      <FileText className="size-7" />
+                    )}
+                  </span>
                   {selectedFileName ? (
+                    <>
+                      <p className="max-w-full truncate text-sm font-semibold">
+                        {selectedFileName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Clique para trocar o arquivo · PDF ou imagem, até 30 MB
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold">
+                        Clique ou arraste o arquivo aqui
+                      </p>
+                      <p className="max-w-sm text-xs text-muted-foreground">
+                        Anexe a nota fiscal com certificados. PDF ou imagem, até
+                        30 MB.
+                      </p>
+                    </>
+                  )}
+                </button>
+                {selectedFileName ? (
+                  <div className="flex justify-end">
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
+                      className="text-muted-foreground"
                       onClick={() => {
-                        setSelectedFileName(null);
-                        setValue('invoiceFile', undefined, {
-                          shouldValidate: true,
-                        });
+                        applyInvoiceFile(undefined);
                         if (fileInputRef.current) {
                           fileInputRef.current.value = '';
                         }
                       }}
                     >
-                      Remover
+                      Remover arquivo
                     </Button>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <FileUp className="size-4" />
-                    Escolher arquivo
-                  </Button>
-                </div>
+                  </div>
+                ) : null}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -515,12 +571,14 @@ function FormTimelineStep({
 
 function DocumentChoiceCard({
   selected,
+  dimmed = false,
   icon,
   title,
   description,
   onSelect,
 }: {
   selected: boolean;
+  dimmed?: boolean;
   icon: ReactNode;
   title: string;
   description: string;
@@ -532,10 +590,11 @@ function DocumentChoiceCard({
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        'flex h-full flex-col gap-2 rounded-2xl px-4 py-4 text-left transition-colors',
+        'flex h-full flex-col gap-2 rounded-2xl px-4 py-4 text-left transition-[colors,opacity]',
         selected
           ? 'bg-brand-muted text-foreground'
           : 'bg-muted/50 text-foreground hover:bg-muted',
+        dimmed && 'opacity-40 saturate-50 hover:opacity-55',
       )}
     >
       <span
