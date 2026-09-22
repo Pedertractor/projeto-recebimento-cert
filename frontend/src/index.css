@@ -54,11 +54,11 @@
 :root {
   /* Paleta verde — Certificado de Qualidade
      #8aae8a · #a4c4a4 · #c0d8c0 · #d4e8d4 · #e8f2e8 */
-  --palette-900: #8aae8a;
-  --palette-700: #a4c4a4;
-  --palette-500: #c0d8c0;
-  --palette-300: #d4e8d4;
-  --palette-100: #e8f2e8;
+  --palette-900: #31543a;
+  --palette-700: #4f7257;
+  --palette-500: #78947d;
+  --palette-300: #afc1b2;
+  --palette-100: #e3eae4;
 
   --brand: var(--palette-900);
   --brand-soft: var(--palette-700);
