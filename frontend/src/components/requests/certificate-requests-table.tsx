@@ -59,88 +59,90 @@ export function CertificateRequestsTable({
 
   return (
     <>
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Solicitação</TableHead>
-          <TableHead>Fornecedor</TableHead>
-          <TableHead>Nº NF</TableHead>
-          <TableHead>Lotes</TableHead>
-          {variant === 'conference' ? (
-            <TableHead>Comparados</TableHead>
-          ) : null}
-          <TableHead>Data NF</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>
-            {variant === 'purchase' ? 'Solicitante' : 'Abertura'}
-          </TableHead>
-          {variant === 'conference' ? (
-            <TableHead className="w-[1%] whitespace-nowrap">FORM-084</TableHead>
-          ) : null}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {requests.map((request) => (
-          <TableRow
-            key={request.id}
-            className={cn(
-              'cursor-pointer transition-colors hover:bg-muted/50',
-            )}
-            onClick={() => navigate(detailPath(request.id))}
-          >
-            <TableCell className="font-medium">#{request.id}</TableCell>
-            <TableCell>{request.supplier.name}</TableCell>
-            <TableCell>{request.invoiceNumber}</TableCell>
-            <TableCell>{request.expectedCertificates}</TableCell>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Solicitação</TableHead>
+            <TableHead>Fornecedor</TableHead>
+            <TableHead>Nº NF</TableHead>
+            <TableHead>Lotes</TableHead>
             {variant === 'conference' ? (
-              <TableCell className="tabular-nums">
-                {getInspectedCertificatesCount(request)}/
-                {request.expectedCertificates}
-              </TableCell>
+              <TableHead>Comparados</TableHead>
             ) : null}
-            <TableCell>{formatRequestDate(request.invoiceDate)}</TableCell>
-            <TableCell>
-              <RequestStatusBadge
-                status={
-                  variant === 'conference'
-                    ? getNfConferenceStatus(request)
-                    : request.status
-                }
-              />
-            </TableCell>
-            <TableCell>
-              {variant === 'purchase'
-                ? (request.createdByName ?? 'Operador de estoque')
-                : formatRequestDate(request.submittedAt)}
-            </TableCell>
+            <TableHead>Data NF</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>
+              {variant === 'purchase' ? 'Solicitante' : 'Abertura'}
+            </TableHead>
             {variant === 'conference' ? (
-              <TableCell
-                className="text-right"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => openForm084(request)}
-                >
-                  <FileText className="size-4" aria-hidden />
-                  Visualizar
-                </Button>
-              </TableCell>
+              <TableHead className="w-[1%] whitespace-nowrap">
+                FORM-084
+              </TableHead>
             ) : null}
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-    {variant === 'conference' ? (
-      <Form084PreviewDialog
-        request={form084Request}
-        open={form084Open}
-        onOpenChange={handleForm084OpenChange}
-      />
-    ) : null}
+        </TableHeader>
+        <TableBody>
+          {requests.map((request) => (
+            <TableRow
+              key={request.id}
+              className={cn(
+                'cursor-pointer transition-colors hover:bg-muted/50',
+              )}
+              onClick={() => navigate(detailPath(request.id))}
+            >
+              <TableCell className="font-medium">#{request.id}</TableCell>
+              <TableCell>{request.supplier.name}</TableCell>
+              <TableCell>{request.invoiceNumber}</TableCell>
+              <TableCell>{request.expectedCertificates}</TableCell>
+              {variant === 'conference' ? (
+                <TableCell className="tabular-nums">
+                  {getInspectedCertificatesCount(request)}/
+                  {request.expectedCertificates}
+                </TableCell>
+              ) : null}
+              <TableCell>{formatRequestDate(request.invoiceDate)}</TableCell>
+              <TableCell>
+                <RequestStatusBadge
+                  status={
+                    variant === 'conference'
+                      ? getNfConferenceStatus(request)
+                      : request.status
+                  }
+                />
+              </TableCell>
+              <TableCell>
+                {variant === 'purchase'
+                  ? (request.createdByName ?? 'Operador de estoque')
+                  : formatRequestDate(request.submittedAt)}
+              </TableCell>
+              {variant === 'conference' ? (
+                <TableCell
+                  className="text-right"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => openForm084(request)}
+                  >
+                    <FileText className="size-4" aria-hidden />
+                    Visualizar FORM-084
+                  </Button>
+                </TableCell>
+              ) : null}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {variant === 'conference' ? (
+        <Form084PreviewDialog
+          request={form084Request}
+          open={form084Open}
+          onOpenChange={handleForm084OpenChange}
+        />
+      ) : null}
     </>
   );
 }

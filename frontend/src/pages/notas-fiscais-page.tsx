@@ -1,17 +1,55 @@
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 
 import { CertificateRequestsTable } from '@/components/requests/certificate-requests-table';
+import { NfConferenceFilters } from '@/components/requests/nf-conference-filters';
+import {
+  buildNfConferenceFiltersSummary,
+  filterNfConferenceRequests,
+  hasActiveNfConferenceFilters,
+  type NfConferenceStatusFilter,
+} from '@/lib/nf-conference-filters';
 import {
   completedCertificateRequestsQueryKey,
   listCompletedCertificateRequests,
 } from '@/services/certificate-requests/certificate-request.service';
 
 export function NotasFiscaisPage() {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] =
+    useState<NfConferenceStatusFilter>('ALL');
+
   const requestsQuery = useQuery({
     queryKey: completedCertificateRequestsQueryKey,
     queryFn: listCompletedCertificateRequests,
   });
+
+  const filteredRequests = useMemo(
+    () =>
+      filterNfConferenceRequests(
+        requestsQuery.data ?? [],
+        search,
+        statusFilter,
+      ),
+    [requestsQuery.data, search, statusFilter],
+  );
+
+  const totalCount = requestsQuery.data?.length ?? 0;
+
+  const filtersSummary = buildNfConferenceFiltersSummary(
+    search,
+    statusFilter,
+    filteredRequests.length,
+    totalCount,
+  );
+
+  const hasActiveFilters = hasActiveNfConferenceFilters(search, statusFilter);
+
+  function resetFilters() {
+    setSearch('');
+    setStatusFilter('ALL');
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -40,12 +78,24 @@ export function NotasFiscaisPage() {
       ) : null}
 
       {requestsQuery.isSuccess ? (
-        <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60">
-          <CertificateRequestsTable
-            requests={requestsQuery.data}
-            variant="conference"
-            detailPath={(id) => `/notas-fiscais/${id}`}
+        <div className="flex flex-col gap-4">
+          <NfConferenceFilters
+            search={search}
+            statusFilter={statusFilter}
+            filtersSummary={filtersSummary}
+            hasActiveFilters={hasActiveFilters}
+            onSearchChange={setSearch}
+            onStatusFilterChange={setStatusFilter}
+            onReset={resetFilters}
           />
+
+          <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60">
+            <CertificateRequestsTable
+              requests={filteredRequests}
+              variant="conference"
+              detailPath={(id) => `/notas-fiscais/${id}`}
+            />
+          </div>
         </div>
       ) : null}
     </div>
