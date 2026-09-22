@@ -197,6 +197,32 @@ export async function upsertInvoiceController(
   return reply.send(request);
 }
 
+export async function replacePurchaseDocumentController(
+  req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
+  reply: FastifyReply,
+) {
+  const { files } = await parseMultipartRequest(req);
+  const invoiceFile = files.invoiceFile;
+
+  if (!invoiceFile) {
+    throw new AppError('Anexe o documento substituto.');
+  }
+
+  const service = new CertificateRequestService(req.server.prisma);
+  const existing = await service.findById(req.params.id);
+
+  if (!canAccessCertificateRequest(existing, req.user)) {
+    throw new AppError('Acesso negado.', 403);
+  }
+
+  const request = await service.replaceDocumentFromPurchase(
+    req.params.id,
+    req.user.id,
+    invoiceFile,
+  );
+  return reply.send(request);
+}
+
 export async function registerSupplierContactController(
   req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
   reply: FastifyReply,

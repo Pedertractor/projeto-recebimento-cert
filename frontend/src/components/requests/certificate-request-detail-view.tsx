@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { CancelCertificateRequestButton } from '@/components/requests/cancel-certificate-request-button';
 import { CertificateRequestSummary } from '@/components/requests/certificate-request-summary';
 import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-card';
+import { PurchaseReplaceDocumentPrompt } from '@/components/requests/purchase-replace-document-prompt';
 import { RequestHistoryTimeline } from '@/components/requests/request-history-timeline';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { Button } from '@/components/ui/button';
@@ -172,6 +173,13 @@ export function CertificateRequestDetailView({
     request.supplierContactAt == null &&
     invoiceAttachment != null;
 
+  const canReplacePurchaseDocument =
+    isPurchaseView &&
+    request.status !== 'CANCELADA' &&
+    (request.status === 'AGUARDANDO_COMPRAS' ||
+      request.status === 'AGUARDANDO_FORNECEDOR' ||
+      request.status === 'CONCLUIDA');
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -227,11 +235,14 @@ export function CertificateRequestDetailView({
         </section>
 
         {invoiceAttachment ? (
-          <div className="h-full lg:col-span-1">
+          <div className="flex h-full flex-col gap-3 lg:col-span-1">
             <InvoiceAttachmentCard
               attachment={invoiceAttachment}
               subtitle="Último documento anexado — estoque ou compras"
             />
+            {canReplacePurchaseDocument ? (
+              <PurchaseReplaceDocumentPrompt requestId={request.id} />
+            ) : null}
           </div>
         ) : null}
       </div>

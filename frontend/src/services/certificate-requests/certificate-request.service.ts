@@ -132,6 +132,27 @@ export async function createCertificateRequest(
   return response.data;
 }
 
+export async function replacePurchaseDocument(
+  requestId: number,
+  invoiceFile: File,
+): Promise<CertificateRequest> {
+  const formData = new FormData();
+  formData.append('invoiceFile', invoiceFile);
+
+  const response = await axios.post<CertificateRequest>(
+    `${env.apiUrl}/certificate-requests/${requestId}/purchase-document`,
+    formData,
+    {
+      withCredentials: true,
+      headers: {
+        'x-csrf-token': getWebCsrfToken() ?? '',
+      },
+    },
+  );
+
+  return response.data;
+}
+
 export async function registerSupplierContact(
   requestId: number,
 ): Promise<CertificateRequest> {

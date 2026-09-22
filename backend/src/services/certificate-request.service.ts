@@ -455,6 +455,65 @@ export class CertificateRequestService {
     return this.findById(requestId);
   }
 
+  async replaceDocumentFromPurchase(
+    requestId: number,
+    userId: number,
+    documentFile: { buffer: Buffer; filename: string },
+  ) {
+    const request = await this.prisma.certificateRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!request) {
+      throw new AppError('Solicitação não encontrada.', 404);
+    }
+
+    const canReplace =
+      request.status === CertificateRequestStatus.AGUARDANDO_COMPRAS ||
+      request.status === CertificateRequestStatus.AGUARDANDO_FORNECEDOR ||
+      request.status === CertificateRequestStatus.CONCLUIDA;
+
+    if (!canReplace) {
+      throw new AppError(
+        'Não é possível substituir o documento neste estágio da solicitação.',
+        400,
+      );
+    }
+
+    const documentType =
+      request.status === CertificateRequestStatus.AGUARDANDO_COMPRAS
+        ? AttachmentType.NOTA_FISCAL
+        : AttachmentType.CERTIFICADO;
+
+    const storagePath = await saveCertificateRequestFile(
+      requestId,
+      documentType,
+      documentFile.buffer,
+      documentFile.filename,
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.replaceMainInvoiceDocument(tx, {
+        requestId,
+        userId,
+        fileName: documentFile.filename,
+        storagePath,
+        type: documentType,
+      });
+
+      await tx.requestHistoryEvent.create({
+        data: {
+          requestId,
+          eventType: RequestHistoryEventType.CERTIFICADO_ANEXADO,
+          description: `Documento substituído pelo compras: ${documentFile.filename}.`,
+          actorUserId: userId,
+        },
+      });
+    });
+
+    return this.findById(requestId);
+  }
+
   async requestDocumentFromPurchase(requestId: number, userId: number) {
     const request = await this.prisma.certificateRequest.findUnique({
       where: { id: requestId },

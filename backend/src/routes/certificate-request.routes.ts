@@ -18,6 +18,7 @@ import {
   listPurchaseCertificateRequestsController,
   listRecentCertificateRequestsController,
   registerSupplierContactController,
+  replacePurchaseDocumentController,
   requestDocumentFromPurchaseController,
   updateCertificateRequestController,
   upsertInvoiceController,
@@ -226,6 +227,29 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
       ],
     },
     upsertInvoiceController,
+  );
+
+  fastify.post<{ Params: CertificateRequestIdParams }>(
+    '/:id/purchase-document',
+    {
+      schema: {
+        summary: 'Replace reference document from purchase operator',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        consumes: ['multipart/form-data'],
+        params: certificateRequestIdParamsSchema,
+        response: {
+          200: certificateRequestResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.PURCHASE_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    replacePurchaseDocumentController,
   );
 
   fastify.post<{ Params: CertificateRequestIdParams }>(
