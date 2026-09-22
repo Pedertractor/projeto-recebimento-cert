@@ -4,6 +4,7 @@ import { RequestAttachmentActions } from '@/components/requests/request-attachme
 import { formatRequestDateTime } from '@/lib/certificate-request-labels';
 import { cn } from '@/lib/utils';
 import type { QualityDocument } from '@/types/quality-document';
+import { capitalizeAllWords } from '@/utils/capitalize';
 
 type QualityDocumentTimelineProps = {
   documents: QualityDocument[];
@@ -62,7 +63,8 @@ export function QualityDocumentTimeline({
                 <div>
                   <p className="text-sm font-medium">{document.displayName}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {document.uploadedByName ?? 'Operador de estoque'}
+                    Atualizado por: <br />
+                    {capitalizeAllWords(document.uploadedByName ?? 'Operador de estoque')}
                   </p>
                 </div>
                 {isLatest ? (

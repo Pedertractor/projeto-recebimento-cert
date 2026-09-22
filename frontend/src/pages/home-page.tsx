@@ -137,7 +137,7 @@ export function HomePage() {
           actionTo="/cadastrar-nf"
         />
 
-          <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-2xl shadow-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-2xl shadow-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <HomeStatCard
             value={openRequestsCount}
             label="Solicitações em aberto"
@@ -152,15 +152,15 @@ export function HomePage() {
 
       <aside className="flex flex-col gap-3 lg:col-span-1">
         <HomeActionTile
+          title="NF's de materiais"
+          description="Conferir certificados por lote"
+          to="/notas-fiscais"
+        />
+        <HomeActionTile
           title="Minhas solicitações"
           description="Acompanhe o que ainda está em andamento"
           to="/minhas-solicitacoes"
           badge={openRequestsCount}
-        />
-        <HomeActionTile
-          title="NF's de materiais"
-          description="Conferir certificados por lote"
-          to="/notas-fiscais"
         />
         <HomeActionTile
           title="Doc qualidade"

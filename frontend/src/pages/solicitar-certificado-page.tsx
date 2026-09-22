@@ -1,4 +1,10 @@
-import { useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import {
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -166,7 +172,9 @@ export function SolicitarCertificadoPage() {
 
   function onSubmit(values: CreateCertificateRequestFormValues): void {
     if (!documentChoice) {
-      setDocumentChoiceError('Escolha se você já tem a NF ou se deseja solicitar.');
+      setDocumentChoiceError(
+        'Escolha se você já tem a NF ou se deseja solicitar.',
+      );
       return;
     }
 
@@ -344,15 +352,15 @@ export function SolicitarCertificadoPage() {
               <DocumentChoiceCard
                 selected={documentChoice === 'have-invoice'}
                 icon={<FileText className="size-5" />}
-                title="Tenho a nota fiscal (NF)"
-                description="O arquivo já está com você. Pode anexar agora ou depois, na visualização da NF."
+                title="Tenho a nota fiscal com certificados"
+                description="Caso já tenha o arquivo, anexe o arquivo agora."
                 onSelect={() => handleDocumentChoice('have-invoice')}
               />
               <DocumentChoiceCard
                 selected={documentChoice === 'request-invoice'}
                 icon={<Mail className="size-5" />}
-                title="Solicitar NF"
-                description="Cadastra a nota e avisa o compras para pedir o documento ao fornecedor."
+                title="Solicitar nota fiscal com certificados"
+                description="Solicita a nota fiscal com certificados ao compras."
                 onSelect={() => handleDocumentChoice('request-invoice')}
               />
             </div>
