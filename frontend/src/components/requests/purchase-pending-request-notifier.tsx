@@ -61,44 +61,55 @@ export function PurchasePendingRequestNotifier() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden border-0 p-0 shadow-2xl ring-0 sm:max-w-lg">
-        <div className="bg-linear-to-br from-brand/10 via-background to-background px-6 pt-6 pb-4">
-          <DialogHeader className="gap-3 text-left">
-            <div className="flex size-11 items-center justify-center rounded-full bg-brand/15 text-brand">
-              <BellRing className="size-5" />
-            </div>
-            <div className="space-y-2">
-              <DialogTitle className="text-xl font-semibold tracking-tight">
-                Nova solicitação de certificado
-              </DialogTitle>
-              <DialogDescription className="text-sm leading-relaxed">
-                O estoque abriu uma solicitação aguardando ação do compras.
-                {pendingRequests.length > 1
-                  ? ` Há ${pendingRequests.length} solicitações pendentes.`
-                  : null}
-              </DialogDescription>
-            </div>
-          </DialogHeader>
-        </div>
-
-        <div className="space-y-4 px-6 py-5">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium">Solicitação mais recente</p>
-            <RequestStatusBadge status={latestRequest.status} />
+      <DialogContent className="flex max-h-[min(92dvh,100%)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] flex-col gap-0 overflow-hidden border-0 p-0 shadow-2xl ring-0 sm:max-w-lg sm:w-full">
+        <div className="app-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <div className="bg-linear-to-br from-brand/10 via-background to-background px-4 pt-5 pb-4 sm:px-6 sm:pt-6">
+            <DialogHeader className="gap-0 text-left">
+              <div className="flex items-start gap-3 pr-8">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand sm:size-11">
+                  <BellRing className="size-5" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <DialogTitle className="text-lg font-semibold tracking-tight sm:text-xl">
+                    Nova solicitação de certificado
+                  </DialogTitle>
+                  <DialogDescription className="text-sm leading-relaxed">
+                    O estoque abriu uma solicitação aguardando ação do compras.
+                    {pendingRequests.length > 1
+                      ? ` Há ${pendingRequests.length} solicitações pendentes.`
+                      : null}
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
           </div>
 
-          <div className="rounded-2xl bg-muted/40 px-4 py-4">
-            <CertificateRequestSummary request={latestRequest} compact />
+          <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <p className="text-sm font-medium">Solicitação mais recente</p>
+              <RequestStatusBadge
+                status={latestRequest.status}
+                className="w-fit shrink-0"
+              />
+            </div>
+
+            <div className="min-w-0 rounded-2xl bg-muted/40 px-3 py-3 sm:px-4 sm:py-4">
+              <CertificateRequestSummary request={latestRequest} compact />
+            </div>
           </div>
         </div>
 
-        <DialogFooter className="gap-2 border-t border-border/60 bg-muted/20 px-6 py-4 sm:justify-between">
-          <Button variant="ghost" onClick={() => handleOpenChange(false)}>
+        <DialogFooter className="shrink-0 flex-col-reverse gap-2 border-t border-border/60 bg-muted/20 px-4 py-3 sm:flex-row sm:justify-between sm:px-6 sm:py-4">
+          <Button
+            variant="ghost"
+            className="w-full sm:w-auto"
+            onClick={() => handleOpenChange(false)}
+          >
             Fechar
           </Button>
           <Button
             asChild
-            className="bg-brand text-brand-foreground hover:bg-brand/90"
+            className="w-full bg-brand text-brand-foreground hover:bg-brand/90 sm:w-auto"
             onClick={() => handleOpenChange(false)}
           >
             <Link to={`/compras/solicitacoes/${latestRequest.id}`}>
