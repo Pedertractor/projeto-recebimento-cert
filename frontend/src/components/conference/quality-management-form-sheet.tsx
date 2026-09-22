@@ -178,11 +178,11 @@ export const QualityManagementFormSheet = forwardRef<
           </Badge>
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="overflow-x-auto overscroll-x-contain p-0 [-webkit-overflow-scrolling:touch]">
           <Table className="min-w-180 text-xs">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="sticky left-0 z-10 min-w-52 bg-muted/50 font-semibold">
+                <TableHead className="min-w-52 bg-muted/50 font-semibold max-md:static md:sticky md:left-0 md:z-10">
                   Campo
                 </TableHead>
                 {columns.map((column) => (
@@ -203,7 +203,7 @@ export const QualityManagementFormSheet = forwardRef<
             <TableBody>
               {FORM_ROWS.map((row) => (
                 <TableRow key={row.label} className="hover:bg-muted/30">
-                  <TableCell className="sticky left-0 z-10 bg-background font-medium text-muted-foreground">
+                  <TableCell className="bg-background font-medium text-muted-foreground max-md:static md:sticky md:left-0 md:z-10">
                     {row.label}
                   </TableCell>
                   {columns.map((column) => (
