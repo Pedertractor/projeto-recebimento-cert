@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { FileText } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowRight, FileText } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { Form084PreviewDialog } from '@/components/conference/form-084-preview-dialog';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
@@ -25,12 +25,15 @@ type CertificateRequestsTableProps = {
   requests: CertificateRequest[];
   detailPath: (requestId: number) => string;
   variant: 'stock' | 'purchase' | 'conference';
+  /** Atalho para a página de conferência da NF (ex.: estoque em minhas solicitações). */
+  nfShortcutPath?: (requestId: number) => string;
 };
 
 export function CertificateRequestsTable({
   requests,
   detailPath,
   variant,
+  nfShortcutPath,
 }: CertificateRequestsTableProps) {
   const navigate = useNavigate();
   const [form084Request, setForm084Request] =
@@ -78,6 +81,9 @@ export function CertificateRequestsTable({
               <TableHead className="w-[1%] whitespace-nowrap">
                 FORM-084
               </TableHead>
+            ) : null}
+            {nfShortcutPath ? (
+              <TableHead className="w-[1%] whitespace-nowrap">Atalho</TableHead>
             ) : null}
           </TableRow>
         </TableHeader>
@@ -129,6 +135,24 @@ export function CertificateRequestsTable({
                   >
                     <FileText className="size-4" aria-hidden />
                     Visualizar FORM-084
+                  </Button>
+                </TableCell>
+              ) : null}
+              {nfShortcutPath ? (
+                <TableCell
+                  className="text-right"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                  >
+                    <Link to={nfShortcutPath(request.id)}>
+                      Ir para NF
+                      <ArrowRight className="size-4" aria-hidden />
+                    </Link>
                   </Button>
                 </TableCell>
               ) : null}

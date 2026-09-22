@@ -51,6 +51,7 @@ export function MinhasSolicitacoesPage() {
             requests={requestsQuery.data}
             variant="stock"
             detailPath={(id) => `/minhas-solicitacoes/${id}`}
+            nfShortcutPath={(id) => `/notas-fiscais/${id}`}
           />
         </div>
       ) : null}
