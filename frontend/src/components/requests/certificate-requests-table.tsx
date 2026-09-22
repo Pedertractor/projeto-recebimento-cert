@@ -1,6 +1,10 @@
+import { useState } from 'react';
+import { FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { Form084PreviewDialog } from '@/components/conference/form-084-preview-dialog';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -29,6 +33,21 @@ export function CertificateRequestsTable({
   variant,
 }: CertificateRequestsTableProps) {
   const navigate = useNavigate();
+  const [form084Request, setForm084Request] =
+    useState<CertificateRequest | null>(null);
+  const [form084Open, setForm084Open] = useState(false);
+
+  function openForm084(request: CertificateRequest) {
+    setForm084Request(request);
+    setForm084Open(true);
+  }
+
+  function handleForm084OpenChange(open: boolean) {
+    setForm084Open(open);
+    if (!open) {
+      setForm084Request(null);
+    }
+  }
 
   if (requests.length === 0) {
     return (
@@ -39,6 +58,7 @@ export function CertificateRequestsTable({
   }
 
   return (
+    <>
     <Table>
       <TableHeader>
         <TableRow>
@@ -54,6 +74,9 @@ export function CertificateRequestsTable({
           <TableHead>
             {variant === 'purchase' ? 'Solicitante' : 'Abertura'}
           </TableHead>
+          {variant === 'conference' ? (
+            <TableHead className="w-[1%] whitespace-nowrap">FORM-084</TableHead>
+          ) : null}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -90,9 +113,34 @@ export function CertificateRequestsTable({
                 ? (request.createdByName ?? 'Operador de estoque')
                 : formatRequestDate(request.submittedAt)}
             </TableCell>
+            {variant === 'conference' ? (
+              <TableCell
+                className="text-right"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => openForm084(request)}
+                >
+                  <FileText className="size-4" aria-hidden />
+                  Visualizar
+                </Button>
+              </TableCell>
+            ) : null}
           </TableRow>
         ))}
       </TableBody>
     </Table>
+    {variant === 'conference' ? (
+      <Form084PreviewDialog
+        request={form084Request}
+        open={form084Open}
+        onOpenChange={handleForm084OpenChange}
+      />
+    ) : null}
+    </>
   );
 }

@@ -32,7 +32,7 @@ export async function sendEmailByNodeMailer(
   });
 
   return transporter.sendMail({
-    from: `"Certificado de Qualidade" <${env.EMAIL_AUTOMACAO}>`,
+    from: `"Confere NF" <${env.EMAIL_AUTOMACAO}>`,
     to,
     subject,
     html,

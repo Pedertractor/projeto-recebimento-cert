@@ -23,14 +23,17 @@ import {
 
 function HomeStatCard({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex min-h-28 flex-col justify-between px-4 py-4 sm:min-h-32 sm:px-5">
-      <p className="text-3xl font-semibold tracking-tight text-brand sm:text-4xl">
+    <div className="flex min-h-[clamp(6.5rem,14vh,10rem)] flex-col justify-between px-4 py-4 sm:px-6 sm:py-5">
+      <p className="text-[clamp(1.875rem,3.5vw,3.25rem)] font-semibold leading-none tracking-tight text-brand">
         {value}
       </p>
-      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-sm text-muted-foreground sm:text-base">{label}</p>
     </div>
   );
 }
+
+const homeActionTileClassName =
+  'min-h-[clamp(5.5rem,11vh,9rem)] flex-1 py-5 sm:px-5 sm:py-6';
 
 export function HomePage() {
   const { data: user } = useWebSession();
@@ -98,16 +101,19 @@ export function HomePage() {
     ).length;
 
     return (
-      <div className="mx-auto grid min-h-[calc(100dvh-7.5rem)] w-full max-w-6xl flex-1 gap-5 py-2 lg:grid-cols-3 lg:items-stretch">
-        <div className="flex flex-col gap-5 lg:col-span-2">
-          <HomeHeroCard
-            title="Solicitações de certificado"
-            description="Anexe o PDF com a NF e os certificados para concluir cada pedido."
-            actionLabel="Abrir solicitações"
-            actionTo="/compras/solicitacoes"
-          />
+      <div className="mx-auto grid min-h-[calc(100dvh-7.5rem)] w-full max-w-[100rem] flex-1 gap-5 py-2 lg:grid-cols-3 lg:items-stretch">
+        <div className="flex min-h-0 flex-col gap-5 lg:col-span-2">
+          <div className="flex min-h-0 flex-1 flex-col">
+            <HomeHeroCard
+              fill
+              title="Solicitações de certificado"
+              description="Anexe o PDF com a NF e os certificados para concluir cada pedido."
+              actionLabel="Abrir solicitações"
+              actionTo="/compras/solicitacoes"
+            />
+          </div>
 
-          <div className="grid grid-cols-1 divide-y divide-border rounded-l-2xl sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+          <div className="grid shrink-0 grid-cols-1 divide-y divide-border overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
             <HomeStatCard
               value={withoutEmailCount}
               label="Solicitações sem envio de e-mail"
@@ -128,16 +134,19 @@ export function HomePage() {
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-5 py-2 lg:grid-cols-3 lg:items-start">
-      <div className="flex flex-col gap-5 lg:col-span-2">
-        <HomeHeroCard
-          title="Cadastrar NF de materiais"
-          description="Registre a nota fiscal recebida. O documento da NF é opcional e os certificados podem ser vinculados depois."
-          actionLabel="Cadastrar NF"
-          actionTo="/cadastrar-nf"
-        />
+    <div className="mx-auto grid min-h-[calc(100dvh-7.5rem)] w-full max-w-[100rem] flex-1 gap-5 py-2 lg:grid-cols-3 lg:items-stretch">
+      <div className="flex min-h-0 flex-col gap-5 lg:col-span-2">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <HomeHeroCard
+            fill
+            title="Cadastrar NF de materiais"
+            description="Registre a nota fiscal recebida. O documento da NF é opcional e os certificados podem ser vinculados depois."
+            actionLabel="Cadastrar NF"
+            actionTo="/cadastrar-nf"
+          />
+        </div>
 
-        <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-2xl shadow-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="grid shrink-0 grid-cols-1 divide-y divide-border overflow-hidden rounded-2xl  shadow-sm ring-1 ring-border/60 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <HomeStatCard
             value={openRequestsCount}
             label="Solicitações em aberto"
@@ -150,24 +159,28 @@ export function HomePage() {
         </div>
       </div>
 
-      <aside className="flex flex-col gap-3 lg:col-span-1">
+      <aside className="flex min-h-0 flex-col gap-3 lg:col-span-1">
         <HomeActionTile
+          className={homeActionTileClassName}
           title="NF's de materiais"
           description="Conferir certificados por lote"
           to="/notas-fiscais"
         />
         <HomeActionTile
+          className={homeActionTileClassName}
           title="Minhas solicitações"
           description="Acompanhe o que ainda está em andamento"
           to="/minhas-solicitacoes"
           badge={openRequestsCount}
         />
         <HomeActionTile
+          className={homeActionTileClassName}
           title="Doc qualidade"
           description="Padrões usados na conferência"
           to="/doc-qualidade"
         />
         <HomeActionTile
+          className={homeActionTileClassName}
           title="Fornecedores"
           description="Listar e editar cadastros"
           to="/fornecedores"

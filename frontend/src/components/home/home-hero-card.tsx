@@ -159,31 +159,36 @@ export function HomeHeroCard({
       <div className="relative grid min-h-0 flex-1 lg:grid-cols-2 lg:items-stretch">
         <div
           ref={logoRef}
-          className="flex h-full min-h-full flex-col items-center justify-center gap-4 px-6 py-8"
-          >
-         
+          className="flex h-full min-h-full flex-col items-center justify-center gap-4 px-6 py-8 lg:px-10 lg:py-10"
+        >
           <BrandMark
             logoSrc={APP_LOGO_SRC}
-            alt="Certificado de Qualidade"
+            alt="Confere NF"
             className={
               fill
-                ? 'h-[clamp(7rem,22vmin,16rem)] w-[clamp(7rem,22vmin,16rem)] object-contain'
+                ? 'h-[clamp(7rem,24vmin,18rem)] w-[clamp(7rem,24vmin,18rem)] object-contain'
                 : 'h-28 w-28 object-contain sm:h-36 sm:w-36 lg:h-40 lg:w-40'
             }
           />
-          <p className="text-center text-xs tracking-wide text-brand-foreground/75">
+          <p
+            className={
+              fill
+                ? 'text-center text-xs tracking-wide text-brand-foreground/75 sm:text-sm'
+                : 'text-center text-xs tracking-wide text-brand-foreground/75'
+            }
+          >
             Pedertractor &amp; TractorComponents
           </p>
         </div>
 
         <div
-          className="flex h-full items-center border-t border-border/70 px-6 py-8 lg:border-t-0 lg:border-l"
+          className="flex h-full items-center border-t border-border/70 px-6 py-8 lg:border-t-0 lg:border-l lg:px-10 lg:py-10"
           style={{ paddingBottom: notchHeight + 16 }}
         >
           <div
             className={
               fill
-                ? 'flex max-w-lg flex-col gap-3'
+                ? 'flex w-full max-w-2xl flex-col gap-3 xl:max-w-3xl'
                 : 'flex max-w-sm flex-col gap-3'
             }
           >
@@ -214,7 +219,7 @@ export function HomeHeroCard({
       <div ref={buttonWrapRef} className="absolute right-0 bottom-0 z-10">
         <Link
           to={actionTo}
-          className="group inline-flex items-center gap-2 bg-brand px-5 py-3 text-sm font-medium text-brand-foreground shadow-sm transition-colors hover:bg-brand/90"
+          className="group inline-flex items-center gap-2 bg-brand px-[clamp(1.1rem,2vw,1.75rem)] py-[clamp(0.7rem,1.4vh,1rem)] text-[clamp(0.875rem,1.05vw,1.0625rem)] font-medium text-brand-foreground shadow-sm transition-colors hover:bg-brand/90"
           style={{ borderRadius: BUTTON_RADIUS }}
         >
           {actionLabel}

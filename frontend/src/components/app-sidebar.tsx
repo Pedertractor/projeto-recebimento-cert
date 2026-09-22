@@ -186,7 +186,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton
               size="lg"
               asChild
-              tooltip="Certificado de Qualidade"
+              tooltip="Confere NF"
               className="hover:bg-transparent group-data-[collapsible=icon]:justify-center"
             >
               <Link to="/">
@@ -197,7 +197,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   />
                 </div>
                 <span className="truncate font-semibold group-data-[collapsible=icon]:hidden">
-                  Certificado de Qualidade
+                  Confere NF
                 </span>
               </Link>
             </SidebarMenuButton>

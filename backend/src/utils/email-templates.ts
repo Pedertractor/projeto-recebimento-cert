@@ -128,7 +128,7 @@ export function buildNewCertificateRequestEmail(
   const footerHtml = `Solicitação #${params.requestId} · Aberta em ${escapeHtml(formattedSubmittedAt)}`;
 
   const html = renderEmailLayout({
-    title: 'Nova solicitação — Certificado de Qualidade',
+    title: 'Nova solicitação — Confere NF',
     introHtml,
     listItemsHtml: listItems,
     actionHtml,
@@ -138,7 +138,7 @@ export function buildNewCertificateRequestEmail(
   });
 
   const text = [
-    'Nova solicitação — Certificado de Qualidade',
+    'Nova solicitação — Confere NF',
     '',
     'O estoque abriu uma nova solicitação de certificado de qualidade.',
     '',
@@ -196,7 +196,7 @@ export function buildCompletedCertificateRequestEmail(
       <p>Olá, <strong>${escapeHtml(name)}</strong>.</p>
       <p>
         A solicitação foi concluída pelo Compras e os certificados já estão disponíveis no sistema
-        <strong>Certificado de Qualidade</strong>.
+        <strong>Confere NF</strong>.
       </p>
   `.trim();
 
@@ -209,7 +209,7 @@ export function buildCompletedCertificateRequestEmail(
   const footerHtml = `Solicitação #${params.requestId} · Concluída em ${escapeHtml(formattedCompletedAt)}`;
 
   const html = renderEmailLayout({
-    title: 'Certificados recebidos — Certificado de Qualidade',
+    title: 'Certificados recebidos — Confere NF',
     introHtml,
     listItemsHtml: listItems,
     actionHtml,

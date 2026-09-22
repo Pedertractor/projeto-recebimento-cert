@@ -69,7 +69,7 @@ export function LoginForm({
         <div className="flex flex-col items-center gap-5 text-center">
           <BrandMark
             logoSrc={APP_LOGO_SRC}
-            alt="Certificado de Qualidade"
+            alt="Confere NF"
             className="h-32 w-52 sm:h-40 sm:w-64 lg:h-72 lg:w-[22rem]"
           />
           <p className="hidden max-w-sm text-sm leading-relaxed text-brand-foreground/80 lg:block">
@@ -102,7 +102,7 @@ export function LoginForm({
             >
               {isFirstLoginStep
                 ? 'Defina uma nova senha para concluir o primeiro acesso.'
-                : 'Acesse o Certificado de Qualidade.'}
+                : 'Acesse o Confere NF.'}
             </p>
           </div>
 

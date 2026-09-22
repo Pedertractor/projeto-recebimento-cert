@@ -34,8 +34,8 @@ function resolveAdminTheme(): AdminTheme {
 export function AdminThemeProvider({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { data: user } = useWebSession();
-  const isSuperAdmin = user?.role === 'SUPERADMIN';
   const isLoginRoute = pathname === '/login';
+  const canUseTheme = Boolean(user) && !isLoginRoute;
   const [theme, setThemeState] = useState<AdminTheme>(() =>
     readStoredAdminTheme() ?? 'light',
   );
@@ -46,19 +46,14 @@ export function AdminThemeProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!isSuperAdmin) {
-      applyDocumentTheme('light');
-      return;
-    }
-
     const nextTheme = resolveAdminTheme();
     setThemeState(nextTheme);
     applyDocumentTheme(nextTheme);
-  }, [isSuperAdmin, isLoginRoute, user]);
+  }, [isLoginRoute, user]);
 
   const setTheme = useCallback(
     (nextTheme: AdminTheme) => {
-      if (!isSuperAdmin) {
+      if (!user) {
         return;
       }
 
@@ -66,7 +61,7 @@ export function AdminThemeProvider({ children }: { children: ReactNode }) {
       storeAdminTheme(nextTheme);
       applyDocumentTheme(nextTheme);
     },
-    [isSuperAdmin],
+    [user],
   );
 
   const toggleTheme = useCallback(() => {
@@ -76,11 +71,11 @@ export function AdminThemeProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       theme,
-      canToggleTheme: isSuperAdmin,
+      canToggleTheme: canUseTheme,
       setTheme,
       toggleTheme,
     }),
-    [isSuperAdmin, setTheme, theme, toggleTheme],
+    [canUseTheme, setTheme, theme, toggleTheme],
   );
 
   return (

@@ -17,7 +17,7 @@ export function SolicitacoesComprasPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Solicitações de certificado
+          Solicitações ao compras
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Solicitações abertas pelo estoque para contato com fornecedores e

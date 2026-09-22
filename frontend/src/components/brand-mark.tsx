@@ -11,7 +11,7 @@ type BrandMarkProps = {
 export function BrandMark({
   className,
   logoSrc,
-  alt = 'Certificado de Qualidade',
+  alt = 'Confere NF',
 }: BrandMarkProps) {
   if (logoSrc) {
     return (
