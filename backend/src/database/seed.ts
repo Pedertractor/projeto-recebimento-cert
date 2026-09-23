@@ -38,8 +38,6 @@ async function main() {
       update: {
         name: spec.name,
         role: UserRole.SUPERADMIN,
-        password: passwordHash,
-        firstLogin: true,
         status: true,
         deletedAt: null,
       },
