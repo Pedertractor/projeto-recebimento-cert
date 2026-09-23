@@ -285,6 +285,23 @@ export async function attachConferencePrint(
   return response.data;
 }
 
+export async function deleteConferencePrint(
+  requestId: number,
+  lotIndex: number,
+): Promise<CertificateRequest> {
+  const response = await axios.delete<CertificateRequest>(
+    `${env.apiUrl}/certificate-requests/${requestId}/conference-prints/${lotIndex}`,
+    {
+      withCredentials: true,
+      headers: {
+        'x-csrf-token': getWebCsrfToken() ?? '',
+      },
+    },
+  );
+
+  return response.data;
+}
+
 export async function submitCertificateInspection(
   requestId: number,
   attachmentId: string,

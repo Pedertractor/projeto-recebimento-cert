@@ -5,11 +5,13 @@ import { AppError } from '../lib/errors.js';
 import {
   attachConferencePrintFieldsSchema,
   attachConferencePrintPasteSchema,
+  deleteConferencePrintParamsSchema,
   submitCertificateInspectionSchema,
 } from '../schemas/certificate-inspection.schemas.js';
 import type {
   AttachConferencePrintParams,
   CertificateInspectionParams,
+  DeleteConferencePrintParams,
 } from '../schemas/certificate-inspection.schemas.js';
 import { CertificateInspectionService } from '../services/certificate-inspection.service.js';
 import { CertificateRequestService } from '../services/certificate-request.service.js';
@@ -195,6 +197,32 @@ export async function attachConferencePrintPasteController(
   );
 
   const request = await requestService.findById(requestId);
+  return reply.send(request);
+}
+
+export async function deleteConferencePrintController(
+  req: FastifyRequest<{ Params: DeleteConferencePrintParams }>,
+  reply: FastifyReply,
+) {
+  const parsed = deleteConferencePrintParamsSchema.safeParse(req.params);
+  if (!parsed.success) {
+    throw new AppError(parsed.error.issues[0]?.message ?? 'Parâmetros inválidos.');
+  }
+
+  const requestService = new CertificateRequestService(req.server.prisma);
+  const existing = await requestService.findById(parsed.data.id);
+
+  if (!canAttachConferencePrint(existing, req.user)) {
+    throw new AppError('Acesso negado.', 403);
+  }
+
+  const inspectionService = new CertificateInspectionService(req.server.prisma);
+  await inspectionService.removeConferencePrint(
+    parsed.data.id,
+    parsed.data.lotIndex,
+  );
+
+  const request = await requestService.findById(parsed.data.id);
   return reply.send(request);
 }
 

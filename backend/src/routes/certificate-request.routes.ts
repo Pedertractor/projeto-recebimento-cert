@@ -3,6 +3,7 @@ import { UserRole } from '../generated/prisma/enums.js';
 import {
   attachConferencePrintController,
   attachConferencePrintPasteController,
+  deleteConferencePrintController,
   listCompletedCertificateRequestsController,
   submitCertificateInspectionController,
 } from '../controllers/certificate-inspection.controller.js';
@@ -27,7 +28,9 @@ import {
   attachConferencePrintPasteSchema,
   certificateInspectionParamsSchema,
   certificateInspectionSchema,
+  deleteConferencePrintParamsSchema,
   submitCertificateInspectionSchema,
+  type DeleteConferencePrintParams,
 } from '../schemas/certificate-inspection.schemas.js';
 import {
   certificateRequestIdParamsSchema,
@@ -408,6 +411,28 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
       ],
     },
     attachConferencePrintController,
+  );
+
+  fastify.delete<{ Params: DeleteConferencePrintParams }>(
+    '/:id/conference-prints/:lotIndex',
+    {
+      schema: {
+        summary: 'Remove conference print for a lot',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        params: deleteConferencePrintParamsSchema,
+        response: {
+          200: certificateRequestResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.csrfProtection,
+      ],
+    },
+    deleteConferencePrintController,
   );
 
   fastify.post<{ Params: CertificateRequestIdParams & { attachmentId: string } }>(

@@ -257,9 +257,7 @@ export function CertificateRequestDetailView({
 
       {showPurchaseDocumentPendingSupplierEmail ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
-          Há um documento anexado na solicitação, mas o e-mail ao fornecedor
-          ainda não foi registrado. Envie a solicitação ao fornecedor e confirme
-          o envio na seção abaixo.
+          Há um documento anexado na solicitação, mas está desatualizado. Solicite ao fornecedor a atualização do documento com a NF e todos certificados.
         </div>
       ) : null}
 

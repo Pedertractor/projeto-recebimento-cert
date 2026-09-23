@@ -6,16 +6,19 @@ import {
   FileImage,
   FileUp,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { PdfPageImportDialog } from '@/components/conference/pdf-page-import-dialog';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { HttpClientError } from '@/lib/http-client';
 import {
   attachConferencePrint,
   certificateRequestDetailQueryKey,
+  deleteConferencePrint,
 } from '@/services/certificate-requests/certificate-request.service';
 import {
   hasPendingConferencePrint,
@@ -51,9 +54,11 @@ export function LotConferenceCard({
   const [isPasteFocused, setIsPasteFocused] = useState(false);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [hasCopiedPage, setHasCopiedPage] = useState(hasPendingConferencePrint);
+  const isMobile = useIsMobile();
 
   const canImportFromPdf =
     purchaseCertificate !== null && isPdfFile(purchaseCertificate.fileName);
+  const showPdfImport = canImportFromPdf && isMobile;
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) =>
@@ -78,6 +83,29 @@ export function LotConferenceCard({
           : error instanceof Error
             ? error.message
             : 'Não foi possível anexar a impressão.';
+      toast.error(message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteConferencePrint(requestId, lotIndex),
+    onSuccess: async () => {
+      toast.success(`Anexo do lote ${lotIndex} removido.`);
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      await queryClient.invalidateQueries({
+        queryKey: certificateRequestDetailQueryKey(requestId),
+      });
+    },
+    onError: (error) => {
+      const message =
+        error instanceof HttpClientError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Não foi possível remover o anexo do lote.';
       toast.error(message);
     },
   });
@@ -251,7 +279,7 @@ export function LotConferenceCard({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*,.pdf"
+        accept={isMobile ? 'image/*,.pdf' : 'image/*'}
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];
@@ -299,14 +327,24 @@ export function LotConferenceCard({
           <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="w-full md:hidden"
             disabled={uploadMutation.isPending}
             onClick={() => fileInputRef.current?.click()}
           >
             <FileUp className="size-4" />
             Escolher arquivo
           </Button>
-          {canImportFromPdf ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="hidden w-full md:inline-flex"
+            disabled={uploadMutation.isPending}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <FileUp className="size-4" />
+            Anexar imagem do PC
+          </Button>
+          {showPdfImport ? (
             <Button
               type="button"
               variant="outline"
@@ -347,20 +385,53 @@ export function LotConferenceCard({
                 onClick={() => void handlePasteButtonClick()}
               >
                 <ClipboardPaste className="size-4" />
-                Trocar print
+                Colar página
               </Button>
-              {canImportFromPdf ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="hidden w-full md:inline-flex"
+                disabled={uploadMutation.isPending || deleteMutation.isPending}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FileUp className="size-4" />
+                Anexar imagem do PC
+              </Button>
+              {showPdfImport ? (
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full"
-                  disabled={uploadMutation.isPending}
+                  disabled={uploadMutation.isPending || deleteMutation.isPending}
                   onClick={() => setPdfImportOpen(true)}
                 >
                   <FileImage className="size-4" />
                   Importar do PDF
                 </Button>
               ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={uploadMutation.isPending || deleteMutation.isPending}
+                onClick={() => {
+                  if (
+                    !window.confirm(
+                      `Remover a impressão anexada ao lote ${lotIndex}?`,
+                    )
+                  ) {
+                    return;
+                  }
+                  deleteMutation.mutate();
+                }}
+              >
+                {deleteMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Trash2 className="size-4" />
+                )}
+                Remover anexo
+              </Button>
             </>
           ) : (
             <Button asChild variant="outline" className="w-full">
@@ -374,7 +445,7 @@ export function LotConferenceCard({
         </div>
       )}
 
-      {canImportFromPdf && purchaseCertificate ? (
+      {showPdfImport && purchaseCertificate ? (
         <PdfPageImportDialog
           open={pdfImportOpen}
           onOpenChange={setPdfImportOpen}

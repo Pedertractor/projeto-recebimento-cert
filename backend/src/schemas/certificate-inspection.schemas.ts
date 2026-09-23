@@ -105,6 +105,22 @@ export type AttachConferencePrintParams = z.infer<
   typeof attachConferencePrintParamsSchema
 >;
 
+export const deleteConferencePrintParamsSchema = z.object({
+  id: z
+    .string()
+    .regex(/^[1-9]\d*$/, 'ID inválido')
+    .transform(Number),
+  lotIndex: z.coerce
+    .number()
+    .int('Informe o lote.')
+    .min(1, 'Informe o lote.')
+    .max(99, 'Lote inválido.'),
+});
+
+export type DeleteConferencePrintParams = z.infer<
+  typeof deleteConferencePrintParamsSchema
+>;
+
 export const attachConferencePrintPasteSchema = z.object({
   lotIndex: z
     .number()

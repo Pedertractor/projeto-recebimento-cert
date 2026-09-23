@@ -148,6 +148,50 @@ export class CertificateInspectionService {
     });
   }
 
+  async removeConferencePrint(requestId: number, lotIndex: number) {
+    const request = await this.prisma.certificateRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        attachments: {
+          include: { inspection: true },
+        },
+      },
+    });
+
+    if (!request) {
+      throw new AppError('Solicitação não encontrada.', 404);
+    }
+
+    if (request.status === CertificateRequestStatus.CANCELADA) {
+      throw new AppError('Não é possível alterar impressões em uma NF cancelada.', 400);
+    }
+
+    if (lotIndex < 1 || lotIndex > request.expectedCertificates) {
+      throw new AppError('Lote inválido para esta NF.', 400);
+    }
+
+    const existingPrint = request.attachments.find(
+      (attachment) =>
+        attachment.type === AttachmentType.IMPRESSAO_CONFERENCIA &&
+        attachment.lotIndex === lotIndex,
+    );
+
+    if (!existingPrint) {
+      throw new AppError('Não há impressão anexada neste lote.', 404);
+    }
+
+    if (existingPrint.inspection) {
+      throw new AppError(
+        'Este lote já foi conferido. Não é possível remover a impressão.',
+        400,
+      );
+    }
+
+    await this.prisma.requestAttachment.delete({
+      where: { id: existingPrint.id },
+    });
+  }
+
   async submitInspection(
     requestId: number,
     attachmentId: string,
