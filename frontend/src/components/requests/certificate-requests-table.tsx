@@ -36,7 +36,13 @@ type CertificateRequestsTableProps = {
 
 type RequestSupplier = CertificateRequest['supplier'];
 
-function ConferenceSupplierCell({ supplier }: { supplier: RequestSupplier }) {
+function showsSupplierLogo(
+  tableVariant: CertificateRequestsTableProps['variant'],
+): boolean {
+  return tableVariant === 'conference' || tableVariant === 'purchase';
+}
+
+function SupplierWithLogoCell({ supplier }: { supplier: RequestSupplier }) {
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       <div className="size-9 shrink-0 overflow-hidden rounded-lg ring-1 ring-border/70">
@@ -101,7 +107,7 @@ export function CertificateRequestsTable({
               <div className="flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex min-w-0 flex-1 items-start gap-2.5">
-                    {variant === 'conference' ? (
+                    {showsSupplierLogo(variant) ? (
                       <div className="size-10 shrink-0 overflow-hidden rounded-lg ring-1 ring-border/70">
                         <SupplierLogo
                           name={request.supplier.name}
@@ -220,8 +226,8 @@ export function CertificateRequestsTable({
             >
               <TableCell className="font-medium">#{request.id}</TableCell>
               <TableCell>
-                {variant === 'conference' ? (
-                  <ConferenceSupplierCell supplier={request.supplier} />
+                {showsSupplierLogo(variant) ? (
+                  <SupplierWithLogoCell supplier={request.supplier} />
                 ) : (
                   request.supplier.name
                 )}
