@@ -1,9 +1,6 @@
 import {
   useMemo,
-  useRef,
   useState,
-  type ChangeEvent,
-  type DragEvent,
   type ReactNode,
 } from 'react';
 import { useForm } from 'react-hook-form';
@@ -12,7 +9,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Check,
   FileText,
-  FileUp,
   Loader2,
   Mail,
   Plus,
@@ -33,6 +29,7 @@ import {
   useComboboxAnchor,
 } from '@/components/ui/combobox';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { DocumentUploadField } from '@/components/ui/document-upload-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { HttpClientError } from '@/lib/http-client';
@@ -60,15 +57,12 @@ export function SolicitarCertificadoPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const supplierAnchorRef = useComboboxAnchor();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [documentChoice, setDocumentChoice] = useState<DocumentChoice | null>(
     null,
   );
   const [documentChoiceError, setDocumentChoiceError] = useState<string | null>(
     null,
   );
-  const [isFileDragOver, setIsFileDragOver] = useState(false);
 
   const suppliersQuery = useQuery({
     queryKey: suppliersListQueryKey,
@@ -98,6 +92,7 @@ export function SolicitarCertificadoPage() {
   const invoiceNumber = watch('invoiceNumber');
   const invoiceDate = watch('invoiceDate');
   const expectedCertificates = watch('expectedCertificates');
+  const invoiceFile = watch('invoiceFile');
 
   const selectedSupplier = useMemo(
     () => suppliers.find((supplier) => supplier.id === supplierId) ?? null,
@@ -147,28 +142,8 @@ export function SolicitarCertificadoPage() {
     },
   });
 
-  function applyInvoiceFile(file: File | undefined): void {
-    if (!file) {
-      setSelectedFileName(null);
-      setValue('invoiceFile', undefined, { shouldValidate: true });
-      return;
-    }
-
-    setValue('invoiceFile', file, { shouldValidate: true });
-    setSelectedFileName(file.name);
-  }
-
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
-    applyInvoiceFile(event.target.files?.[0]);
-  }
-
-  function handleFileDrop(event: DragEvent<HTMLButtonElement>): void {
-    event.preventDefault();
-    setIsFileDragOver(false);
-    const file = event.dataTransfer.files?.[0];
-    if (file) {
-      applyInvoiceFile(file);
-    }
+  function applyInvoiceFile(file: File | null): void {
+    setValue('invoiceFile', file ?? undefined, { shouldValidate: true });
   }
 
   function handleDocumentChoice(choice: DocumentChoice): void {
@@ -176,11 +151,7 @@ export function SolicitarCertificadoPage() {
     setDocumentChoiceError(null);
 
     if (choice === 'request-invoice') {
-      setSelectedFileName(null);
-      setValue('invoiceFile', undefined, { shouldValidate: true });
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      applyInvoiceFile(null);
     }
   }
 
@@ -390,86 +361,11 @@ export function SolicitarCertificadoPage() {
             ) : null}
 
             {documentChoice === 'have-invoice' ? (
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setIsFileDragOver(true);
-                  }}
-                  onDragLeave={() => setIsFileDragOver(false)}
-                  onDrop={handleFileDrop}
-                  className={cn(
-                    'flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors',
-                    isFileDragOver
-                      ? 'border-brand bg-brand-muted/40'
-                      : selectedFileName
-                        ? 'border-brand/60 bg-brand-muted/20'
-                        : 'border-muted-foreground/35 bg-muted/20 hover:border-muted-foreground/55 hover:bg-muted/35',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'flex size-14 items-center justify-center rounded-2xl',
-                      selectedFileName
-                        ? 'bg-brand text-brand-foreground'
-                        : 'bg-background text-muted-foreground shadow-sm ring-1 ring-border',
-                    )}
-                  >
-                    {selectedFileName ? (
-                      <FileUp className="size-7" />
-                    ) : (
-                      <FileText className="size-7" />
-                    )}
-                  </span>
-                  {selectedFileName ? (
-                    <>
-                      <p className="max-w-full truncate text-sm font-semibold">
-                        {selectedFileName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Clique para trocar o arquivo · PDF ou imagem, até 30 MB
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm font-semibold">
-                        Clique ou arraste o arquivo aqui
-                      </p>
-                      <p className="max-w-sm text-xs text-muted-foreground">
-                        Anexe a nota fiscal com certificados. PDF ou imagem, até
-                        30 MB.
-                      </p>
-                    </>
-                  )}
-                </button>
-                {selectedFileName ? (
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground"
-                      onClick={() => {
-                        applyInvoiceFile(undefined);
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = '';
-                        }
-                      }}
-                    >
-                      Remover arquivo
-                    </Button>
-                  </div>
-                ) : null}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.png,.jpg,.jpeg,.webp"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </div>
+              <DocumentUploadField
+                id="invoiceFile"
+                value={invoiceFile ?? null}
+                onChange={applyInvoiceFile}
+              />
             ) : null}
 
             {documentChoice === 'request-invoice' ? (

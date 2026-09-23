@@ -9,6 +9,7 @@ import { ComparisonDocumentPreview } from '@/components/conference/comparison-do
 import { Button } from '@/components/ui/button';
 import { useSidebarAutoCollapse } from '@/hooks/use-sidebar-auto-collapse';
 import { useWebSession } from '@/hooks/auth/use-web-session';
+import { getInspectedCertificatesCount } from '@/lib/certificate-request-labels';
 import { HttpClientError } from '@/lib/http-client';
 import {
   certificateRequestDetailQueryKey,
@@ -49,12 +50,6 @@ export function CertificateComparisonPage() {
       return submitCertificateInspection(requestId, attachmentId, values);
     },
     onSuccess: async (inspection) => {
-      if (inspection.isValid) {
-        toast.success('Conferência salva com aprovação.');
-      } else {
-        toast.error('Conferência salva com reprovação. Certificado invalidado.');
-      }
-
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: certificateRequestDetailQueryKey(requestId),
@@ -63,6 +58,29 @@ export function CertificateComparisonPage() {
           queryKey: completedCertificateRequestsQueryKey,
         }),
       ]);
+
+      const updatedRequest = await queryClient.fetchQuery({
+        queryKey: certificateRequestDetailQueryKey(requestId),
+        queryFn: () => getCertificateRequest(requestId),
+      });
+
+      const comparedLots = getInspectedCertificatesCount(updatedRequest);
+      const allLotsCompared =
+        updatedRequest.expectedCertificates > 0 &&
+        comparedLots >= updatedRequest.expectedCertificates;
+
+      if (allLotsCompared) {
+        navigate(`/notas-fiscais/${requestId}`, {
+          state: { conferenceCompleteCelebration: true },
+        });
+        return;
+      }
+
+      if (inspection.isValid) {
+        toast.success('Conferência salva com aprovação.');
+      } else {
+        toast.error('Conferência salva com reprovação. Certificado invalidado.');
+      }
 
       navigate(`/notas-fiscais/${requestId}`);
     },

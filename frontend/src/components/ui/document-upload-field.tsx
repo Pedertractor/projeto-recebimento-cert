@@ -1,5 +1,10 @@
-import { useRef, type ChangeEvent, type ReactNode } from 'react';
-import { FileUp } from 'lucide-react';
+import {
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+} from 'react';
+import { FileText, FileUp } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,16 +12,15 @@ import { cn } from '@/lib/utils';
 
 type DocumentUploadFieldProps = {
   id: string;
-  label: string;
+  label?: string;
   accept?: string;
   value: File | null;
   onChange: (file: File | null) => void;
-  placeholder?: string;
-  hint?: string;
-  buttonLabel?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  selectedDescription?: string;
   error?: string;
   className?: string;
-  icon?: ReactNode;
 };
 
 export function DocumentUploadField({
@@ -25,76 +29,100 @@ export function DocumentUploadField({
   accept = '.pdf,.png,.jpg,.jpeg,.webp',
   value,
   onChange,
-  placeholder = 'Selecione um arquivo',
-  hint = 'PDF ou imagem, até 30 MB',
-  buttonLabel = 'Escolher arquivo',
+  emptyTitle = 'Clique ou arraste o arquivo aqui',
+  emptyDescription = 'Anexe a nota fiscal com certificados. PDF ou imagem, até 30 MB.',
+  selectedDescription = 'Clique para trocar o arquivo · PDF ou imagem, até 30 MB',
   error,
   className,
-  icon,
 }: DocumentUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  function applyFile(file: File | undefined): void {
+    onChange(file ?? null);
+    if (!file && inputRef.current) {
+      inputRef.current.value = '';
+    }
+  }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>): void {
-    const file = event.target.files?.[0] ?? null;
-    onChange(file);
+    applyFile(event.target.files?.[0]);
+  }
+
+  function handleDrop(event: DragEvent<HTMLButtonElement>): void {
+    event.preventDefault();
+    setIsDragOver(false);
+    applyFile(event.dataTransfer.files?.[0]);
   }
 
   return (
     <div className={cn('space-y-2', className)}>
-      <Label htmlFor={id}>{label}</Label>
-      <div
+      {label ? <Label htmlFor={id}>{label}</Label> : null}
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={handleDrop}
         className={cn(
-          'flex flex-col gap-4 rounded-2xl border border-dashed p-4 transition-colors sm:flex-row sm:items-center sm:justify-between',
-          value
-            ? 'border-brand/50 bg-brand/5'
-            : 'border-brand/30 bg-brand-muted/20 hover:border-brand/45 hover:bg-brand-muted/30',
+          'flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors',
+          isDragOver
+            ? 'border-brand bg-brand-muted/40'
+            : value
+              ? 'border-brand/60 bg-brand-muted/20'
+              : 'border-muted-foreground/35 bg-muted/20 hover:border-muted-foreground/55 hover:bg-muted/35',
         )}
       >
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground shadow-sm shadow-brand/15">
-            {icon ?? <FileUp className="size-5" />}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">
-              {value?.name ?? placeholder}
+        <span
+          className={cn(
+            'flex size-14 items-center justify-center rounded-2xl',
+            value
+              ? 'bg-brand text-brand-foreground'
+              : 'bg-background text-muted-foreground shadow-sm ring-1 ring-border',
+          )}
+        >
+          {value ? <FileUp className="size-7" /> : <FileText className="size-7" />}
+        </span>
+        {value ? (
+          <>
+            <p className="max-w-full truncate text-sm font-semibold">
+              {value.name}
             </p>
-            <p className="text-xs text-muted-foreground">{hint}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {value ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                onChange(null);
-                if (inputRef.current) {
-                  inputRef.current.value = '';
-                }
-              }}
-            >
-              Remover
-            </Button>
-          ) : null}
+            <p className="text-xs text-muted-foreground">{selectedDescription}</p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-semibold">{emptyTitle}</p>
+            <p className="max-w-sm text-xs text-muted-foreground">
+              {emptyDescription}
+            </p>
+          </>
+        )}
+      </button>
+      {value ? (
+        <div className="flex justify-end">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            onClick={() => inputRef.current?.click()}
+            className="text-muted-foreground"
+            onClick={() => applyFile(undefined)}
           >
-            {buttonLabel}
+            Remover arquivo
           </Button>
         </div>
-        <input
-          ref={inputRef}
-          id={id}
-          type="file"
-          accept={accept}
-          className="hidden"
-          onChange={handleChange}
-        />
-      </div>
+      ) : null}
+      <input
+        ref={inputRef}
+        id={id}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={handleChange}
+      />
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
   );

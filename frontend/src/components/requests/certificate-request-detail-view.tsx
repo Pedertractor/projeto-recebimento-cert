@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { CancelCertificateRequestButton } from '@/components/requests/cancel-certificate-request-button';
 import { CertificateRequestSummary } from '@/components/requests/certificate-request-summary';
 import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-card';
+import { SuccessCelebrationOverlay } from '@/components/ui/success-celebration-overlay';
 import { PurchaseReplaceDocumentPrompt } from '@/components/requests/purchase-replace-document-prompt';
 import { RequestHistoryTimeline } from '@/components/requests/request-history-timeline';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
@@ -41,6 +42,8 @@ export function CertificateRequestDetailView({
   const queryClient = useQueryClient();
   const { data: sessionUser } = useWebSession();
   const [combinedDocument, setCombinedDocument] = useState<File | null>(null);
+  const [attachSuccessOpen, setAttachSuccessOpen] = useState(false);
+  const [attachSuccessKey, setAttachSuccessKey] = useState(0);
   const isPurchaseView = viewer === 'purchase';
   const purchaseOperatorName =
     sessionUser?.name?.trim() || 'operador de compras';
@@ -94,8 +97,9 @@ export function CertificateRequestDetailView({
       });
     },
     onSuccess: async () => {
-      toast.success('Documento confirmado. Solicitação concluída.');
       setCombinedDocument(null);
+      setAttachSuccessKey((current) => current + 1);
+      setAttachSuccessOpen(true);
       await invalidateQueries();
     },
     onError: (error) => {
@@ -182,6 +186,12 @@ export function CertificateRequestDetailView({
 
   return (
     <div className="page-container">
+      <SuccessCelebrationOverlay
+        key={attachSuccessKey}
+        open={attachSuccessOpen}
+        onClose={() => setAttachSuccessOpen(false)}
+        ariaLabel="Documento anexado com sucesso"
+      />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-3">
           <Button asChild variant="ghost" className="-ml-2 w-fit px-2">
@@ -304,13 +314,8 @@ export function CertificateRequestDetailView({
 
             <DocumentUploadField
               id="combinedDocument"
-              label="NF com certificados"
-              accept=".pdf"
               value={combinedDocument}
               onChange={setCombinedDocument}
-              placeholder="Selecione o PDF"
-              hint="Um único PDF, até 30 MB"
-              buttonLabel="Escolher PDF"
             />
 
             {combinedDocument ? (

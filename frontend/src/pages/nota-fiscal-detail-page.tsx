@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { InvoiceCertificatePrompt } from '@/components/conference/invoice-certificate-prompt';
 import { LotConferenceCard } from '@/components/conference/lot-conference-card';
@@ -10,6 +10,7 @@ import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-
 import { NfInfoCards } from '@/components/requests/nf-info-cards';
 import { PurchaseRequestWaitingBanner } from '@/components/requests/purchase-request-waiting-banner';
 import { Button } from '@/components/ui/button';
+import { SuccessCelebrationOverlay } from '@/components/ui/success-celebration-overlay';
 import {
   getComparisonInvoiceAttachment,
   getPurchaseCertificateAttachment,
@@ -38,9 +39,29 @@ function getPurchaseCertificate(attachments: RequestAttachment[] | undefined) {
   return getPurchaseCertificateAttachment(attachments);
 }
 
+type NotaFiscalDetailLocationState = {
+  conferenceCompleteCelebration?: boolean;
+};
+
 export function NotaFiscalDetailPage() {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const requestId = Number(id);
+  const [conferenceCelebrationOpen, setConferenceCelebrationOpen] =
+    useState(false);
+  const [conferenceCelebrationKey, setConferenceCelebrationKey] = useState(0);
+
+  useEffect(() => {
+    const state = location.state as NotaFiscalDetailLocationState | null;
+    if (!state?.conferenceCompleteCelebration) {
+      return;
+    }
+
+    setConferenceCelebrationKey((current) => current + 1);
+    setConferenceCelebrationOpen(true);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const requestQuery = useQuery({
     queryKey: certificateRequestDetailQueryKey(requestId),
@@ -121,6 +142,12 @@ export function NotaFiscalDetailPage() {
 
   return (
     <div className="page-container">
+      <SuccessCelebrationOverlay
+        key={conferenceCelebrationKey}
+        open={conferenceCelebrationOpen}
+        onClose={() => setConferenceCelebrationOpen(false)}
+        ariaLabel="Conferência de todos os lotes concluída"
+      />
       <Button asChild variant="ghost" className="-ml-2 w-fit px-2">
         <Link to="/notas-fiscais">
           <ArrowLeft className="size-4" />
