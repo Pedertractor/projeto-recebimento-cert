@@ -6,12 +6,10 @@ import {
   updateSupplierController,
 } from '../controllers/supplier.controller.js';
 import {
-  createSupplierBodySchema,
   createSupplierResponseSchema,
   listSuppliersQuerySchema,
   listSuppliersResponseSchema,
   supplierIdParamsSchema,
-  updateSupplierBodySchema,
   type CreateSupplierBody,
   type ListSuppliersQuery,
   type SupplierIdParams,
@@ -49,7 +47,6 @@ export function supplierRoutes(fastify: FastifyInstance) {
         tags: ['Supplier'],
         security: [{ cookieAuth: [] }],
         consumes: ['application/json', 'multipart/form-data'],
-        body: createSupplierBodySchema,
         response: {
           201: createSupplierResponseSchema,
           ...commonErrors,
@@ -73,7 +70,6 @@ export function supplierRoutes(fastify: FastifyInstance) {
         security: [{ cookieAuth: [] }],
         consumes: ['application/json', 'multipart/form-data'],
         params: supplierIdParamsSchema,
-        body: updateSupplierBodySchema,
         response: {
           200: createSupplierResponseSchema,
           ...commonErrors,

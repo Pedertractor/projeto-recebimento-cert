@@ -1,15 +1,25 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { AppError } from '../lib/errors.js';
 import { SupplierService } from '../services/supplier.service.js';
-import type {
-  CreateSupplierBody,
-  ListSuppliersQuery,
-  SupplierIdParams,
-  UpdateSupplierBody,
+import {
+  createSupplierBodySchema,
+  type CreateSupplierBody,
+  type ListSuppliersQuery,
+  type SupplierIdParams,
+  type UpdateSupplierBody,
 } from '../schemas/supplier.schemas.js';
 import {
   isMultipartSupplierRequest,
   parseSupplierMultipartRequest,
 } from '../utils/supplier-multipart.js';
+
+function parseJsonSupplierBody(body: unknown): CreateSupplierBody {
+  const parsed = createSupplierBodySchema.safeParse(body);
+  if (!parsed.success) {
+    throw new AppError(parsed.error.issues[0]?.message ?? 'Dados inválidos.');
+  }
+  return parsed.data;
+}
 
 export async function listSuppliersController(
   req: FastifyRequest<{ Querystring: ListSuppliersQuery }>,
@@ -32,7 +42,7 @@ export async function createSupplierController(
     return reply.status(201).send(supplier);
   }
 
-  const supplier = await service.create(req.body);
+  const supplier = await service.create(parseJsonSupplierBody(req.body));
   return reply.status(201).send(supplier);
 }
 
@@ -52,6 +62,9 @@ export async function updateSupplierController(
     return reply.send(supplier);
   }
 
-  const supplier = await service.update(req.params.id, req.body);
+  const supplier = await service.update(
+    req.params.id,
+    parseJsonSupplierBody(req.body),
+  );
   return reply.send(supplier);
 }
