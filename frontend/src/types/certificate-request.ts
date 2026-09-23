@@ -65,6 +65,7 @@ export type CertificateRequest = {
     id: number;
     name: string;
     cnpj: string;
+    logoStoragePath: string | null;
   };
   invoiceNumber: string;
   invoiceDate: string;

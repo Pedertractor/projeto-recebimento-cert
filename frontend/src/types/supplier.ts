@@ -3,6 +3,7 @@ export type Supplier = {
   name: string;
   cnpj: string;
   description: string | null;
+  logoStoragePath: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -5,6 +5,7 @@ export const supplierSchema = z.object({
   name: z.string(),
   cnpj: z.string(),
   description: z.string().nullable(),
+  logoStoragePath: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

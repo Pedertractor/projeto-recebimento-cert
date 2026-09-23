@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2, Pencil, Search } from 'lucide-react';
 
 import { CreateSupplierDialog } from '@/components/suppliers/create-supplier-dialog';
+import { SupplierLogo } from '@/components/suppliers/supplier-logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -116,7 +117,15 @@ export function FornecedoresPage() {
                 >
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-semibold">{supplier.name}</p>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="size-10 shrink-0 overflow-hidden rounded-lg ring-1 ring-border/70">
+                          <SupplierLogo
+                            name={supplier.name}
+                            logoStoragePath={supplier.logoStoragePath}
+                          />
+                        </div>
+                        <p className="font-semibold">{supplier.name}</p>
+                      </div>
                       <Button
                         type="button"
                         variant="ghost"
@@ -155,6 +164,7 @@ export function FornecedoresPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12" />
                   <TableHead>Nome</TableHead>
                   <TableHead>CNPJ</TableHead>
                   <TableHead>Descrição</TableHead>
@@ -175,6 +185,14 @@ export function FornecedoresPage() {
                       }
                     }}
                   >
+                    <TableCell>
+                      <div className="size-9 overflow-hidden rounded-md ring-1 ring-border/60">
+                        <SupplierLogo
+                          name={supplier.name}
+                          logoStoragePath={supplier.logoStoragePath}
+                        />
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium">{supplier.name}</TableCell>
                     <TableCell className="tabular-nums">{supplier.cnpj}</TableCell>
                     <TableCell className="max-w-xs truncate text-muted-foreground">

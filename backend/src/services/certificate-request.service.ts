@@ -116,6 +116,7 @@ function toPublicRequest(request: RequestWithRelations) {
       id: request.supplier.id,
       name: request.supplier.name,
       cnpj: request.supplier.cnpj,
+      logoStoragePath: request.supplier.logoStoragePath,
     },
     invoiceNumber: request.invoiceNumber,
     invoiceDate: toIsoDate(request.invoiceDate),

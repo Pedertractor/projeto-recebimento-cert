@@ -96,12 +96,13 @@ model User {
 }
 
 model Supplier {
-  id          Int      @id @default(autoincrement())
-  name        String
-  cnpj        String   @unique
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement())
+  name             String
+  cnpj             String   @unique
+  description      String?
+  logoStoragePath  String?  @map("logo_storage_path")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   certificateRequests CertificateRequest[]
 

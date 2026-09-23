@@ -48,6 +48,7 @@ export function supplierRoutes(fastify: FastifyInstance) {
         summary: 'Create supplier',
         tags: ['Supplier'],
         security: [{ cookieAuth: [] }],
+        consumes: ['application/json', 'multipart/form-data'],
         body: createSupplierBodySchema,
         response: {
           201: createSupplierResponseSchema,
@@ -70,6 +71,7 @@ export function supplierRoutes(fastify: FastifyInstance) {
         summary: 'Update supplier',
         tags: ['Supplier'],
         security: [{ cookieAuth: [] }],
+        consumes: ['application/json', 'multipart/form-data'],
         params: supplierIdParamsSchema,
         body: updateSupplierBodySchema,
         response: {

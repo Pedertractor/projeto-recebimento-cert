@@ -5,6 +5,15 @@ import type {
   UpdateSupplierBody,
 } from '../schemas/supplier.schemas.js';
 import { formatCnpj, normalizeCnpj } from '../utils/cnpj.js';
+import {
+  deleteSupplierLogo,
+  saveSupplierLogo,
+} from '../utils/supplier-logo-storage.js';
+
+export type SupplierLogoFile = {
+  buffer: Buffer;
+  filename: string;
+};
 
 function toPublicSupplier(supplier: Supplier) {
   return {
@@ -12,6 +21,7 @@ function toPublicSupplier(supplier: Supplier) {
     name: supplier.name,
     cnpj: supplier.cnpj,
     description: supplier.description,
+    logoStoragePath: supplier.logoStoragePath,
     createdAt: supplier.createdAt.toISOString(),
     updatedAt: supplier.updatedAt.toISOString(),
   };
@@ -49,7 +59,7 @@ export class SupplierService {
     return suppliers.map(toPublicSupplier);
   }
 
-  async create(data: CreateSupplierBody) {
+  async create(data: CreateSupplierBody, logoFile?: SupplierLogoFile | null) {
     const name = data.name.trim();
     const cnpj = resolveCnpj(data.cnpj);
 
@@ -61,7 +71,7 @@ export class SupplierService {
       throw new AppError('Já existe um fornecedor com este CNPJ.');
     }
 
-    const supplier = await this.prisma.supplier.create({
+    let supplier = await this.prisma.supplier.create({
       data: {
         name,
         cnpj,
@@ -69,11 +79,34 @@ export class SupplierService {
       },
     });
 
+    if (logoFile) {
+      const logoStoragePath = await saveSupplierLogo(
+        supplier.id,
+        logoFile.buffer,
+        logoFile.filename,
+      );
+      supplier = await this.prisma.supplier.update({
+        where: { id: supplier.id },
+        data: { logoStoragePath },
+      });
+    }
+
     return toPublicSupplier(supplier);
   }
 
-  async update(id: number, data: UpdateSupplierBody) {
-    await this.findById(id);
+  async update(
+    id: number,
+    data: UpdateSupplierBody,
+    options?: {
+      logoFile?: SupplierLogoFile | null;
+      removeLogo?: boolean;
+    },
+  ) {
+    const current = await this.prisma.supplier.findUnique({ where: { id } });
+
+    if (!current) {
+      throw new AppError('Fornecedor não encontrado.', 404);
+    }
 
     const name = data.name.trim();
     const cnpj = resolveCnpj(data.cnpj);
@@ -89,12 +122,31 @@ export class SupplierService {
       throw new AppError('Já existe um fornecedor com este CNPJ.');
     }
 
+    let logoStoragePath = current.logoStoragePath;
+
+    if (options?.removeLogo && logoStoragePath) {
+      await deleteSupplierLogo(logoStoragePath);
+      logoStoragePath = null;
+    }
+
+    if (options?.logoFile) {
+      if (logoStoragePath) {
+        await deleteSupplierLogo(logoStoragePath);
+      }
+      logoStoragePath = await saveSupplierLogo(
+        id,
+        options.logoFile.buffer,
+        options.logoFile.filename,
+      );
+    }
+
     const supplier = await this.prisma.supplier.update({
       where: { id },
       data: {
         name,
         cnpj,
         description: data.description?.trim() || null,
+        logoStoragePath,
       },
     });
 

@@ -1,8 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Building2, Plus } from 'lucide-react';
+import { Building2, ImagePlus, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import {
   createSupplierFormSchema,
   type CreateSupplierFormValues,
 } from '@/schemas/create-supplier.schema';
+import { SupplierLogo } from '@/components/suppliers/supplier-logo';
 import {
   createSupplier,
   suppliersListQueryKey,
@@ -45,7 +46,11 @@ export function CreateSupplierDialog({
   trigger,
 }: CreateSupplierDialogProps) {
   const queryClient = useQueryClient();
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : uncontrolledOpen;
   const isEditing = Boolean(supplier);
@@ -65,6 +70,7 @@ export function CreateSupplierDialog({
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<CreateSupplierFormValues>({
     resolver: zodResolver(createSupplierFormSchema),
@@ -85,13 +91,43 @@ export function CreateSupplierDialog({
       cnpj: supplier?.cnpj ?? '',
       description: supplier?.description ?? '',
     });
+    setLogoFile(null);
+    setRemoveLogo(false);
+    if (logoPreviewUrl) {
+      URL.revokeObjectURL(logoPreviewUrl);
+    }
+    setLogoPreviewUrl(null);
+    if (logoInputRef.current) {
+      logoInputRef.current.value = '';
+    }
   }, [open, reset, supplier]);
 
+  useEffect(() => {
+    return () => {
+      if (logoPreviewUrl) {
+        URL.revokeObjectURL(logoPreviewUrl);
+      }
+    };
+  }, [logoPreviewUrl]);
+
+  const supplierName = watch('name');
+
+  const displayedLogoPath =
+    removeLogo || logoPreviewUrl
+      ? null
+      : (supplier?.logoStoragePath ?? null);
+
   const mutation = useMutation({
-    mutationFn: (values: CreateSupplierFormValues) =>
-      isEditing && supplier
-        ? updateSupplier(supplier.id, values)
-        : createSupplier(values),
+    mutationFn: (values: CreateSupplierFormValues) => {
+      const options = {
+        logoFile,
+        removeLogo: isEditing ? removeLogo : false,
+      };
+
+      return isEditing && supplier
+        ? updateSupplier(supplier.id, values, options)
+        : createSupplier(values, options);
+    },
     onSuccess: (saved) => {
       toast.success(
         isEditing ? 'Fornecedor atualizado.' : 'Fornecedor cadastrado.',
@@ -178,6 +214,83 @@ export function CreateSupplierDialog({
               id={`${formId}-description`}
               {...register('description')}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor={`${formId}-logo`}>Logo (opcional)</Label>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="size-16 shrink-0 overflow-hidden rounded-xl ring-1 ring-border">
+                {logoPreviewUrl ? (
+                  <img
+                    src={logoPreviewUrl}
+                    alt=""
+                    className="size-full object-contain"
+                  />
+                ) : (
+                  <SupplierLogo
+                    name={supplierName || supplier?.name || 'Fornecedor'}
+                    logoStoragePath={displayedLogoPath}
+                  />
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logoInputRef.current?.click()}
+                >
+                  <ImagePlus className="size-4" />
+                  {displayedLogoPath || logoPreviewUrl
+                    ? 'Trocar logo'
+                    : 'Enviar logo'}
+                </Button>
+                {displayedLogoPath || logoPreviewUrl ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={() => {
+                      setLogoFile(null);
+                      setRemoveLogo(true);
+                      if (logoPreviewUrl) {
+                        URL.revokeObjectURL(logoPreviewUrl);
+                        setLogoPreviewUrl(null);
+                      }
+                      if (logoInputRef.current) {
+                        logoInputRef.current.value = '';
+                      }
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                    Remover
+                  </Button>
+                ) : null}
+              </div>
+              <input
+                ref={logoInputRef}
+                id={`${formId}-logo`}
+                type="file"
+                accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) {
+                    return;
+                  }
+                  setLogoFile(file);
+                  setRemoveLogo(false);
+                  if (logoPreviewUrl) {
+                    URL.revokeObjectURL(logoPreviewUrl);
+                  }
+                  setLogoPreviewUrl(URL.createObjectURL(file));
+                }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              PNG ou JPEG, até 2 MB. Aparece na visualização da NF.
+            </p>
           </div>
 
           <div className="flex justify-end gap-2">

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { CreateSupplierDialog } from '@/components/suppliers/create-supplier-dialog';
+import { SupplierLogo } from '@/components/suppliers/supplier-logo';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,121 +92,127 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
     },
   });
 
+  const qualityDocHint = request.qualityDocumentLocked
+    ? 'Versão vinculada após concluir as conferências'
+    : 'Versão usada nas conferências desta NF';
+
   return (
     <>
-      <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <InfoCard
-            label="NF"
-            onBrand
-            onEdit={canEdit ? () => setEditField('invoiceNumber') : undefined}
-            editLabel="Editar número da NF"
-          >
-            <div className="mt-1 flex flex-wrap items-center gap-3">
-              <p className="text-xl font-semibold md:text-2xl">
-                {request.invoiceNumber}
-              </p>
-              <RequestStatusBadge status={request.status} />
-            </div>
-          </InfoCard>
-          <InfoCard
-            label="Data NF"
-            onBrand
-            onEdit={canEdit ? () => setEditField('invoiceDate') : undefined}
-            editLabel="Editar data da NF"
-          >
-            <p className="mt-1 text-xl font-semibold md:text-2xl">
-              {formatRequestDate(request.invoiceDate)}
-            </p>
-          </InfoCard>
-        </div>
-        <InfoCard
-          label="Certificados"
-          onBrand
-          className="lg:min-w-44"
-          onEdit={canEdit ? () => setEditField('lots') : undefined}
-          editLabel="Editar quantidade de lotes"
-        >
-          <p className="mt-1 text-xl font-semibold md:text-2xl">
-            {request.expectedCertificates}
+      <section className="min-w-0 border-b border-border pb-6">
+        <header className="space-y-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Identificação da nota
           </p>
-        </InfoCard>
-      </div>
-
-      <div className="rounded-2xl bg-card px-5 py-4 shadow-sm ring-1 ring-border/60">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Fornecedor
-              </p>
+          <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
+            <h1 className="min-w-0 break-all text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              {request.invoiceNumber}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <RequestStatusBadge status={request.status} />
               {canEdit ? (
                 <EditPencilButton
-                  onClick={() => setEditField('supplier')}
-                  label="Editar fornecedor"
+                  onClick={() => setEditField('invoiceNumber')}
+                  label="Editar número da NF"
                 />
               ) : null}
             </div>
-            <p className="font-medium">{request.supplier.name}</p>
-            <p className="text-sm text-muted-foreground">
-              {formatCnpjInput(request.supplier.cnpj)}
-            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <p className="text-sm text-muted-foreground">
-              Qtd de lotes: {request.expectedCertificates}
-            </p>
-            {canEdit ? (
-              <EditPencilButton
-                onClick={() => setEditField('lots')}
-                label="Editar quantidade de lotes"
+        </header>
+
+        <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 sm:gap-x-10">
+          <NfInfoField
+            label="Data de emissão"
+            onEdit={canEdit ? () => setEditField('invoiceDate') : undefined}
+            editLabel="Editar data da NF"
+          >
+            {formatRequestDate(request.invoiceDate)}
+          </NfInfoField>
+          <NfInfoField
+            label="Lotes / certificados"
+            onEdit={canEdit ? () => setEditField('lots') : undefined}
+            editLabel="Editar quantidade de lotes"
+          >
+            {request.expectedCertificates}
+          </NfInfoField>
+          <NfInfoField label="Solicitação" className="col-span-2 sm:col-span-1">
+            #{request.id}
+          </NfInfoField>
+        </dl>
+
+        <div className="mt-6 border-t border-border/60 pt-5">
+          <div className="flex items-start gap-4">
+            <div className="size-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/70 sm:size-16">
+              <SupplierLogo
+                name={request.supplier.name}
+                logoStoragePath={request.supplier.logoStoragePath}
               />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Fornecedor
+                </p>
+                {canEdit ? (
+                  <EditPencilButton
+                    onClick={() => setEditField('supplier')}
+                    label="Editar fornecedor"
+                  />
+                ) : null}
+              </div>
+              <p className="mt-1 text-base font-semibold leading-snug">
+                {request.supplier.name}
+              </p>
+              <p className="mt-0.5 text-sm tabular-nums text-muted-foreground">
+                {formatCnpjInput(request.supplier.cnpj)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-3 border-t border-border/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <FileText
+              className="mt-0.5 size-5 shrink-0 text-brand"
+              aria-hidden
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-medium leading-snug">
+                {qualityDocument?.displayName ?? 'Documento de qualidade'}
+              </p>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                {qualityDocHint}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2 sm:pl-4">
+            {!request.qualityDocumentLocked ? (
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-1.5 text-muted-foreground"
+              >
+                <Link to="/doc-qualidade">
+                  <Pencil className="size-3.5" />
+                  Gerenciar versões
+                </Link>
+              </Button>
+            ) : null}
+            {qualityDocument ? (
+              <Button asChild variant="outline" size="sm" className="h-9">
+                <a
+                  href={resolveAttachmentUrl(qualityDocument.storagePath)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLink className="size-4" />
+                  Abrir PDF
+                </a>
+              </Button>
             ) : null}
           </div>
         </div>
-      </div>
-
-      <div className="flex items-center justify-between rounded-2xl bg-card px-5 py-4 shadow-sm ring-1 ring-border/60">
-        <div className="flex min-w-0 items-center gap-3">
-          <FileText className="size-5 shrink-0 text-brand" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">
-              {qualityDocument?.displayName ?? 'Documento de qualidade'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {request.qualityDocumentLocked
-                ? 'Versão vinculada a esta NF após conclusão das conferências'
-                : 'Versão atual usada na conferência'}
-            </p>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {!request.qualityDocumentLocked ? (
-            <Button
-              asChild
-              variant="ghost"
-              size="icon-xs"
-              aria-label="Atualizar documento de qualidade"
-            >
-              <Link to="/doc-qualidade">
-                <Pencil className="size-3.5" />
-              </Link>
-            </Button>
-          ) : null}
-          {qualityDocument ? (
-            <Button asChild variant="outline" size="sm">
-              <a
-                href={resolveAttachmentUrl(qualityDocument.storagePath)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <ExternalLink className="size-4" />
-                Abrir
-              </a>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      </section>
 
       <NfEditDialog
         request={request}
@@ -222,47 +229,35 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
   );
 }
 
-function InfoCard({
+function NfInfoField({
   label,
   children,
-  onBrand = false,
-  className,
   onEdit,
   editLabel,
+  className,
 }: {
   label: string;
   children: ReactNode;
-  onBrand?: boolean;
-  className?: string;
   onEdit?: () => void;
   editLabel?: string;
+  className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        'relative rounded-2xl px-5 py-4 shadow-sm',
-        onBrand ? 'bg-brand text-brand-foreground' : 'bg-card',
-        className,
-      )}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <p
-          className={cn(
-            'text-xs uppercase tracking-wide',
-            onBrand ? 'opacity-80' : 'text-muted-foreground',
-          )}
-        >
+    <div className={cn('min-w-0', className)}>
+      <div className="flex items-center gap-1">
+        <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
-        </p>
+        </dt>
         {onEdit ? (
           <EditPencilButton
             onClick={onEdit}
             label={editLabel ?? `Editar ${label}`}
-            onBrand={onBrand}
           />
         ) : null}
       </div>
-      {children}
+      <dd className="mt-1 text-lg font-semibold tabular-nums tracking-tight sm:text-xl">
+        {children}
+      </dd>
     </div>
   );
 }
@@ -270,21 +265,16 @@ function InfoCard({
 function EditPencilButton({
   onClick,
   label,
-  onBrand = false,
 }: {
   onClick: () => void;
   label: string;
-  onBrand?: boolean;
 }) {
   return (
     <Button
       type="button"
       variant="ghost"
       size="icon-xs"
-      className={cn(
-        onBrand &&
-          'text-brand-foreground/80 hover:bg-white/15 hover:text-brand-foreground',
-      )}
+      className="size-7 text-muted-foreground hover:text-foreground"
       aria-label={label}
       title={label}
       onClick={onClick}

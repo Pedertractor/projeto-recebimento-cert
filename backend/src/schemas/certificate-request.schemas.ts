@@ -17,6 +17,7 @@ const supplierSummarySchema = z.object({
   id: z.number(),
   name: z.string(),
   cnpj: z.string(),
+  logoStoragePath: z.string().nullable(),
 });
 
 export const attachmentSchema = z.object({
