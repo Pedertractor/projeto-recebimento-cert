@@ -75,7 +75,7 @@ export function UserActionsDialog({
             <p className="text-sm text-muted-foreground">{user.email}</p>
           ) : null}
 
-          <div className="grid gap-2">
+          <div className="grid gap-2 border-t pt-4">
             <p className="text-sm font-medium">Alterar perfil</p>
             <div className="flex flex-wrap gap-2">
               {roles.map((role) => (
