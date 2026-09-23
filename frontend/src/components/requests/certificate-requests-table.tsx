@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import { Form084PreviewDialog } from '@/components/conference/form-084-preview-dialog';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
+import { SupplierLogo } from '@/components/suppliers/supplier-logo';
 import { Button } from '@/components/ui/button';
 import {
   MobileListCard,
@@ -32,6 +33,22 @@ type CertificateRequestsTableProps = {
   /** Atalho para a página de conferência da NF (ex.: estoque em minhas solicitações). */
   nfShortcutPath?: (requestId: number) => string;
 };
+
+type RequestSupplier = CertificateRequest['supplier'];
+
+function ConferenceSupplierCell({ supplier }: { supplier: RequestSupplier }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      <div className="size-9 shrink-0 overflow-hidden rounded-lg ring-1 ring-border/70">
+        <SupplierLogo
+          name={supplier.name}
+          logoStoragePath={supplier.logoStoragePath}
+        />
+      </div>
+      <span className="min-w-0 truncate">{supplier.name}</span>
+    </div>
+  );
+}
 
 export function CertificateRequestsTable({
   requests,
@@ -83,11 +100,21 @@ export function CertificateRequestsTable({
             >
               <div className="flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-semibold">Solicitação #{request.id}</p>
-                    <p className="truncate text-sm text-muted-foreground">
-                      {request.supplier.name}
-                    </p>
+                  <div className="flex min-w-0 flex-1 items-start gap-2.5">
+                    {variant === 'conference' ? (
+                      <div className="size-10 shrink-0 overflow-hidden rounded-lg ring-1 ring-border/70">
+                        <SupplierLogo
+                          name={request.supplier.name}
+                          logoStoragePath={request.supplier.logoStoragePath}
+                        />
+                      </div>
+                    ) : null}
+                    <div className="min-w-0">
+                      <p className="font-semibold">Solicitação #{request.id}</p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {request.supplier.name}
+                      </p>
+                    </div>
                   </div>
                   <RequestStatusBadge status={status} />
                 </div>
@@ -192,7 +219,13 @@ export function CertificateRequestsTable({
               onClick={() => navigate(detailPath(request.id))}
             >
               <TableCell className="font-medium">#{request.id}</TableCell>
-              <TableCell>{request.supplier.name}</TableCell>
+              <TableCell>
+                {variant === 'conference' ? (
+                  <ConferenceSupplierCell supplier={request.supplier} />
+                ) : (
+                  request.supplier.name
+                )}
+              </TableCell>
               <TableCell>{request.invoiceNumber}</TableCell>
               <TableCell>{request.expectedCertificates}</TableCell>
               {variant === 'conference' ? (

@@ -14,6 +14,9 @@ import {
 } from '../utils/supplier-multipart.js';
 
 function parseJsonSupplierBody(body: unknown): CreateSupplierBody {
+  if (body === null || body === undefined) {
+    throw new AppError('Informe os dados do fornecedor.');
+  }
   const parsed = createSupplierBodySchema.safeParse(body);
   if (!parsed.success) {
     throw new AppError(parsed.error.issues[0]?.message ?? 'Dados inválidos.');

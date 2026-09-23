@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import z from 'zod';
 import { UserRole } from '../generated/prisma/enums.js';
 import {
   createSupplierController,
@@ -6,6 +7,7 @@ import {
   updateSupplierController,
 } from '../controllers/supplier.controller.js';
 import {
+  createSupplierBodySchema,
   createSupplierResponseSchema,
   listSuppliersQuerySchema,
   listSuppliersResponseSchema,
@@ -15,6 +17,9 @@ import {
   type SupplierIdParams,
   type UpdateSupplierBody,
 } from '../schemas/supplier.schemas.js';
+
+/** Multipart requests have no JSON body (`null`); fields are parsed in the controller. */
+const supplierWriteBodySchema = z.union([createSupplierBodySchema, z.null()]);
 import { commonErrors } from '../schemas/error.schemas.js';
 
 export function supplierRoutes(fastify: FastifyInstance) {
@@ -47,6 +52,7 @@ export function supplierRoutes(fastify: FastifyInstance) {
         tags: ['Supplier'],
         security: [{ cookieAuth: [] }],
         consumes: ['application/json', 'multipart/form-data'],
+        body: supplierWriteBodySchema,
         response: {
           201: createSupplierResponseSchema,
           ...commonErrors,
@@ -70,6 +76,7 @@ export function supplierRoutes(fastify: FastifyInstance) {
         security: [{ cookieAuth: [] }],
         consumes: ['application/json', 'multipart/form-data'],
         params: supplierIdParamsSchema,
+        body: supplierWriteBodySchema,
         response: {
           200: createSupplierResponseSchema,
           ...commonErrors,

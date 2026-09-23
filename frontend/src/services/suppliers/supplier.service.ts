@@ -26,6 +26,40 @@ function appendSupplierFields(
   }
 }
 
+function buildSupplierFormData(
+  payload: CreateSupplierPayload,
+  options?: SaveSupplierOptions,
+): FormData {
+  const formData = new FormData();
+  appendSupplierFields(formData, payload);
+  if (options?.logoFile) {
+    formData.append('logoFile', options.logoFile);
+  }
+  if (options?.removeLogo) {
+    formData.append('removeLogo', 'true');
+  }
+  return formData;
+}
+
+function readSupplierSaveErrorMessage(data: unknown): string {
+  if (!data || typeof data !== 'object') {
+    return 'Não foi possível salvar o fornecedor.';
+  }
+  const record = data as Record<string, unknown>;
+  if (typeof record.message === 'string' && record.message.trim()) {
+    if (record.message === 'ValidationError' && typeof record.errors === 'string') {
+      return record.errors.trim() || record.message;
+    }
+    if (record.message !== 'ValidationError') {
+      return record.message;
+    }
+  }
+  if (typeof record.errors === 'string' && record.errors.trim()) {
+    return record.errors.trim();
+  }
+  return 'Não foi possível salvar o fornecedor.';
+}
+
 async function postSupplierMultipart(
   url: string,
   formData: FormData,
@@ -44,12 +78,8 @@ async function postSupplierMultipart(
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      const message =
-        typeof error.response?.data?.message === 'string'
-          ? error.response.data.message
-          : 'Não foi possível salvar o fornecedor.';
       throw new HttpClientError({
-        message,
+        message: readSupplierSaveErrorMessage(error.response?.data),
         statusCode: error.response?.status,
       });
     }
@@ -67,16 +97,7 @@ export function createSupplier(
   payload: CreateSupplierPayload,
   options?: SaveSupplierOptions,
 ): Promise<Supplier> {
-  if (!options?.logoFile) {
-    return httpClient.post<Supplier, CreateSupplierPayload>(
-      '/suppliers',
-      payload,
-    );
-  }
-
-  const formData = new FormData();
-  appendSupplierFields(formData, payload);
-  formData.append('logoFile', options.logoFile);
+  const formData = buildSupplierFormData(payload, options);
   return postSupplierMultipart('/suppliers', formData, 'POST');
 }
 
@@ -85,20 +106,6 @@ export function updateSupplier(
   payload: UpdateSupplierPayload,
   options?: SaveSupplierOptions,
 ): Promise<Supplier> {
-  if (!options?.logoFile && !options?.removeLogo) {
-    return httpClient.patch<Supplier, UpdateSupplierPayload>(
-      `/suppliers/${id}`,
-      payload,
-    );
-  }
-
-  const formData = new FormData();
-  appendSupplierFields(formData, payload);
-  if (options.logoFile) {
-    formData.append('logoFile', options.logoFile);
-  }
-  if (options.removeLogo) {
-    formData.append('removeLogo', 'true');
-  }
+  const formData = buildSupplierFormData(payload, options);
   return postSupplierMultipart(`/suppliers/${id}`, formData, 'PATCH');
 }
