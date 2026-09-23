@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { roleLabel } from '@/lib/user-labels';
+import { roleLabel, userSystemAccessLabel } from '@/lib/user-labels';
 import type { PublicUser, UserRole } from '@/types/user';
 import { UNIT_LABELS } from '@/types/unit';
 
@@ -59,9 +59,16 @@ export function UserActionsDialog({
             <Badge variant={user.status ? 'default' : 'destructive'}>
               {user.status ? 'Ativo' : 'Inativo'}
             </Badge>
-            {user.firstLogin ? (
-              <Badge variant="outline">Primeiro acesso pendente</Badge>
-            ) : null}
+            <Badge
+              variant={user.firstLogin ? 'outline' : 'secondary'}
+              className={
+                user.firstLogin
+                  ? 'border-amber-200 bg-amber-50 text-amber-900'
+                  : 'bg-emerald-100 text-emerald-900'
+              }
+            >
+              {userSystemAccessLabel(user.firstLogin)}
+            </Badge>
           </div>
 
           {user.email ? (

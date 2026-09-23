@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { roleLabel } from '@/lib/user-labels';
+import { roleLabel, userSystemAccessLabel } from '@/lib/user-labels';
 import type { PublicUser } from '@/types/user';
 import { UNIT_LABELS } from '@/types/unit';
 
@@ -54,6 +54,21 @@ export function UsersTable({ users, onRowClick }: UsersTableProps) {
                     <Badge variant="secondary">{roleLabel(user.role)}</Badge>
                   }
                 />
+                <MobileListCardRow
+                  label="Acesso ao sistema"
+                  value={
+                    <Badge
+                      variant={user.firstLogin ? 'outline' : 'secondary'}
+                      className={
+                        user.firstLogin
+                          ? 'border-amber-200 bg-amber-50 text-amber-900'
+                          : 'bg-emerald-100 text-emerald-900'
+                      }
+                    >
+                      {userSystemAccessLabel(user.firstLogin)}
+                    </Badge>
+                  }
+                />
               </div>
             </div>
           </MobileListCard>
@@ -69,6 +84,7 @@ export function UsersTable({ users, onRowClick }: UsersTableProps) {
           <TableHead>Unidade</TableHead>
           <TableHead>Matrícula</TableHead>
           <TableHead>Perfil</TableHead>
+          <TableHead>Acesso ao sistema</TableHead>
           <TableHead>Status</TableHead>
         </TableRow>
       </TableHeader>
@@ -94,6 +110,18 @@ export function UsersTable({ users, onRowClick }: UsersTableProps) {
             <TableCell>{user.employeeId}</TableCell>
             <TableCell>
               <Badge variant="secondary">{roleLabel(user.role)}</Badge>
+            </TableCell>
+            <TableCell>
+              <Badge
+                variant={user.firstLogin ? 'outline' : 'secondary'}
+                className={
+                  user.firstLogin
+                    ? 'border-amber-200 bg-amber-50 text-amber-900'
+                    : 'bg-emerald-100 text-emerald-900'
+                }
+              >
+                {userSystemAccessLabel(user.firstLogin)}
+              </Badge>
             </TableCell>
             <TableCell>
               <Badge variant={user.status ? 'default' : 'destructive'}>

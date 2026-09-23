@@ -25,3 +25,8 @@ export function isAdminLikeRole(role: UserRole | undefined): boolean {
 export function unitLabel(unit: Unit | string): string {
   return UNIT_LABELS[unit as Unit] ?? unit;
 }
+
+/** `firstLogin` true = ainda não concluiu o primeiro acesso (troca de senha). */
+export function userSystemAccessLabel(firstLogin: boolean): string {
+  return firstLogin ? 'Ainda não acessou' : 'Já acessou';
+}
