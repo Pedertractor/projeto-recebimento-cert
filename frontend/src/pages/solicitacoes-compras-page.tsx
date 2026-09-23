@@ -1,17 +1,57 @@
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 
+import { CertificateRequestTableFilters } from '@/components/requests/certificate-request-table-filters';
 import { CertificateRequestsTable } from '@/components/requests/certificate-requests-table';
+import {
+  buildCertificateRequestListFiltersSummary,
+  filterCertificateRequestList,
+  hasActiveCertificateRequestListFilters,
+  PURCHASE_REQUEST_STATUS_FILTER_OPTIONS,
+  type RequestListStatusFilter,
+} from '@/lib/certificate-request-table-filters';
 import {
   listPurchaseCertificateRequests,
   purchaseCertificateRequestsListQueryKey,
 } from '@/services/certificate-requests/certificate-request.service';
 
 export function SolicitacoesComprasPage() {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] =
+    useState<RequestListStatusFilter>('ALL');
+
   const requestsQuery = useQuery({
     queryKey: purchaseCertificateRequestsListQueryKey,
     queryFn: listPurchaseCertificateRequests,
   });
+
+  const filteredRequests = useMemo(
+    () =>
+      filterCertificateRequestList(
+        requestsQuery.data ?? [],
+        search,
+        statusFilter,
+      ),
+    [requestsQuery.data, search, statusFilter],
+  );
+
+  const totalCount = requestsQuery.data?.length ?? 0;
+  const filtersSummary = buildCertificateRequestListFiltersSummary(
+    search,
+    statusFilter,
+    filteredRequests.length,
+    totalCount,
+  );
+  const hasActiveFilters = hasActiveCertificateRequestListFilters(
+    search,
+    statusFilter,
+  );
+
+  function resetFilters() {
+    setSearch('');
+    setStatusFilter('ALL');
+  }
 
   return (
     <div className="page-container">
@@ -38,12 +78,27 @@ export function SolicitacoesComprasPage() {
       ) : null}
 
       {requestsQuery.isSuccess ? (
-        <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60">
-          <CertificateRequestsTable
-            requests={requestsQuery.data}
-            variant="purchase"
-            detailPath={(id) => `/compras/solicitacoes/${id}`}
+        <div className="flex flex-col gap-4">
+          <CertificateRequestTableFilters
+            searchInputId="purchase-requests-search"
+            searchPlaceholder="NF, fornecedor, CNPJ, solicitante ou nº da solicitação"
+            search={search}
+            statusFilter={statusFilter}
+            statusOptions={PURCHASE_REQUEST_STATUS_FILTER_OPTIONS}
+            filtersSummary={filtersSummary}
+            hasActiveFilters={hasActiveFilters}
+            onSearchChange={setSearch}
+            onStatusFilterChange={setStatusFilter}
+            onReset={resetFilters}
           />
+
+          <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60">
+            <CertificateRequestsTable
+              requests={filteredRequests}
+              variant="purchase"
+              detailPath={(id) => `/compras/solicitacoes/${id}`}
+            />
+          </div>
         </div>
       ) : null}
     </div>
