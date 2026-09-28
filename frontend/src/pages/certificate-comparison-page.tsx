@@ -6,9 +6,11 @@ import { toast } from 'sonner';
 
 import { CertificateComparisonForm } from '@/components/conference/certificate-comparison-form';
 import { ComparisonDocumentPreview } from '@/components/conference/comparison-document-preview';
+import { ConferencePrintEditMenu } from '@/components/conference/conference-print-edit-menu';
 import { Button } from '@/components/ui/button';
 import { useSidebarAutoCollapse } from '@/hooks/use-sidebar-auto-collapse';
 import { useWebSession } from '@/hooks/auth/use-web-session';
+import { getPurchaseCertificateAttachment } from '@/lib/certificate-request-attachments';
 import { getInspectedCertificatesCount } from '@/lib/certificate-request-labels';
 import { HttpClientError } from '@/lib/http-client';
 import {
@@ -128,6 +130,10 @@ export function CertificateComparisonPage() {
 
   const inspection = attachment.inspection ?? null;
   const lotLabel = attachment.lotLabel ?? `Lote ${attachment.lotIndex}`;
+  const lotIndex = attachment.lotIndex ?? 1;
+  const purchaseCertificate = getPurchaseCertificateAttachment(
+    requestQuery.data.attachments,
+  );
 
   const defaultValues: Partial<CertificateComparisonFormValues> = inspection
     ? {
@@ -179,6 +185,15 @@ export function CertificateComparisonPage() {
           subtitle={lotLabel}
           fileName={attachment.fileName}
           storagePath={attachment.storagePath}
+          headerActions={
+            inspection ? (
+              <ConferencePrintEditMenu
+                requestId={requestId}
+                lotIndex={lotIndex}
+                purchaseCertificate={purchaseCertificate}
+              />
+            ) : undefined
+          }
         />
       </div>
 

@@ -4,6 +4,7 @@ import {
   useState,
   type MouseEvent,
   type PointerEvent,
+  type ReactNode,
 } from 'react';
 import { FileText, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 
@@ -18,6 +19,7 @@ type ComparisonDocumentPreviewProps = {
   subtitle?: string;
   fileName: string;
   storagePath: string;
+  headerActions?: ReactNode;
 };
 
 const MIN_SCALE = 1;
@@ -33,6 +35,7 @@ export function ComparisonDocumentPreview({
   subtitle,
   fileName,
   storagePath,
+  headerActions,
 }: ComparisonDocumentPreviewProps) {
   const url = resolveAttachmentUrl(storagePath);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -167,6 +170,7 @@ export function ComparisonDocumentPreview({
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          {headerActions}
           {canPreview ? (
             <>
               <Button

@@ -113,19 +113,24 @@ export class CertificateInspectionService {
         attachment.lotIndex === lotIndex,
     );
 
-    if (existingPrint?.inspection) {
-      throw new AppError(
-        'Este lote já foi conferido e não pode receber nova impressão.',
-        400,
-      );
-    }
-
     const storagePath = await saveCertificateRequestFile(
       requestId,
       AttachmentType.IMPRESSAO_CONFERENCIA,
       file.buffer,
       file.filename,
     );
+
+    if (existingPrint?.inspection) {
+      await this.prisma.requestAttachment.update({
+        where: { id: existingPrint.id },
+        data: {
+          fileName: file.filename,
+          storagePath,
+          uploadedByUserId: userId,
+        },
+      });
+      return;
+    }
 
     await this.prisma.$transaction(async (tx) => {
       if (existingPrint) {

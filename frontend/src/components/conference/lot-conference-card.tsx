@@ -438,7 +438,7 @@ export function LotConferenceCard({
               <Link
                 to={`/notas-fiscais/${requestId}/comparacao/${printAttachment.id}`}
               >
-                Ver conferência
+                Ver certificado
               </Link>
             </Button>
           )}
