@@ -77,6 +77,7 @@ export function CreateSupplierDialog({
     defaultValues: {
       name: supplier?.name ?? '',
       cnpj: supplier?.cnpj ?? '',
+      epromSupplierNumber: supplier?.epromSupplierNumber ?? '',
       description: supplier?.description ?? '',
     },
   });
@@ -89,6 +90,7 @@ export function CreateSupplierDialog({
     reset({
       name: supplier?.name ?? '',
       cnpj: supplier?.cnpj ?? '',
+      epromSupplierNumber: supplier?.epromSupplierNumber ?? '',
       description: supplier?.description ?? '',
     });
     setLogoFile(null);
@@ -205,6 +207,21 @@ export function CreateSupplierDialog({
             />
             {errors.cnpj?.message ? (
               <p className="text-sm text-destructive">{errors.cnpj.message}</p>
+            ) : null}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor={`${formId}-eprom`}>Número do fornecedor no EPROM</Label>
+            <Input
+              id={`${formId}-eprom`}
+              inputMode="numeric"
+              placeholder="Ex.: 12345"
+              {...register('epromSupplierNumber')}
+            />
+            {errors.epromSupplierNumber?.message ? (
+              <p className="text-sm text-destructive">
+                {errors.epromSupplierNumber.message}
+              </p>
             ) : null}
           </div>
 

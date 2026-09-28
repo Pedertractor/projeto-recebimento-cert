@@ -97,11 +97,12 @@ model User {
 }
 
 model Supplier {
-  id               Int      @id @default(autoincrement())
-  name             String
-  cnpj             String   @unique
-  description      String?
-  logoStoragePath  String?  @map("logo_storage_path")
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  cnpj                 String   @unique
+  description          String?
+  epromSupplierNumber  String?  @map("eprom_supplier_number")
+  logoStoragePath      String?  @map("logo_storage_path")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 

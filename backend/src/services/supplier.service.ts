@@ -15,12 +15,18 @@ export type SupplierLogoFile = {
   filename: string;
 };
 
+function normalizeEpromSupplierNumber(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
 function toPublicSupplier(supplier: Supplier) {
   return {
     id: supplier.id,
     name: supplier.name,
     cnpj: supplier.cnpj,
     description: supplier.description,
+    epromSupplierNumber: supplier.epromSupplierNumber,
     logoStoragePath: supplier.logoStoragePath,
     createdAt: supplier.createdAt.toISOString(),
     updatedAt: supplier.updatedAt.toISOString(),
@@ -76,6 +82,9 @@ export class SupplierService {
         name,
         cnpj,
         description: data.description?.trim() || null,
+        epromSupplierNumber: normalizeEpromSupplierNumber(
+          data.epromSupplierNumber,
+        ),
       },
     });
 
@@ -146,6 +155,9 @@ export class SupplierService {
         name,
         cnpj,
         description: data.description?.trim() || null,
+        epromSupplierNumber: normalizeEpromSupplierNumber(
+          data.epromSupplierNumber,
+        ),
         logoStoragePath,
       },
     });

@@ -21,6 +21,7 @@ function appendSupplierFields(
 ): void {
   formData.append('name', payload.name);
   formData.append('cnpj', payload.cnpj);
+  formData.append('epromSupplierNumber', payload.epromSupplierNumber?.trim() ?? '');
   if (payload.description?.trim()) {
     formData.append('description', payload.description.trim());
   }

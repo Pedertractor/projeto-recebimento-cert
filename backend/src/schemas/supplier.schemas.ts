@@ -5,6 +5,7 @@ export const supplierSchema = z.object({
   name: z.string(),
   cnpj: z.string(),
   description: z.string().nullable(),
+  epromSupplierNumber: z.string().nullable(),
   logoStoragePath: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -24,6 +25,10 @@ export const createSupplierBodySchema = z.object({
   name: z.string().trim().min(1, 'Informe o nome do fornecedor.'),
   cnpj: z.string().trim().min(1, 'Informe o CNPJ.'),
   description: z.string().trim().optional(),
+  epromSupplierNumber: z
+    .string()
+    .trim()
+    .min(1, 'Informe o número do fornecedor no EPROM.'),
 });
 
 export type CreateSupplierBody = z.infer<typeof createSupplierBodySchema>;
