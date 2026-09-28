@@ -11,6 +11,7 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { ConferencePrintConfirmDialog } from '@/components/conference/conference-print-confirm-dialog';
 import { PdfPageImportDialog } from '@/components/conference/pdf-page-import-dialog';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -54,6 +55,7 @@ export function LotConferenceCard({
   const [isPasteFocused, setIsPasteFocused] = useState(false);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [hasCopiedPage, setHasCopiedPage] = useState(hasPendingConferencePrint);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const canImportFromPdf =
@@ -91,6 +93,7 @@ export function LotConferenceCard({
     mutationFn: () => deleteConferencePrint(requestId, lotIndex),
     onSuccess: async () => {
       toast.success(`Anexo do lote ${lotIndex} removido.`);
+      setRemoveDialogOpen(false);
       setPreviewUrl(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -414,16 +417,7 @@ export function LotConferenceCard({
                 variant="outline"
                 className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
                 disabled={uploadMutation.isPending || deleteMutation.isPending}
-                onClick={() => {
-                  if (
-                    !window.confirm(
-                      `Remover a impressão anexada ao lote ${lotIndex}?`,
-                    )
-                  ) {
-                    return;
-                  }
-                  deleteMutation.mutate();
-                }}
+                onClick={() => setRemoveDialogOpen(true)}
               >
                 {deleteMutation.isPending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -456,6 +450,15 @@ export function LotConferenceCard({
           onImport={uploadPrintFile}
         />
       ) : null}
+
+      <ConferencePrintConfirmDialog
+        open={removeDialogOpen}
+        onOpenChange={setRemoveDialogOpen}
+        lotIndex={lotIndex}
+        intent="remove"
+        isPending={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate()}
+      />
     </article>
   );
 }

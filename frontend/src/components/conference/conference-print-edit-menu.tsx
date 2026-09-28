@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { ConferencePrintConfirmDialog } from '@/components/conference/conference-print-confirm-dialog';
 import { PdfPageImportDialog } from '@/components/conference/pdf-page-import-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,6 +53,8 @@ export function ConferencePrintEditMenu({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [hasCopiedPage, setHasCopiedPage] = useState(hasPendingConferencePrint);
+  const [replaceDialogOpen, setReplaceDialogOpen] = useState(false);
+  const pendingReplaceRef = useRef<(() => void) | null>(null);
   const isMobile = useIsMobile();
 
   const canImportFromPdf =
@@ -90,32 +93,44 @@ export function ConferencePrintEditMenu({
     });
   }, []);
 
-  async function uploadPrintFile(file: File): Promise<void> {
+  function uploadPrintFile(file: File): void {
     if (uploadMutation.isPending) {
       return;
     }
     uploadMutation.mutate(file);
   }
 
-  async function applyPendingCopiedPage(): Promise<void> {
+  function requestReplace(action: () => void): void {
+    pendingReplaceRef.current = action;
+    setReplaceDialogOpen(true);
+  }
+
+  function confirmReplace(): void {
+    const action = pendingReplaceRef.current;
+    pendingReplaceRef.current = null;
+    setReplaceDialogOpen(false);
+    action?.();
+  }
+
+  function applyPendingCopiedPage(): void {
     const pendingFile = takePendingConferencePrint();
     if (!pendingFile) {
       toast.message('Nenhuma página copiada. Use "Copiar página" na nota fiscal.');
       return;
     }
-    await uploadPrintFile(pendingFile);
+    requestReplace(() => uploadPrintFile(pendingFile));
   }
 
   async function handlePasteAction(): Promise<void> {
     if (hasPendingConferencePrint()) {
-      await applyPendingCopiedPage();
+      applyPendingCopiedPage();
       return;
     }
 
     try {
       const pastedFile = await readImageFileFromClipboardApi();
       if (pastedFile) {
-        await uploadPrintFile(pastedFile);
+        requestReplace(() => uploadPrintFile(pastedFile));
         return;
       }
     } catch {
@@ -127,6 +142,10 @@ export function ConferencePrintEditMenu({
         ? 'Copie a página na nota fiscal ou escolha um arquivo.'
         : 'Copie a página na nota fiscal ou use Ctrl+V na área de colagem do lote.',
     );
+  }
+
+  function handleFileSelected(file: File): void {
+    requestReplace(() => uploadPrintFile(file));
   }
 
   const isBusy = uploadMutation.isPending;
@@ -155,7 +174,7 @@ export function ConferencePrintEditMenu({
           {hasCopiedPage ? (
             <DropdownMenuItem
               disabled={isBusy}
-              onClick={() => void applyPendingCopiedPage()}
+              onClick={() => applyPendingCopiedPage()}
             >
               <ClipboardPaste className="size-4" />
               Usar página copiada
@@ -189,7 +208,7 @@ export function ConferencePrintEditMenu({
         onChange={(event) => {
           const file = event.target.files?.[0];
           if (file) {
-            void uploadPrintFile(file);
+            handleFileSelected(file);
           }
         }}
       />
@@ -202,9 +221,23 @@ export function ConferencePrintEditMenu({
           fileName={purchaseCertificate.fileName}
           lotIndex={lotIndex}
           defaultPage={lotIndex}
-          onImport={uploadPrintFile}
+          onImport={(file) => requestReplace(() => uploadPrintFile(file))}
         />
       ) : null}
+
+      <ConferencePrintConfirmDialog
+        open={replaceDialogOpen}
+        onOpenChange={(open) => {
+          setReplaceDialogOpen(open);
+          if (!open) {
+            pendingReplaceRef.current = null;
+          }
+        }}
+        lotIndex={lotIndex}
+        intent="replace"
+        isPending={uploadMutation.isPending}
+        onConfirm={confirmReplace}
+      />
     </>
   );
 }
