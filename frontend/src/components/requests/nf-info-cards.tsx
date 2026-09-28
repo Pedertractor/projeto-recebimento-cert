@@ -28,7 +28,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useWebSession } from '@/hooks/auth/use-web-session';
 import { formatRequestDate } from '@/lib/certificate-request-labels';
+import { canManageQualityDocuments } from '@/lib/role-access';
 import { HttpClientError } from '@/lib/http-client';
 import { cn } from '@/lib/utils';
 import {
@@ -59,6 +61,8 @@ type NfInfoCardsProps = {
 
 export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
   const queryClient = useQueryClient();
+  const { data: sessionUser } = useWebSession();
+  const canManageQualityDoc = canManageQualityDocuments(sessionUser?.role);
   const [editField, setEditField] = useState<EditField | null>(null);
   const canEdit = request.status !== 'CANCELADA';
 
@@ -185,7 +189,7 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2 sm:pl-4">
-            {!request.qualityDocumentLocked ? (
+            {canManageQualityDoc && !request.qualityDocumentLocked ? (
               <Button
                 asChild
                 variant="ghost"

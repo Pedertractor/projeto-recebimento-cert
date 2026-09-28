@@ -5,6 +5,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { UserService } from '../services/user.service.js';
 import { AppError } from '../lib/errors.js';
 import { UserRole } from '../generated/prisma/enums.js';
+import { isAuthorizeRoleAllowed } from '../utils/user-roles.js';
 
 interface UserPayload {
   id: number;
@@ -105,7 +106,7 @@ export const authPlugin = fp(async (app) => {
     return async (request: FastifyRequest, _reply: FastifyReply) => {
       const { role } = request.user;
 
-      if (!allowedRoles.includes(role) && role !== UserRole.SUPERADMIN) {
+      if (!isAuthorizeRoleAllowed(role, allowedRoles)) {
         throw new AppError('Acesso negado', 403);
       }
     };

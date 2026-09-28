@@ -5,9 +5,14 @@ import { UserActionsDialog } from '@/components/users/user-actions-dialog';
 import { UsersFilters } from '@/components/users/users-filters';
 import { UsersTable } from '@/components/users/users-table';
 import { Button } from '@/components/ui/button';
+import { useWebSession } from '@/hooks/auth/use-web-session';
 import { useUsersPage } from '@/hooks/users/use-users-page';
+import { canAdministerUsers } from '@/lib/role-access';
 
 export function UsuariosPage() {
+  const { data: sessionUser } = useWebSession();
+  const canAdminister = canAdministerUsers(sessionUser?.role);
+
   const {
     usersQuery,
     roles,
@@ -44,7 +49,9 @@ export function UsuariosPage() {
         <div className="min-w-0">
           <h1 className="page-heading">Usuários</h1>
           <p className="page-lead">
-            Gerencie os usuários do sistema.
+            {canAdminister
+              ? 'Gerencie os usuários do sistema.'
+              : 'Cadastre operadores de estoque para a equipe.'}
           </p>
         </div>
         <CreateUserDialog />
@@ -57,6 +64,7 @@ export function UsuariosPage() {
         unit={unit}
         statusFilter={statusFilter}
         roleOptions={roleOptions}
+        showRoleFilter={canAdminister}
         filtersSummary={filtersSummary}
         animateSpin={animateSpin}
         onFilterNameChange={setFilterName}
@@ -99,6 +107,7 @@ export function UsuariosPage() {
         user={selectedUser}
         open={dialogOpen}
         roles={roles}
+        canAdminister={canAdminister}
         isResetting={isResetting}
         isUpdatingRole={isUpdatingRole}
         isUpdatingStatus={isUpdatingStatus}

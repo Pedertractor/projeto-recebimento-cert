@@ -28,6 +28,7 @@ type UsersFiltersProps = {
   unit: UnitFilterOption;
   statusFilter: StatusFilterOption;
   roleOptions: RoleFilterOption[];
+  showRoleFilter?: boolean;
   filtersSummary: string;
   animateSpin: boolean;
   onFilterNameChange: (value: string) => void;
@@ -45,6 +46,7 @@ export function UsersFilters({
   unit,
   statusFilter,
   roleOptions,
+  showRoleFilter = true,
   filtersSummary,
   animateSpin,
   onFilterNameChange,
@@ -86,39 +88,41 @@ export function UsersFilters({
         />
       </div>
 
-      <div className="flex min-w-[160px] flex-1 flex-col sm:max-w-[220px]">
-        <Label className="text-sm font-medium">Perfil</Label>
-        <Combobox
-          items={roleOptions}
-          value={filteredRole}
-          onValueChange={onFilteredRoleChange}
-          itemToStringLabel={roleFilterLabel}
-        >
-          <div
-            ref={roleAnchorRef}
-            className="flex w-full min-w-0 items-stretch overflow-hidden rounded-md border border-input bg-background shadow-xs"
+      {showRoleFilter ? (
+        <div className="flex min-w-[160px] flex-1 flex-col sm:max-w-[220px]">
+          <Label className="text-sm font-medium">Perfil</Label>
+          <Combobox
+            items={roleOptions}
+            value={filteredRole}
+            onValueChange={onFilteredRoleChange}
+            itemToStringLabel={roleFilterLabel}
           >
-            <ComboboxInput
-              placeholder="Todos os perfis"
-              className="min-h-9 min-w-0 flex-1 border-0 text-sm font-normal shadow-none"
-              showClear
-            />
-          </div>
-          <ComboboxContent
-            anchor={roleAnchorRef}
-            className="w-(--anchor-width)"
-          >
-            <ComboboxEmpty>Nenhum perfil encontrado.</ComboboxEmpty>
-            <ComboboxList>
-              {(value) => (
-                <ComboboxItem key={value} value={value}>
-                  {roleFilterLabel(value)}
-                </ComboboxItem>
-              )}
-            </ComboboxList>
-          </ComboboxContent>
-        </Combobox>
-      </div>
+            <div
+              ref={roleAnchorRef}
+              className="flex w-full min-w-0 items-stretch overflow-hidden rounded-md border border-input bg-background shadow-xs"
+            >
+              <ComboboxInput
+                placeholder="Todos os perfis"
+                className="min-h-9 min-w-0 flex-1 border-0 text-sm font-normal shadow-none"
+                showClear
+              />
+            </div>
+            <ComboboxContent
+              anchor={roleAnchorRef}
+              className="w-(--anchor-width)"
+            >
+              <ComboboxEmpty>Nenhum perfil encontrado.</ComboboxEmpty>
+              <ComboboxList>
+                {(value) => (
+                  <ComboboxItem key={value} value={value}>
+                    {roleFilterLabel(value)}
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+        </div>
+      ) : null}
 
       <div className="flex min-w-[120px] flex-col">
         <Label className="text-sm font-medium">Unidade</Label>

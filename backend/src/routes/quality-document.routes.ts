@@ -26,7 +26,7 @@ export function qualityDocumentRoutes(fastify: FastifyInstance) {
       },
       onRequest: [
         fastify.authenticate,
-        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.authorize(UserRole.SUPERADMIN, UserRole.STOCK_LEADER),
       ],
     },
     listQualityDocumentsController,
@@ -67,7 +67,7 @@ export function qualityDocumentRoutes(fastify: FastifyInstance) {
       },
       onRequest: [
         fastify.authenticate,
-        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.authorize(UserRole.SUPERADMIN, UserRole.STOCK_LEADER),
         fastify.csrfProtection,
       ],
     },

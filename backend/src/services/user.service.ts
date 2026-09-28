@@ -115,9 +115,12 @@ export class UserService {
     return toPublicUser(user);
   }
 
-  async listAllUsers() {
+  async listAllUsers(options?: { roles?: UserRole[] }) {
     const users = await this.prisma.user.findMany({
-      where: { deletedAt: null },
+      where: {
+        deletedAt: null,
+        ...(options?.roles?.length ? { role: { in: options.roles } } : {}),
+      },
       select: userPublicSelect,
       orderBy: { id: 'asc' },
     });

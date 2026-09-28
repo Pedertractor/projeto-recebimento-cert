@@ -17,6 +17,7 @@ type UserActionsDialogProps = {
   user: PublicUser | null;
   open: boolean;
   roles: UserRole[];
+  canAdminister?: boolean;
   isResetting: boolean;
   isUpdatingRole: boolean;
   isUpdatingStatus: boolean;
@@ -30,6 +31,7 @@ export function UserActionsDialog({
   user,
   open,
   roles,
+  canAdminister = true,
   isResetting,
   isUpdatingRole,
   isUpdatingStatus,
@@ -75,45 +77,49 @@ export function UserActionsDialog({
             <p className="text-sm text-muted-foreground">{user.email}</p>
           ) : null}
 
-          <div className="grid gap-2 border-t pt-4">
-            <p className="text-sm font-medium">Alterar perfil</p>
-            <div className="flex flex-wrap gap-2">
-              {roles.map((role) => (
+          {canAdminister ? (
+            <>
+              <div className="grid gap-2 border-t pt-4">
+                <p className="text-sm font-medium">Alterar perfil</p>
+                <div className="flex flex-wrap gap-2">
+                  {roles.map((role) => (
+                    <Button
+                      key={role}
+                      type="button"
+                      size="sm"
+                      variant={user.role === role ? 'default' : 'outline'}
+                      disabled={isUpdatingRole || user.role === role}
+                      onClick={() => onChangeRole(user, role)}
+                    >
+                      {roleLabel(role)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 border-t pt-4">
                 <Button
-                  key={role}
                   type="button"
-                  size="sm"
-                  variant={user.role === role ? 'default' : 'outline'}
-                  disabled={isUpdatingRole || user.role === role}
-                  onClick={() => onChangeRole(user, role)}
+                  variant="outline"
+                  disabled={isResetting || !user.status}
+                  onClick={() => onResetPassword(user)}
                 >
-                  {roleLabel(role)}
+                  <RotateCcwKey />
+                  Resetar senha
                 </Button>
-              ))}
-            </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2 border-t pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isResetting || !user.status}
-              onClick={() => onResetPassword(user)}
-            >
-              <RotateCcwKey />
-              Resetar senha
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isUpdatingStatus}
-              onClick={() => onToggleStatus(user)}
-            >
-              {user.status ? <UserRoundX /> : <UserRoundCheck />}
-              {user.status ? 'Inativar' : 'Ativar'}
-            </Button>
-          </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isUpdatingStatus}
+                  onClick={() => onToggleStatus(user)}
+                >
+                  {user.status ? <UserRoundX /> : <UserRoundCheck />}
+                  {user.status ? 'Inativar' : 'Ativar'}
+                </Button>
+              </div>
+            </>
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>

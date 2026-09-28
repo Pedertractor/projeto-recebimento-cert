@@ -15,6 +15,7 @@ import type {
 } from '../schemas/certificate-inspection.schemas.js';
 import { CertificateInspectionService } from '../services/certificate-inspection.service.js';
 import { CertificateRequestService } from '../services/certificate-request.service.js';
+import { canManageAllStockCertificateRequests } from '../utils/user-roles.js';
 
 type MultipartFields = Record<string, string>;
 
@@ -60,7 +61,7 @@ function canAccessConferenceRequest(
   request: { createdByUserId: number; status: CertificateRequestStatus },
   user: { id: number; role: UserRole },
 ): boolean {
-  if (user.role === UserRole.SUPERADMIN) {
+  if (canManageAllStockCertificateRequests(user.role)) {
     return true;
   }
 
@@ -75,7 +76,7 @@ function canAttachConferencePrint(
   request: { createdByUserId: number; status: CertificateRequestStatus },
   user: { id: number; role: UserRole },
 ): boolean {
-  if (user.role === UserRole.SUPERADMIN) {
+  if (canManageAllStockCertificateRequests(user.role)) {
     return true;
   }
 
@@ -99,7 +100,7 @@ export async function listCompletedCertificateRequestsController(
   reply: FastifyReply,
 ) {
   const service = new CertificateRequestService(req.server.prisma);
-  const requests = await service.listCompleted(req.user.id);
+  const requests = await service.listCompleted(req.user.id, req.user.role);
   return reply.send(requests);
 }
 

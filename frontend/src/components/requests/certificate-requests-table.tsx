@@ -32,6 +32,8 @@ type CertificateRequestsTableProps = {
   variant: 'stock' | 'purchase' | 'conference';
   /** Atalho para a página de conferência da NF (ex.: estoque em minhas solicitações). */
   nfShortcutPath?: (requestId: number) => string;
+  /** Ex.: líder de estoque vendo solicitações de toda a equipe. */
+  showRequestCreator?: boolean;
 };
 
 type RequestSupplier = CertificateRequest['supplier'];
@@ -61,8 +63,11 @@ export function CertificateRequestsTable({
   detailPath,
   variant,
   nfShortcutPath,
+  showRequestCreator = false,
 }: CertificateRequestsTableProps) {
   const navigate = useNavigate();
+  const showCreatorColumn =
+    variant === 'purchase' || (variant === 'stock' && showRequestCreator);
   const [form084Request, setForm084Request] =
     useState<CertificateRequest | null>(null);
   const [form084Open, setForm084Open] = useState(false);
@@ -144,9 +149,9 @@ export function CertificateRequestsTable({
                     value={formatRequestDate(request.invoiceDate)}
                   />
                   <MobileListCardRow
-                    label={variant === 'purchase' ? 'Solicitante' : 'Abertura'}
+                    label={showCreatorColumn ? 'Solicitante' : 'Abertura'}
                     value={
-                      variant === 'purchase'
+                      showCreatorColumn
                         ? (request.createdByName ?? 'Operador de estoque')
                         : formatRequestDate(request.submittedAt)
                     }
@@ -203,7 +208,7 @@ export function CertificateRequestsTable({
             <TableHead>Data NF</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>
-              {variant === 'purchase' ? 'Solicitante' : 'Abertura'}
+              {showCreatorColumn ? 'Solicitante' : 'Abertura'}
             </TableHead>
             {variant === 'conference' ? (
               <TableHead className="w-[1%] whitespace-nowrap">
@@ -251,7 +256,7 @@ export function CertificateRequestsTable({
                 />
               </TableCell>
               <TableCell>
-                {variant === 'purchase'
+                {showCreatorColumn
                   ? (request.createdByName ?? 'Operador de estoque')
                   : formatRequestDate(request.submittedAt)}
               </TableCell>

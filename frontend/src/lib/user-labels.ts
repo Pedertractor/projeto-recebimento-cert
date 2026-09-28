@@ -6,11 +6,17 @@ export function roleLabel(role: UserRole): string {
   switch (role) {
     case 'SUPERADMIN':
       return 'Super Admin';
+    case 'STOCK_LEADER':
+      return 'Líder de estoque';
     case 'STOCK_OPERATOR':
       return 'Operador de estoque';
     case 'PURCHASE_OPERATOR':
       return 'Operador de compras';
   }
+}
+
+export function isStockLeaderRole(role: UserRole | undefined): boolean {
+  return role === 'STOCK_LEADER';
 }
 
 export function isSuperAdminRole(role: UserRole | undefined): boolean {

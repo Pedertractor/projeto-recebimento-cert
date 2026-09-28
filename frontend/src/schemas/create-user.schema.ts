@@ -9,9 +9,12 @@ export const createUserFormSchema = z.object({
   unit: z.enum(['PEDERTRACTOR', 'TRACTOR'], {
     message: 'Selecione a unidade.',
   }),
-  role: z.enum(['STOCK_OPERATOR', 'PURCHASE_OPERATOR', 'SUPERADMIN'], {
-    message: 'Selecione a função.',
-  }),
+  role: z.enum(
+    ['STOCK_OPERATOR', 'PURCHASE_OPERATOR', 'SUPERADMIN', 'STOCK_LEADER'],
+    {
+      message: 'Selecione a função.',
+    },
+  ),
 });
 
 export type CreateUserFormValues = z.infer<typeof createUserFormSchema>;

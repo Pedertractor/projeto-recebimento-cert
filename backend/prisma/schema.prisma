@@ -16,6 +16,7 @@ enum Unit {
 
 enum UserRole {
   SUPERADMIN
+  STOCK_LEADER
   STOCK_OPERATOR
   PURCHASE_OPERATOR
 

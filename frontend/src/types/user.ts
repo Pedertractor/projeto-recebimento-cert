@@ -1,6 +1,10 @@
 import type { Unit } from '@/types/unit';
 
-export type UserRole = 'SUPERADMIN' | 'STOCK_OPERATOR' | 'PURCHASE_OPERATOR';
+export type UserRole =
+  | 'SUPERADMIN'
+  | 'STOCK_LEADER'
+  | 'STOCK_OPERATOR'
+  | 'PURCHASE_OPERATOR';
 
 export type PublicUser = {
   id: number;

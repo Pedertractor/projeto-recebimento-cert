@@ -193,10 +193,13 @@ export class CertificateRequestService {
     });
   }
 
-  async listForStock(userId: number) {
+  async listForStock(userId: number, userRole: UserRole) {
+    const seeAllRequests =
+      userRole === UserRole.SUPERADMIN || userRole === UserRole.STOCK_LEADER;
+
     const requests = await this.prisma.certificateRequest.findMany({
       where: {
-        createdByUserId: userId,
+        ...(seeAllRequests ? {} : { createdByUserId: userId }),
         status: { not: CertificateRequestStatus.CADASTRADA },
       },
       include: this.includeRelations(),
@@ -206,15 +209,20 @@ export class CertificateRequestService {
     return requests.map(toPublicRequest);
   }
 
-  async listCompleted(userId: number) {
+  async listCompleted(userId: number, userRole: UserRole) {
+    const seeAllRequests =
+      userRole === UserRole.SUPERADMIN || userRole === UserRole.STOCK_LEADER;
+
     const requests = await this.prisma.certificateRequest.findMany({
-      where: {
-        status: { not: CertificateRequestStatus.CANCELADA },
-        OR: [
-          { status: CertificateRequestStatus.CONCLUIDA },
-          { createdByUserId: userId },
-        ],
-      },
+      where: seeAllRequests
+        ? { status: { not: CertificateRequestStatus.CANCELADA } }
+        : {
+            status: { not: CertificateRequestStatus.CANCELADA },
+            OR: [
+              { status: CertificateRequestStatus.CONCLUIDA },
+              { createdByUserId: userId },
+            ],
+          },
       include: this.includeRelations(),
       orderBy: [{ completedAt: 'desc' }, { submittedAt: 'desc' }],
     });
@@ -927,7 +935,8 @@ export class CertificateRequestService {
 
     if (
       request.createdByUserId !== userId &&
-      userRole !== UserRole.SUPERADMIN
+      userRole !== UserRole.SUPERADMIN &&
+      userRole !== UserRole.STOCK_LEADER
     ) {
       throw new AppError('Acesso negado.', 403);
     }

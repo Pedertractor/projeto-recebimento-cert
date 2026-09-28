@@ -2,7 +2,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { useWebSession } from '@/hooks/auth/use-web-session';
 import { HttpClientError } from '@/lib/http-client';
+import { canAdministerUsers } from '@/lib/role-access';
 import { roleLabel } from '@/lib/user-labels';
 import {
   activateUser,
@@ -27,6 +29,8 @@ export function roleFilterLabel(value: RoleFilterOption): string {
 
 export function useUsersPage() {
   const queryClient = useQueryClient();
+  const { data: sessionUser } = useWebSession();
+  const canAdminister = canAdministerUsers(sessionUser?.role);
   const [selectedUser, setSelectedUser] = useState<PublicUser | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filterName, setFilterName] = useState('');
@@ -49,17 +53,20 @@ export function useUsersPage() {
   const roles = rolesQuery.data ?? ([
     'STOCK_OPERATOR',
     'PURCHASE_OPERATOR',
+    'STOCK_LEADER',
     'SUPERADMIN',
   ] as UserRole[]);
   const roleOptions: RoleFilterOption[] = useMemo(
-    () => ['all', ...roles],
-    [roles],
+    () => (canAdminister ? ['all', ...roles] : ['all']),
+    [canAdminister, roles],
   );
 
   const filteredUsers = useMemo(() => {
     const nameQuery = filterName.trim().toLowerCase();
     const cardQuery = filterCard.trim().toLowerCase();
-    const users = usersQuery.data ?? [];
+    const users = (usersQuery.data ?? []).filter(
+      (user) => canAdminister || user.role === 'STOCK_OPERATOR',
+    );
 
     return users.filter((user) => {
       if (nameQuery && !(user.name ?? '').toLowerCase().includes(nameQuery)) {
@@ -90,6 +97,7 @@ export function useUsersPage() {
     });
   }, [
     usersQuery.data,
+    canAdminister,
     filterName,
     filterCard,
     unit,

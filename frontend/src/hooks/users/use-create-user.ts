@@ -8,6 +8,9 @@ import {
   createUserFormSchema,
   type CreateUserFormValues,
 } from '@/schemas/create-user.schema';
+import { useWebSession } from '@/hooks/auth/use-web-session';
+import { canAdministerUsers } from '@/lib/role-access';
+import type { UserRole } from '@/types/user';
 import {
   createUser,
   employeeQueryKey,
@@ -15,14 +18,21 @@ import {
   usersListQueryKey,
 } from '@/services/users/user.service';
 
-const CREATE_USER_ROLES = [
+const SUPERADMIN_CREATE_USER_ROLES: UserRole[] = [
   'STOCK_OPERATOR',
+  'STOCK_LEADER',
   'PURCHASE_OPERATOR',
   'SUPERADMIN',
-] as const;
+];
+
+const STOCK_LEADER_CREATE_USER_ROLES: UserRole[] = ['STOCK_OPERATOR'];
 
 export function useCreateUser() {
   const queryClient = useQueryClient();
+  const { data: sessionUser } = useWebSession();
+  const assignableRoles = canAdministerUsers(sessionUser?.role)
+    ? SUPERADMIN_CREATE_USER_ROLES
+    : STOCK_LEADER_CREATE_USER_ROLES;
   const [openDialog, setOpenDialog] = useState(false);
   const [debouncedCard, setDebouncedCard] = useState('');
 
@@ -126,7 +136,7 @@ export function useCreateUser() {
     !employeeActive;
 
   return {
-    assignableRoles: CREATE_USER_ROLES,
+    assignableRoles,
     employeeData,
     employeeLoading,
     employeeQueryIsError,

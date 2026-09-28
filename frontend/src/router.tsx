@@ -2,7 +2,8 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { MotionIconProvider } from '@/components/motion-icon-provider';
 import { DefaultRouteRedirect } from '@/components/auth/default-route-redirect';
 import { HomeRoute } from '@/components/auth/home-route';
-import { RequireSuperAdmin } from '@/components/auth/require-admin';
+import { RequireQualityDocumentManager } from '@/components/auth/require-quality-document-manager';
+import { RequireUserManagement } from '@/components/auth/require-user-management';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { RequirePurchaseOperator } from '@/components/auth/require-purchase-operator';
 import { RequireStockOperator } from '@/components/auth/require-stock-operator';
@@ -32,8 +33,10 @@ export function AppRouter() {
             <Route element={<RequireAuth />}>
               <Route element={<AppShell />}>
                 <Route path="/" element={<HomeRoute />} />
-                <Route element={<RequireStockOperator />}>
+                <Route element={<RequireQualityDocumentManager />}>
                   <Route path="/doc-qualidade" element={<DocQualidadePage />} />
+                </Route>
+                <Route element={<RequireStockOperator />}>
                   <Route
                     path="/cadastrar-nf"
                     element={<SolicitarCertificadoPage />}
@@ -74,7 +77,7 @@ export function AppRouter() {
                     element={<SolicitacaoComprasDetailPage />}
                   />
                 </Route>
-                <Route element={<RequireSuperAdmin />}>
+                <Route element={<RequireUserManagement />}>
                   <Route path="/usuarios" element={<UsuariosPage />} />
                 </Route>
               </Route>

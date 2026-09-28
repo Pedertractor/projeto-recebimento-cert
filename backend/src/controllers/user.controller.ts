@@ -160,14 +160,21 @@ export async function listUsersController(
   reply: FastifyReply,
 ) {
   const userService = new UserService(req.server.prisma);
-  const users = await userService.listAllUsers();
+  const users =
+    req.user.role === UserRole.STOCK_LEADER
+      ? await userService.listAllUsers({ roles: [UserRole.STOCK_OPERATOR] })
+      : await userService.listAllUsers();
   return reply.status(200).send(users);
 }
 
 export async function listRolesController(
-  _req: FastifyRequest,
+  req: FastifyRequest,
   reply: FastifyReply,
 ) {
+  if (req.user.role === UserRole.STOCK_LEADER) {
+    return reply.status(200).send([UserRole.STOCK_OPERATOR]);
+  }
+
   return reply.status(200).send(Object.values(UserRole));
 }
 
@@ -188,6 +195,16 @@ export async function createUserController(
   req: FastifyRequest<{ Body: CreateUserBody }>,
   reply: FastifyReply,
 ) {
+  if (
+    req.user.role === UserRole.STOCK_LEADER &&
+    req.body.role !== UserRole.STOCK_OPERATOR
+  ) {
+    throw new AppError(
+      'Líder de estoque só pode cadastrar operadores de estoque.',
+      403,
+    );
+  }
+
   const userService = new UserService(req.server.prisma);
   const user = await userService.createUser(req.body);
   return reply.status(201).send(user);

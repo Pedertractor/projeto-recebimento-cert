@@ -117,7 +117,10 @@ export function userRoutes(fastify: FastifyInstance) {
           ...commonErrors,
         },
       },
-      onRequest: [fastify.authenticate, fastify.authorize(UserRole.SUPERADMIN)],
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.SUPERADMIN, UserRole.STOCK_LEADER),
+      ],
     },
     listRolesController,
   );
@@ -139,7 +142,11 @@ export function userRoutes(fastify: FastifyInstance) {
       },
       onRequest: [
         fastify.authenticate,
-        fastify.authorize(UserRole.SUPERADMIN, UserRole.STOCK_OPERATOR),
+        fastify.authorize(
+          UserRole.SUPERADMIN,
+          UserRole.STOCK_LEADER,
+          UserRole.STOCK_OPERATOR,
+        ),
       ],
     },
     getEmployeeInfoController,
@@ -256,7 +263,7 @@ export function userRoutes(fastify: FastifyInstance) {
       },
       onRequest: [
         fastify.authenticate,
-        fastify.authorize(UserRole.SUPERADMIN),
+        fastify.authorize(UserRole.SUPERADMIN, UserRole.STOCK_LEADER),
         fastify.csrfProtection,
       ],
     },

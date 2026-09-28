@@ -238,7 +238,10 @@ export function CertificateRequestDetailView({
             Detalhes
           </h2>
           <div className="mt-4 flex min-h-0 flex-1 flex-col">
-            <CertificateRequestSummary request={request} />
+            <CertificateRequestSummary
+              request={request}
+              showSupplierLogo={isPurchaseView}
+            />
           </div>
         </section>
 

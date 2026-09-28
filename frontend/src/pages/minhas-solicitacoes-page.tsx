@@ -13,12 +13,16 @@ import {
   STOCK_REQUEST_STATUS_FILTER_OPTIONS,
   type RequestListStatusFilter,
 } from '@/lib/certificate-request-table-filters';
+import { useWebSession } from '@/hooks/auth/use-web-session';
+import { isStockLeaderRole } from '@/lib/user-labels';
 import {
   certificateRequestsListQueryKey,
   listCertificateRequests,
 } from '@/services/certificate-requests/certificate-request.service';
 
 export function MinhasSolicitacoesPage() {
+  const { data: user } = useWebSession();
+  const isStockLeader = isStockLeaderRole(user?.role);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<RequestListStatusFilter>('ALL');
@@ -59,9 +63,13 @@ export function MinhasSolicitacoesPage() {
     <div className="page-container">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="page-heading">Minhas solicitações</h1>
+          <h1 className="page-heading">
+            {isStockLeader ? 'Solicitações' : 'Minhas solicitações'}
+          </h1>
           <p className="page-lead">
-            Acompanhe as solicitações de documento enviadas ao compras.
+            {isStockLeader
+              ? 'Acompanhe todas as solicitações de documento enviadas ao compras.'
+              : 'Acompanhe as solicitações de documento enviadas ao compras.'}
           </p>
         </div>
         <Button
@@ -105,6 +113,7 @@ export function MinhasSolicitacoesPage() {
             <CertificateRequestsTable
               requests={filteredRequests}
               variant="stock"
+              showRequestCreator={isStockLeader}
               detailPath={(id) => `/minhas-solicitacoes/${id}`}
               nfShortcutPath={(id) => `/notas-fiscais/${id}`}
             />

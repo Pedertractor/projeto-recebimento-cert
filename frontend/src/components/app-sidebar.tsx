@@ -31,10 +31,12 @@ import { useWebSession } from '@/hooks/auth/use-web-session';
 import {
   canAccessPurchaseModules,
   canAccessStockModules,
+  canAccessUserManagement,
+  canManageQualityDocuments,
   getDefaultRouteForRole,
   isPurchaseOnlyOperator,
 } from '@/lib/role-access';
-import { isSuperAdminRole } from '@/lib/user-labels';
+import { isStockLeaderRole } from '@/lib/user-labels';
 
 type SidebarNavItem = {
   label: string;
@@ -93,10 +95,12 @@ function SidebarNavGroup({
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { pathname } = useLocation();
   const { data: user } = useWebSession();
-  const isSuperAdmin = isSuperAdminRole(user?.role);
+  const canManageUsers = canAccessUserManagement(user?.role);
+  const canManageQualityDoc = canManageQualityDocuments(user?.role);
   const canUseStockModules = canAccessStockModules(user?.role);
   const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
   const purchaseOnly = isPurchaseOnlyOperator(user?.role);
+  const isStockLeader = isStockLeaderRole(user?.role);
   const appRootHref = getDefaultRouteForRole(user?.role);
 
   const homeItems: SidebarNavItem[] = purchaseOnly
@@ -111,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
       ];
 
-  const stockItems: SidebarNavItem[] = canUseStockModules
+  const qualityDocItems: SidebarNavItem[] = canManageQualityDoc
     ? [
         {
           label: 'Doc qualidade',
@@ -120,6 +124,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: FileText,
           isActive: (path) => path.startsWith('/doc-qualidade'),
         },
+      ]
+    : [];
+
+  const stockItems: SidebarNavItem[] = canUseStockModules
+    ? [
+        ...qualityDocItems,
         {
           label: 'Cadastrar NF',
           href: '/cadastrar-nf',
@@ -130,9 +140,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             path.startsWith('/solicitar-certificado'),
         },
         {
-          label: 'Minhas solicitações',
+          label: isStockLeader ? 'Solicitações' : 'Minhas solicitações',
           href: '/minhas-solicitacoes',
-          tooltip: 'Minhas solicitações',
+          tooltip: isStockLeader ? 'Solicitações' : 'Minhas solicitações',
           icon: ClipboardList,
           isActive: (path) => path.startsWith('/minhas-solicitacoes'),
         },
@@ -165,7 +175,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ]
     : [];
 
-  const adminItems: SidebarNavItem[] = isSuperAdmin
+  const adminItems: SidebarNavItem[] = canManageUsers
     ? [
         {
           label: 'Usuários',

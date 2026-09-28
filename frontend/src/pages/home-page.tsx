@@ -3,7 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { HomeActionTile } from '@/components/home/home-action-tile';
 import { HomeHeroCard } from '@/components/home/home-hero-card';
 import { useWebSession } from '@/hooks/auth/use-web-session';
-import { canAccessStockModules } from '@/lib/role-access';
+import {
+  canAccessStockModules,
+  canManageQualityDocuments,
+} from '@/lib/role-access';
+import { isStockLeaderRole } from '@/lib/user-labels';
 import {
   isNfConferenceComplete,
   isNfMissingLotComparisons,
@@ -32,6 +36,8 @@ const homeActionTileClassName =
 export function HomePage() {
   const { data: user } = useWebSession();
   const canUseStockModules = canAccessStockModules(user?.role);
+  const isStockLeader = isStockLeaderRole(user?.role);
+  const canManageQualityDoc = canManageQualityDocuments(user?.role);
 
   const stockRequestsQuery = useQuery({
     queryKey: certificateRequestsListQueryKey,
@@ -108,17 +114,23 @@ export function HomePage() {
         />
         <HomeActionTile
           className={homeActionTileClassName}
-          title="Minhas solicitações"
-          description="Acompanhe o que ainda está em andamento"
+          title={isStockLeader ? 'Solicitações' : 'Minhas solicitações'}
+          description={
+            isStockLeader
+              ? 'Acompanhe a equipe e o que está em andamento'
+              : 'Acompanhe o que ainda está em andamento'
+          }
           to="/minhas-solicitacoes"
           badge={openRequestsCount}
         />
-        <HomeActionTile
-          className={homeActionTileClassName}
-          title="Doc qualidade"
-          description="Padrões usados na conferência"
-          to="/doc-qualidade"
-        />
+        {canManageQualityDoc ? (
+          <HomeActionTile
+            className={homeActionTileClassName}
+            title="Doc qualidade"
+            description="Padrões usados na conferência"
+            to="/doc-qualidade"
+          />
+        ) : null}
         <HomeActionTile
           className={homeActionTileClassName}
           title="Fornecedores"

@@ -14,6 +14,7 @@ import type {
   UpdateCertificateRequestFields,
 } from '../schemas/certificate-request.schemas.js';
 import { CertificateRequestService } from '../services/certificate-request.service.js';
+import { canManageAllStockCertificateRequests } from '../utils/user-roles.js';
 
 type MultipartFields = Record<string, string>;
 
@@ -61,7 +62,7 @@ function canAccessCertificateRequest(
   request: { createdByUserId: number; status: CertificateRequestStatus },
   user: { id: number; role: UserRole },
 ): boolean {
-  if (user.role === UserRole.SUPERADMIN) {
+  if (canManageAllStockCertificateRequests(user.role)) {
     return true;
   }
 
@@ -85,7 +86,7 @@ export async function listCertificateRequestsController(
   reply: FastifyReply,
 ) {
   const service = new CertificateRequestService(req.server.prisma);
-  const requests = await service.listForStock(req.user.id);
+  const requests = await service.listForStock(req.user.id, req.user.role);
   return reply.send(requests);
 }
 
