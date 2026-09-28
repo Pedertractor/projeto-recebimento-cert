@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle2, FileUp, Loader2, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { InvoiceCertificatePrompt } from '@/components/conference/invoice-certificate-prompt';
 import { CancelCertificateRequestButton } from '@/components/requests/cancel-certificate-request-button';
 import { CertificateRequestSummary } from '@/components/requests/certificate-request-summary';
 import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-card';
@@ -219,6 +220,10 @@ export function CertificateRequestDetailView({
           <CancelCertificateRequestButton request={request} />
         ) : null}
       </div>
+
+      {!isPurchaseView ? (
+        <InvoiceCertificatePrompt request={request} variant="card" />
+      ) : null}
 
       <div
         className={

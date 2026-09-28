@@ -68,8 +68,8 @@ export function MinhasSolicitacoesPage() {
           </h1>
           <p className="page-lead">
             {isStockLeader
-              ? 'Acompanhe todas as solicitações de documento enviadas ao compras.'
-              : 'Acompanhe as solicitações de documento enviadas ao compras.'}
+              ? 'Acompanhe NFs cadastradas e solicitações enviadas ao compras.'
+              : 'Acompanhe suas NFs e solicite documentos ao compras quando necessário.'}
           </p>
         </div>
         <Button

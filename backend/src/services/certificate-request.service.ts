@@ -200,10 +200,10 @@ export class CertificateRequestService {
     const requests = await this.prisma.certificateRequest.findMany({
       where: {
         ...(seeAllRequests ? {} : { createdByUserId: userId }),
-        status: { not: CertificateRequestStatus.CADASTRADA },
+        status: { not: CertificateRequestStatus.CANCELADA },
       },
       include: this.includeRelations(),
-      orderBy: { submittedAt: 'desc' },
+      orderBy: [{ submittedAt: 'desc' }, { createdAt: 'desc' }],
     });
 
     return requests.map(toPublicRequest);

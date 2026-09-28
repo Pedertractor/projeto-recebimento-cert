@@ -3,6 +3,8 @@ import { ArrowRight, FileText } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Form084PreviewDialog } from '@/components/conference/form-084-preview-dialog';
+import { InvoiceCertificatePrompt } from '@/components/conference/invoice-certificate-prompt';
+import { canRequestPurchaseDocument } from '@/lib/certificate-request-purchase-document';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { SupplierLogo } from '@/components/suppliers/supplier-logo';
 import { Button } from '@/components/ui/button';
@@ -172,6 +174,14 @@ export function CertificateRequestsTable({
                     Visualizar FORM-084
                   </Button>
                 ) : null}
+                {variant === 'stock' &&
+                canRequestPurchaseDocument(request) ? (
+                  <InvoiceCertificatePrompt
+                    request={request}
+                    variant="button"
+                    className="w-full"
+                  />
+                ) : null}
                 {nfShortcutPath ? (
                   <Button
                     asChild
@@ -214,6 +224,9 @@ export function CertificateRequestsTable({
               <TableHead className="w-[1%] whitespace-nowrap">
                 FORM-084
               </TableHead>
+            ) : null}
+            {variant === 'stock' ? (
+              <TableHead className="w-[1%] whitespace-nowrap">Compras</TableHead>
             ) : null}
             {nfShortcutPath ? (
               <TableHead className="w-[1%] whitespace-nowrap">Atalho</TableHead>
@@ -275,6 +288,21 @@ export function CertificateRequestsTable({
                     <FileText className="size-4" aria-hidden />
                     Visualizar FORM-084
                   </Button>
+                </TableCell>
+              ) : null}
+              {variant === 'stock' ? (
+                <TableCell
+                  className="text-right"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {canRequestPurchaseDocument(request) ? (
+                    <InvoiceCertificatePrompt
+                      request={request}
+                      variant="button"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </TableCell>
               ) : null}
               {nfShortcutPath ? (

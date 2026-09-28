@@ -157,6 +157,8 @@ export function NotaFiscalDetailPage() {
 
       <NfInfoCards request={request} qualityDocument={qualityDocument} />
 
+      <InvoiceCertificatePrompt request={request} variant="card" />
+
       {printsMismatch ? (
         <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
