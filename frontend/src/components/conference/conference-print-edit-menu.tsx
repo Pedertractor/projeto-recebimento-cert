@@ -221,7 +221,9 @@ export function ConferencePrintEditMenu({
           fileName={purchaseCertificate.fileName}
           lotIndex={lotIndex}
           defaultPage={lotIndex}
-          onImport={(file) => requestReplace(() => uploadPrintFile(file))}
+          onImport={async (file) => {
+            requestReplace(() => uploadPrintFile(file));
+          }}
         />
       ) : null}
 
