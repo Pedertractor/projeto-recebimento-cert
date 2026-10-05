@@ -20,13 +20,13 @@ const PALETTE_OPTIONS: Array<{
     id: 'light',
     label: 'Claro',
     description: 'Fundo claro e contraste suave',
-    swatches: ['#ffffff', '#c7ede8', '#1693a5', '#45b5c4'],
+    swatches: ['#ffffff', '#e3eae4', '#78947d', '#31543a'],
   },
   {
     id: 'dark',
     label: 'Escuro',
     description: 'Fundo preto e destaque brand',
-    swatches: ['#0a0a0a', '#141414', '#45b5c4', '#1693a5'],
+    swatches: ['#0a0a0a', '#141414', '#78947d', '#4f7257'],
   },
 ];
 

@@ -109,115 +109,105 @@ export function FornecedoresPage() {
             </p>
           ) : (
             <>
-            <div className="flex flex-col gap-3 p-3 md:hidden">
-              {filteredSuppliers.map((supplier) => (
-                <MobileListCard
-                  key={supplier.id}
-                  onClick={() => setSelected(supplier)}
-                >
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="size-10 shrink-0 overflow-hidden rounded-lg ring-1 ring-border/70">
-                          <SupplierLogo
-                            name={supplier.name}
-                            logoStoragePath={supplier.logoStoragePath}
-                          />
-                        </div>
-                        <p className="font-semibold">{supplier.name}</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 shrink-0 gap-1 px-2"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelected(supplier);
-                        }}
-                      >
-                        <Pencil className="size-3.5" />
-                        Editar
-                      </Button>
-                    </div>
-                    <div className="grid gap-2">
-                      <MobileListCardRow
-                        label="CNPJ"
-                        value={
-                          <span className="tabular-nums">{supplier.cnpj}</span>
-                        }
-                      />
-                      <MobileListCardRow
-                        label="Descrição"
-                        value={
-                          <span className="line-clamp-2 font-normal text-foreground">
-                            {supplier.description || '—'}
-                          </span>
-                        }
-                      />
-                    </div>
-                  </div>
-                </MobileListCard>
-              ))}
-            </div>
-            <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12" />
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CNPJ</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead className="w-24 text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+              <div className="flex flex-col gap-3 p-3 md:hidden">
                 {filteredSuppliers.map((supplier) => (
-                  <TableRow
+                  <MobileListCard
                     key={supplier.id}
-                    className="cursor-pointer"
-                    tabIndex={0}
                     onClick={() => setSelected(supplier)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        setSelected(supplier);
-                      }
-                    }}
                   >
-                    <TableCell>
-                      <div className="size-9 overflow-hidden rounded-md ring-1 ring-border/60">
-                        <SupplierLogo
-                          name={supplier.name}
-                          logoStoragePath={supplier.logoStoragePath}
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="size-10 shrink-0 overflow-hidden rounded-lg ring-1 ring-border/70">
+                            <SupplierLogo
+                              name={supplier.name}
+                              logoStoragePath={supplier.logoStoragePath}
+                            />
+                          </div>
+                          <p className="font-semibold">{supplier.name}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 shrink-0 gap-1 px-2"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelected(supplier);
+                          }}
+                        >
+                          <Pencil className="size-3.5" />
+                          Editar
+                        </Button>
+                      </div>
+                      <div className="grid gap-2">
+                        <MobileListCardRow
+                          label="CNPJ"
+                          value={
+                            <span className="tabular-nums">
+                              {supplier.cnpj}
+                            </span>
+                          }
+                        />
+                        <MobileListCardRow
+                          label="Descrição"
+                          value={
+                            <span className="line-clamp-2 font-normal text-foreground">
+                              {supplier.description || '—'}
+                            </span>
+                          }
                         />
                       </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{supplier.name}</TableCell>
-                    <TableCell className="tabular-nums">{supplier.cnpj}</TableCell>
-                    <TableCell className="max-w-xs truncate text-muted-foreground">
-                      {supplier.description || '—'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelected(supplier);
+                    </div>
+                  </MobileListCard>
+                ))}
+              </div>
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12" />
+                      <TableHead>Nome</TableHead>
+                      <TableHead>CNPJ</TableHead>
+                      <TableHead>Descrição</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSuppliers.map((supplier) => (
+                      <TableRow
+                        key={supplier.id}
+                        className="cursor-pointer"
+                        tabIndex={0}
+                        onClick={() => setSelected(supplier)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            setSelected(supplier);
+                          }
                         }}
                       >
-                        <Pencil className="size-3.5" />
-                        Editar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            </div>
+                        <TableCell>
+                          <div className="size-9 overflow-hidden rounded-md ring-1 ring-border/60">
+                            <SupplierLogo
+                              name={supplier.name}
+                              logoStoragePath={supplier.logoStoragePath}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {supplier.name}
+                        </TableCell>
+                        <TableCell className="tabular-nums">
+                          {supplier.cnpj}
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-muted-foreground">
+                          {supplier.description || '—'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </>
           )}
         </div>
