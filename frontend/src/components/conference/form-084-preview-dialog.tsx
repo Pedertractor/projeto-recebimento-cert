@@ -35,7 +35,7 @@ export function Form084PreviewDialog({
       >
         <div className="app-scrollbar min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
           {request ? (
-            <QualityManagementFormSection columns={columns} />
+            <QualityManagementFormSection columns={columns} embedded />
           ) : null}
         </div>
       </DialogContent>
