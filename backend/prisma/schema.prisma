@@ -122,6 +122,7 @@ model CertificateRequest {
   status               CertificateRequestStatus @default(CADASTRADA)
   createdByUserId      Int                      @map("created_by_user_id")
   createdBy            User                     @relation("CertificateRequestCreatedBy", fields: [createdByUserId], references: [id])
+  registeredByName     String                   @map("registered_by_name")
   submittedAt          DateTime                 @default(now()) @map("submitted_at")
   supplierContactAt    DateTime?                @map("supplier_contact_at")
   completedAt          DateTime?                @map("completed_at")

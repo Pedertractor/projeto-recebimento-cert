@@ -94,6 +94,18 @@ function toIsoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
 }
 
+function resolveRegisteredByName(user: {
+  name: string | null;
+  cardNumber: string;
+}): string {
+  const name = user.name?.trim();
+  if (name) {
+    return name;
+  }
+
+  return `Cartão ${user.cardNumber}`;
+}
+
 function toPublicRequest(request: RequestWithRelations) {
   const attachedCertificatesCount = request.attachments.filter(
     (attachment) => attachment.type === AttachmentType.CERTIFICADO,
@@ -124,7 +136,7 @@ function toPublicRequest(request: RequestWithRelations) {
     notes: request.notes,
     status: request.status,
     createdByUserId: request.createdByUserId,
-    createdByName: request.createdBy.name,
+    createdByName: request.registeredByName,
     submittedAt: request.submittedAt.toISOString(),
     supplierContactAt: request.supplierContactAt?.toISOString() ?? null,
     completedAt: request.completedAt?.toISOString() ?? null,
@@ -298,6 +310,17 @@ export class CertificateRequestService {
       throw new AppError('Data da NF inválida.');
     }
 
+    const creator = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, cardNumber: true },
+    });
+
+    if (!creator) {
+      throw new AppError('Usuário não encontrado.', 401);
+    }
+
+    const registeredByName = resolveRegisteredByName(creator);
+
     const request = await this.prisma.$transaction(async (tx) => {
       const created = await tx.certificateRequest.create({
         data: {
@@ -308,6 +331,7 @@ export class CertificateRequestService {
           notes: fields.notes?.trim() || null,
           status: CertificateRequestStatus.CADASTRADA,
           createdByUserId: userId,
+          registeredByName,
         },
       });
 

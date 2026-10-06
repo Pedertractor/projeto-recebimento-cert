@@ -147,15 +147,15 @@ export const QualityManagementFormSheet = forwardRef<
         className,
       )}
     >
-      <Card className="overflow-hidden rounded-lg border shadow-sm print:rounded-none print:shadow-none print:ring-1 print:ring-black">
-        <CardHeader className="gap-4 border-b bg-muted/30 pb-4 print:bg-white">
+      <div className="overflow-hidden rounded-lg border shadow-sm print:rounded-none print:shadow-none print:ring-1 print:ring-black">
+        <CardHeader className=" p-2 gap-4 border-b bg-muted/30 pb-4 print:bg-white">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <img
               src="/pedertractor_tractorcomponents_azul.svg"
               alt="Peder Tractor"
               className="h-12 w-auto shrink-0"
             />
-            <div className="flex-1 text-center sm:px-4">
+            <div className="flex-1  text-center sm:px-4 py-2">
               <CardTitle className="text-sm font-bold uppercase sm:text-base">
                 Formulário do sistema de gestão da qualidade
               </CardTitle>
@@ -173,9 +173,6 @@ export const QualityManagementFormSheet = forwardRef<
               </span>
             </div>
           </div>
-          <Badge variant="secondary" className="w-fit font-medium">
-            Distribuição: S.G.Q. / Recebimento
-          </Badge>
         </CardHeader>
 
         <CardContent className="overflow-x-auto overscroll-x-contain p-0 [-webkit-overflow-scrolling:touch]">
@@ -230,7 +227,7 @@ export const QualityManagementFormSheet = forwardRef<
             e o departamento de compras deve ser comunicado.
           </p>
         </CardFooter>
-      </Card>
+      </div>
     </div>
   );
 });

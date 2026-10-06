@@ -81,7 +81,14 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, './src'),
+        exceljs: path.resolve(
+          import.meta.dirname,
+          './node_modules/exceljs/dist/exceljs.min.js',
+        ),
       },
+    },
+    optimizeDeps: {
+      include: ['exceljs'],
     },
     server: {
       host: '0.0.0.0',

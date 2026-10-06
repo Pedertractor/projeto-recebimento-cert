@@ -33,3 +33,7 @@ export function BrandMark({
 }
 
 export const APP_LOGO_SRC = '/icone_plataforma.png';
+
+export const APP_NAME = 'Confere NF';
+
+export const COMPANY_NAME = 'Pedertractor & TractorComponents';

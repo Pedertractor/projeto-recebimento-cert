@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { FileSpreadsheet, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { CertificateRequestsTable } from '@/components/requests/certificate-requests-table';
+import { Button } from '@/components/ui/button';
 import { NfConferenceFilters } from '@/components/requests/nf-conference-filters';
 import {
   buildNfConferenceFiltersSummary,
@@ -10,6 +12,10 @@ import {
   hasActiveNfConferenceFilters,
   type NfConferenceStatusFilter,
 } from '@/lib/nf-conference-filters';
+import {
+  exportNfConferenceTableToExcel,
+  listNfsEmConferenciaComComparacoesPendentes,
+} from '@/lib/export-nf-conference-excel';
 import {
   completedCertificateRequestsQueryKey,
   listCompletedCertificateRequests,
@@ -46,6 +52,28 @@ export function NotasFiscaisPage() {
 
   const hasActiveFilters = hasActiveNfConferenceFilters(search, statusFilter);
 
+  const nfsParaExportarExcel = useMemo(
+    () =>
+      listNfsEmConferenciaComComparacoesPendentes(requestsQuery.data ?? []),
+    [requestsQuery.data],
+  );
+
+  async function handleExportExcel() {
+    if (nfsParaExportarExcel.length === 0) {
+      toast.info('Não há NFs em conferência com comparações pendentes.');
+      return;
+    }
+
+    try {
+      await exportNfConferenceTableToExcel(nfsParaExportarExcel);
+      toast.success(
+        `${nfsParaExportarExcel.length} NF${nfsParaExportarExcel.length === 1 ? '' : 's'} exportada${nfsParaExportarExcel.length === 1 ? '' : 's'}.`,
+      );
+    } catch {
+      toast.error('Não foi possível gerar o arquivo Excel.');
+    }
+  }
+
   function resetFilters() {
     setSearch('');
     setStatusFilter('ALL');
@@ -53,12 +81,27 @@ export function NotasFiscaisPage() {
 
   return (
     <div className="page-container">
-      <div>
-        <h1 className="page-heading">NF&apos;s de materiais</h1>
-        <p className="page-lead">
-          Solicitações e NFs cadastradas prontas para conferência de
-          certificados por lote.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="page-heading">NF&apos;s de materiais</h1>
+          <p className="page-lead">
+            Solicitações e NFs cadastradas prontas para conferência de
+            certificados por lote.
+          </p>
+        </div>
+
+        {requestsQuery.isSuccess ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="shrink-0 gap-2"
+            onClick={handleExportExcel}
+            disabled={nfsParaExportarExcel.length === 0}
+          >
+            <FileSpreadsheet className="size-4" aria-hidden />
+            Exportar Excel
+          </Button>
+        ) : null}
       </div>
 
       {requestsQuery.isLoading ? (

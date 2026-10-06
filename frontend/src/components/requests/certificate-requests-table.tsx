@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/table';
 import {
   formatRequestDate,
+  getCertificateRequestRegisteredByName,
   getInspectedCertificatesCount,
   getNfConferenceStatus,
 } from '@/lib/certificate-request-labels';
@@ -146,6 +147,12 @@ export function CertificateRequestsTable({
                       value={`${getInspectedCertificatesCount(request)}/${request.expectedCertificates}`}
                     />
                   ) : null}
+                  {variant === 'conference' ? (
+                    <MobileListCardRow
+                      label="Cadastrado por"
+                      value={getCertificateRequestRegisteredByName(request)}
+                    />
+                  ) : null}
                   <MobileListCardRow
                     label="Data NF"
                     value={formatRequestDate(request.invoiceDate)}
@@ -217,9 +224,16 @@ export function CertificateRequestsTable({
             ) : null}
             <TableHead>Data NF</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>
-              {showCreatorColumn ? 'Solicitante' : 'Abertura'}
-            </TableHead>
+            {variant === 'conference' ? (
+              <>
+                <TableHead>Cadastrado por</TableHead>
+                <TableHead>Abertura</TableHead>
+              </>
+            ) : (
+              <TableHead>
+                {showCreatorColumn ? 'Solicitante' : 'Abertura'}
+              </TableHead>
+            )}
             {variant === 'conference' ? (
               <TableHead className="w-[1%] whitespace-nowrap">
                 FORM-084
@@ -268,11 +282,22 @@ export function CertificateRequestsTable({
                   }
                 />
               </TableCell>
-              <TableCell>
-                {showCreatorColumn
-                  ? (request.createdByName ?? 'Operador de estoque')
-                  : formatRequestDate(request.submittedAt)}
-              </TableCell>
+              {variant === 'conference' ? (
+                <>
+                  <TableCell>
+                    {getCertificateRequestRegisteredByName(request)}
+                  </TableCell>
+                  <TableCell>
+                    {formatRequestDate(request.submittedAt)}
+                  </TableCell>
+                </>
+              ) : (
+                <TableCell>
+                  {showCreatorColumn
+                    ? (request.createdByName ?? 'Operador de estoque')
+                    : formatRequestDate(request.submittedAt)}
+                </TableCell>
+              )}
               {variant === 'conference' ? (
                 <TableCell
                   className="text-right"

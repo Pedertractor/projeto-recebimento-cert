@@ -30,6 +30,12 @@ export function getInspectedCertificatesCount(
   return lots.size;
 }
 
+export function getCertificateRequestRegisteredByName(
+  request: CertificateRequest,
+): string {
+  return request.createdByName?.trim() || 'Operador de estoque';
+}
+
 export function isNfMissingLotComparisons(
   request: CertificateRequest,
 ): boolean {
