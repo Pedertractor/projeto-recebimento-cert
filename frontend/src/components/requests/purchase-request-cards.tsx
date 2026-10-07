@@ -134,7 +134,7 @@ function PurchaseRequestCard({ request }: { request: CertificateRequest }) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold tracking-wide uppercase opacity-70">
-              Solicitação
+              Solicitante
             </p>
             <p className="truncate text-sm font-semibold">{requesterName}</p>
           </div>
