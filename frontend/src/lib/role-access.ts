@@ -37,6 +37,14 @@ export function canAccessStockModules(role: UserRole | undefined): boolean {
   return isStockOperatorRole(role);
 }
 
+export function canViewNfMaterials(role: UserRole | undefined): boolean {
+  return canAccessStockModules(role) || role === 'PURCHASE_OPERATOR';
+}
+
+export function canEditNfMaterials(role: UserRole | undefined): boolean {
+  return canAccessStockModules(role);
+}
+
 export function canAccessPurchaseModules(role: UserRole | undefined): boolean {
   return isPurchaseOperatorRole(role);
 }

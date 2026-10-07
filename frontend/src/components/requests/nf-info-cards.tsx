@@ -31,7 +31,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useWebSession } from '@/hooks/auth/use-web-session';
 import { formatRequestDate } from '@/lib/certificate-request-labels';
-import { canManageQualityDocuments } from '@/lib/role-access';
+import {
+  canEditNfMaterials,
+  canManageQualityDocuments,
+} from '@/lib/role-access';
 import { HttpClientError } from '@/lib/http-client';
 import { cn } from '@/lib/utils';
 import {
@@ -65,7 +68,8 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
   const { data: sessionUser } = useWebSession();
   const canManageQualityDoc = canManageQualityDocuments(sessionUser?.role);
   const [editField, setEditField] = useState<EditField | null>(null);
-  const canEdit = request.status !== 'CANCELADA';
+  const canEdit =
+    canEditNfMaterials(sessionUser?.role) && request.status !== 'CANCELADA';
 
   const mutation = useMutation({
     mutationFn: (payload: UpdateCertificateRequestPayload) =>

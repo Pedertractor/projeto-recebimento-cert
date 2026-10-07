@@ -45,6 +45,7 @@ type CertificateComparisonFormProps = {
     unit: Unit;
   };
   isSubmitting?: boolean;
+  readOnly?: boolean;
   onSubmit: (values: CertificateComparisonFormValues) => void;
 };
 
@@ -111,16 +112,18 @@ function FieldWithPencil({
   onUnlock,
   label,
   children,
+  allowUnlock = true,
 }: {
   locked: boolean;
   onUnlock: () => void;
   label: string;
   children: ReactNode;
+  allowUnlock?: boolean;
 }) {
   return (
     <div className="flex items-start gap-2">
       <div className="min-w-0 flex-1">{children}</div>
-      {locked ? (
+      {locked && allowUnlock ? (
         <Button
           type="button"
           variant="ghost"
@@ -142,6 +145,7 @@ export function CertificateComparisonForm({
   hasSavedInspection = false,
   currentUser,
   isSubmitting = false,
+  readOnly = false,
   onSubmit,
 }: CertificateComparisonFormProps) {
   const [lockedFields, setLockedFields] = useState<Set<LockableField>>(
@@ -205,7 +209,7 @@ export function CertificateComparisonForm({
   });
 
   function isLocked(field: LockableField): boolean {
-    return lockedFields.has(field);
+    return readOnly || lockedFields.has(field);
   }
 
   function unlock(field: LockableField): void {
@@ -216,13 +220,16 @@ export function CertificateComparisonForm({
     });
   }
 
-  const canSave = !hasSavedInspection || lockedFields.size < LOCKABLE_FIELDS.length;
+  const canSave =
+    !readOnly &&
+    (!hasSavedInspection || lockedFields.size < LOCKABLE_FIELDS.length);
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
       <div className="overflow-hidden rounded-2xl border border-border">
         <FormRow label="Data do recebimento">
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('receiptDate')}
             onUnlock={() => unlock('receiptDate')}
             label="data do recebimento"
@@ -247,6 +254,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Descrição do material" alternate>
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('materialDescription')}
             onUnlock={() => unlock('materialDescription')}
             label="descrição do material"
@@ -265,6 +273,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="RM">
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('rm')}
             onUnlock={() => unlock('rm')}
             label="RM"
@@ -278,6 +287,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Nº certificado" alternate>
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('certificateNumber')}
             onUnlock={() => unlock('certificateNumber')}
             label="número do certificado"
@@ -296,6 +306,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Composição química OK ou NOK">
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('chemicalComposition')}
             onUnlock={() => unlock('chemicalComposition')}
             label="composição química"
@@ -318,6 +329,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Quantidade especificada na nota fiscal" alternate>
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('quantitySpecified')}
             onUnlock={() => unlock('quantitySpecified')}
             label="quantidade especificada"
@@ -336,6 +348,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Quantidade encontrada no recebimento">
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('quantityFound')}
             onUnlock={() => unlock('quantityFound')}
             label="quantidade encontrada"
@@ -354,6 +367,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Dimensional especificado NF" alternate>
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('dimensionalSpecified')}
             onUnlock={() => unlock('dimensionalSpecified')}
             label="dimensional especificado"
@@ -372,6 +386,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Dimensional encontrado no recebimento">
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('dimensionalFound')}
             onUnlock={() => unlock('dimensionalFound')}
             label="dimensional encontrado"
@@ -390,6 +405,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Visual encont. OK ou NOK" alternate>
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('visualInspection')}
             onUnlock={() => unlock('visualInspection')}
             label="inspeção visual"
@@ -412,6 +428,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Laudo ap. ou rep.">
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('reportStatus')}
             onUnlock={() => unlock('reportStatus')}
             label="laudo"
@@ -434,6 +451,7 @@ export function CertificateComparisonForm({
 
         <FormRow label="Recebedor resp." alternate>
           <FieldWithPencil
+            allowUnlock={!readOnly}
             locked={isLocked('receiverResponsible')}
             onUnlock={() => unlock('receiverResponsible')}
             label="recebedor responsável"

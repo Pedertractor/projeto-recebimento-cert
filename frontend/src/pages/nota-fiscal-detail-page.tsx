@@ -10,6 +10,8 @@ import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-
 import { NfInfoCards } from '@/components/requests/nf-info-cards';
 import { PurchaseRequestWaitingBanner } from '@/components/requests/purchase-request-waiting-banner';
 import { Button } from '@/components/ui/button';
+import { useWebSession } from '@/hooks/auth/use-web-session';
+import { canEditNfMaterials } from '@/lib/role-access';
 import { SuccessCelebrationOverlay } from '@/components/ui/success-celebration-overlay';
 import {
   getComparisonInvoiceAttachment,
@@ -47,6 +49,8 @@ export function NotaFiscalDetailPage() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { data: sessionUser } = useWebSession();
+  const canEdit = canEditNfMaterials(sessionUser?.role);
   const requestId = Number(id);
   const [conferenceCelebrationOpen, setConferenceCelebrationOpen] =
     useState(false);
@@ -157,7 +161,9 @@ export function NotaFiscalDetailPage() {
 
       <NfInfoCards request={request} qualityDocument={qualityDocument} />
 
-      <InvoiceCertificatePrompt request={request} variant="card" />
+      {canEdit ? (
+        <InvoiceCertificatePrompt request={request} variant="card" />
+      ) : null}
 
       {printsMismatch ? (
         <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -177,12 +183,13 @@ export function NotaFiscalDetailPage() {
               Certificados por lote
             </h2>
             <p className="text-sm text-muted-foreground">
-              Anexe uma impressão por lote e faça a comparação com o documento
-              de qualidade.
+              {canEdit
+                ? 'Anexe uma impressão por lote e faça a comparação com o documento de qualidade.'
+                : 'Impressões e conferências de cada lote desta nota.'}
             </p>
           </div>
 
-          {waitingPurchaseDocument ? (
+          {canEdit && waitingPurchaseDocument ? (
             <PurchaseRequestWaitingBanner request={request} />
           ) : null}
 
@@ -194,24 +201,30 @@ export function NotaFiscalDetailPage() {
                 lotIndex={lotIndex}
                 printAttachment={getPrintForLot(request.attachments, lotIndex)}
                 purchaseCertificate={invoiceAttachment}
+                readOnly={!canEdit}
               />
             ))}
           </div>
 
-          <InvoiceCertificatePrompt request={request} />
+          {canEdit ? <InvoiceCertificatePrompt request={request} /> : null}
         </section>
 
         <div className="order-1 min-w-0 space-y-4 lg:order-2">
           <InvoiceAttachmentCard
             attachment={invoiceAttachment}
             requestId={request.id}
-            canUpdate={request.status !== 'CANCELADA'}
+            canUpdate={canEdit && request.status !== 'CANCELADA'}
+            allowPageCopy={canEdit}
             subtitle={
               invoiceAttachment
                 ? 'Último documento anexado — estoque ou compras'
                 : undefined
             }
-            emptyMessage="Nenhuma nota fiscal anexada. Você pode incluir depois."
+            emptyMessage={
+              canEdit
+                ? 'Nenhuma nota fiscal anexada. Você pode incluir depois.'
+                : 'Nenhuma nota fiscal anexada.'
+            }
           />
         </div>
       </div>

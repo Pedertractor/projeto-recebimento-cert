@@ -67,7 +67,7 @@ function canAccessCertificateRequest(
   }
 
   if (user.role === UserRole.PURCHASE_OPERATOR) {
-    return request.status !== CertificateRequestStatus.CADASTRADA;
+    return true;
   }
 
   if (user.role === UserRole.STOCK_OPERATOR) {

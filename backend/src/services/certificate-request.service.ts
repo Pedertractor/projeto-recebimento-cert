@@ -227,7 +227,9 @@ export class CertificateRequestService {
 
   async listCompleted(userId: number, userRole: UserRole) {
     const seeAllRequests =
-      userRole === UserRole.SUPERADMIN || userRole === UserRole.STOCK_LEADER;
+      userRole === UserRole.SUPERADMIN ||
+      userRole === UserRole.STOCK_LEADER ||
+      userRole === UserRole.PURCHASE_OPERATOR;
 
     const requests = await this.prisma.certificateRequest.findMany({
       where: seeAllRequests

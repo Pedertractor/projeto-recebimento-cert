@@ -24,6 +24,7 @@ type InvoiceAttachmentCardProps = {
   emptyMessage?: string;
   requestId?: number;
   canUpdate?: boolean;
+  allowPageCopy?: boolean;
 };
 
 export function InvoiceAttachmentCard({
@@ -33,6 +34,7 @@ export function InvoiceAttachmentCard({
   emptyMessage = 'Nenhuma nota fiscal anexada.',
   requestId,
   canUpdate = false,
+  allowPageCopy = true,
 }: InvoiceAttachmentCardProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -134,7 +136,7 @@ export function InvoiceAttachmentCard({
                 <PdfPageViewer
                   key={`${attachment.id}-${attachment.uploadedAt}`}
                   pdfUrl={resolveAttachmentUrl(attachment.storagePath)}
-                  showCopyButton
+                  showCopyButton={allowPageCopy}
                   expandDialogTitle="Nota fiscal"
                   className="w-full min-h-0 max-md:flex-none md:size-full md:p-2"
                 />
@@ -149,7 +151,7 @@ export function InvoiceAttachmentCard({
               )}
             </div>
 
-            {isPdfFile(attachment.fileName) ? (
+            {allowPageCopy && isPdfFile(attachment.fileName) ? (
               <p className="text-xs text-muted-foreground">
                 Navegue pelas páginas, toque em &quot;Copiar página&quot; e use
                 &quot;Usar página copiada&quot; no lote (no celular). No

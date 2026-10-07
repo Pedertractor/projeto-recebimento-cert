@@ -119,7 +119,7 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
       },
       onRequest: [
         fastify.authenticate,
-        fastify.authorize(UserRole.STOCK_OPERATOR),
+        fastify.authorize(UserRole.STOCK_OPERATOR, UserRole.PURCHASE_OPERATOR),
       ],
     },
     listCompletedCertificateRequestsController,

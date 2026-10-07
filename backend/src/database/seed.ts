@@ -37,7 +37,6 @@ async function main() {
       },
       update: {
         name: spec.name,
-        role: UserRole.SUPERADMIN,
         status: true,
         deletedAt: null,
       },

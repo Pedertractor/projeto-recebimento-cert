@@ -5,6 +5,7 @@ import { HomeRoute } from '@/components/auth/home-route';
 import { RequireQualityDocumentManager } from '@/components/auth/require-quality-document-manager';
 import { RequireUserManagement } from '@/components/auth/require-user-management';
 import { RequireAuth } from '@/components/auth/require-auth';
+import { RequireNfMaterialsViewer } from '@/components/auth/require-nf-materials-viewer';
 import { RequirePurchaseOperator } from '@/components/auth/require-purchase-operator';
 import { RequireStockOperator } from '@/components/auth/require-stock-operator';
 import { Toaster } from '@/components/ui/sonner';
@@ -53,6 +54,9 @@ export function AppRouter() {
                     path="/minhas-solicitacoes/:id"
                     element={<SolicitacaoEstoqueDetailPage />}
                   />
+                  <Route path="/fornecedores" element={<FornecedoresPage />} />
+                </Route>
+                <Route element={<RequireNfMaterialsViewer />}>
                   <Route
                     path="/notas-fiscais"
                     element={<NotasFiscaisPage />}
@@ -65,7 +69,6 @@ export function AppRouter() {
                     path="/notas-fiscais/:id/comparacao/:attachmentId"
                     element={<CertificateComparisonPage />}
                   />
-                  <Route path="/fornecedores" element={<FornecedoresPage />} />
                 </Route>
                 <Route element={<RequirePurchaseOperator />}>
                   <Route

@@ -165,6 +165,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const purchaseItems: SidebarNavItem[] = canUsePurchaseModules
     ? [
+        ...(purchaseOnly
+          ? [
+              {
+                label: "NF's de materiais",
+                href: '/notas-fiscais',
+                tooltip: "NF's de materiais",
+                icon: FileSearch,
+                isActive: (path: string) => path.startsWith('/notas-fiscais'),
+              },
+            ]
+          : []),
         {
           label: 'Solicitações',
           href: '/compras/solicitacoes',

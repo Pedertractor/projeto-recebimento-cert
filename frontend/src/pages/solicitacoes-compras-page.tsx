@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 
 import { CertificateRequestTableFilters } from '@/components/requests/certificate-request-table-filters';
-import { CertificateRequestsTable } from '@/components/requests/certificate-requests-table';
+import {
+  PurchaseRequestCards,
+  PurchaseRequestStatusLegend,
+} from '@/components/requests/purchase-request-cards';
 import {
   buildCertificateRequestListFiltersSummary,
   filterCertificateRequestList,
@@ -15,6 +18,35 @@ import {
   listPurchaseCertificateRequests,
   purchaseCertificateRequestsListQueryKey,
 } from '@/services/certificate-requests/certificate-request.service';
+import type { CertificateRequest } from '@/types/certificate-request';
+
+const OPEN_STATUS_RANK: Record<CertificateRequest['status'], number> = {
+  AGUARDANDO_COMPRAS: 0,
+  AGUARDANDO_FORNECEDOR: 1,
+  CONCLUIDA: 2,
+  CANCELADA: 3,
+  CADASTRADA: 4,
+};
+
+function sortPurchaseRequestsForCards(
+  requests: CertificateRequest[],
+): CertificateRequest[] {
+  return [...requests].sort((left, right) => {
+    const rankDiff =
+      OPEN_STATUS_RANK[left.status] - OPEN_STATUS_RANK[right.status];
+    if (rankDiff !== 0) {
+      return rankDiff;
+    }
+
+    const leftTime = new Date(left.submittedAt).getTime();
+    const rightTime = new Date(right.submittedAt).getTime();
+    if (left.status === 'CONCLUIDA' || left.status === 'CANCELADA') {
+      return rightTime - leftTime;
+    }
+
+    return leftTime - rightTime;
+  });
+}
 
 export function SolicitacoesComprasPage() {
   const [search, setSearch] = useState('');
@@ -28,10 +60,12 @@ export function SolicitacoesComprasPage() {
 
   const filteredRequests = useMemo(
     () =>
-      filterCertificateRequestList(
-        requestsQuery.data ?? [],
-        search,
-        statusFilter,
+      sortPurchaseRequestsForCards(
+        filterCertificateRequestList(
+          requestsQuery.data ?? [],
+          search,
+          statusFilter,
+        ),
       ),
     [requestsQuery.data, search, statusFilter],
   );
@@ -54,7 +88,7 @@ export function SolicitacoesComprasPage() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container md:max-w-none">
       <div>
         <h1 className="page-heading">Solicitações ao compras</h1>
         <p className="page-lead">
@@ -92,13 +126,9 @@ export function SolicitacoesComprasPage() {
             onReset={resetFilters}
           />
 
-          <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60">
-            <CertificateRequestsTable
-              requests={filteredRequests}
-              variant="purchase"
-              detailPath={(id) => `/compras/solicitacoes/${id}`}
-            />
-          </div>
+          <PurchaseRequestStatusLegend />
+
+          <PurchaseRequestCards requests={filteredRequests} />
         </div>
       ) : null}
     </div>

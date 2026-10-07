@@ -40,6 +40,7 @@ type LotConferenceCardProps = {
   lotIndex: number;
   printAttachment: RequestAttachment | null;
   purchaseCertificate: RequestAttachment | null;
+  readOnly?: boolean;
 };
 
 export function LotConferenceCard({
@@ -47,6 +48,7 @@ export function LotConferenceCard({
   lotIndex,
   printAttachment,
   purchaseCertificate,
+  readOnly = false,
 }: LotConferenceCardProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -223,7 +225,13 @@ export function LotConferenceCard({
         ) : null}
       </div>
 
-      {!printAttachment ? (
+      {!printAttachment && readOnly ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Nenhuma impressão anexada.
+        </p>
+      ) : null}
+
+      {!printAttachment && !readOnly ? (
         <div
           ref={pasteAreaRef}
           tabIndex={0}
@@ -284,6 +292,7 @@ export function LotConferenceCard({
         type="file"
         accept={isMobile ? 'image/*,.pdf' : 'image/*'}
         className="hidden"
+        disabled={readOnly}
         onChange={(event) => {
           const file = event.target.files?.[0];
           if (file) {
@@ -292,7 +301,21 @@ export function LotConferenceCard({
         }}
       />
 
-      {!printAttachment ? (
+      {readOnly ? (
+        printAttachment && inspection ? (
+          <Button asChild variant="outline" className="mt-4 w-full">
+            <Link
+              to={`/notas-fiscais/${requestId}/comparacao/${printAttachment.id}`}
+            >
+              Ver certificado
+            </Link>
+          </Button>
+        ) : printAttachment && !inspection ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Conferência ainda não realizada.
+          </p>
+        ) : null
+      ) : !printAttachment ? (
         <div className="mt-4 space-y-2">
           {hasCopiedPage ? (
             <Button

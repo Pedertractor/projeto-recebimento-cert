@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useSidebarAutoCollapse } from '@/hooks/use-sidebar-auto-collapse';
 import { useWebSession } from '@/hooks/auth/use-web-session';
 import { getPurchaseCertificateAttachment } from '@/lib/certificate-request-attachments';
+import { canEditNfMaterials } from '@/lib/role-access';
 import { getInspectedCertificatesCount } from '@/lib/certificate-request-labels';
 import { HttpClientError } from '@/lib/http-client';
 import {
@@ -28,6 +29,7 @@ export function CertificateComparisonPage() {
   const { id, attachmentId } = useParams();
   const requestId = Number(id);
   const { data: user } = useWebSession();
+  const readOnly = !canEditNfMaterials(user?.role);
 
   const requestQuery = useQuery({
     queryKey: certificateRequestDetailQueryKey(requestId),
@@ -186,7 +188,7 @@ export function CertificateComparisonPage() {
           fileName={attachment.fileName}
           storagePath={attachment.storagePath}
           headerActions={
-            inspection ? (
+            inspection && !readOnly ? (
               <ConferencePrintEditMenu
                 requestId={requestId}
                 lotIndex={lotIndex}
@@ -210,7 +212,13 @@ export function CertificateComparisonPage() {
             : undefined
         }
         isSubmitting={submitMutation.isPending}
-        onSubmit={(values) => submitMutation.mutate(values)}
+        readOnly={readOnly}
+        onSubmit={(values) => {
+          if (readOnly) {
+            return;
+          }
+          submitMutation.mutate(values);
+        }}
       />
     </div>
   );
