@@ -184,7 +184,7 @@ export const QualityManagementFormSheet = forwardRef<
                 {columns.map((column) => (
                   <TableHead
                     key={column.lotIndex}
-                    className="min-w-40 text-center align-top"
+                    className="p-1 min-w-40 text-center align-top"
                   >
                     <p className="font-semibold uppercase">
                       {column.supplierName}
