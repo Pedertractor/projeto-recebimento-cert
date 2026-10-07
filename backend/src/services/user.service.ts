@@ -269,19 +269,6 @@ export class UserService {
       throw new AppError('Usuário não encontrado', 404);
     }
 
-    const emailInUse = await this.prisma.user.findFirst({
-      where: {
-        email: normalizedEmail,
-        deletedAt: null,
-        NOT: { id: userId },
-      },
-      select: { id: true },
-    });
-
-    if (emailInUse) {
-      throw new AppError('Este e-mail já está em uso.', 409);
-    }
-
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: { email: normalizedEmail },

@@ -72,7 +72,7 @@ enum RequestHistoryEventType {
 
 model User {
   id         Int       @id @default(autoincrement())
-  email      String?   @unique
+  email      String?
   cardNumber String    @map("card_number")
   unit       Unit
   password   String
@@ -86,10 +86,10 @@ model User {
   deletedAt  DateTime? @map("deleted_at")
 
   refreshTokens              RefreshToken[]
-  createdCertificateRequests CertificateRequest[] @relation("CertificateRequestCreatedBy")
-  uploadedAttachments        RequestAttachment[]  @relation("RequestAttachmentUploadedBy")
-  historyEvents              RequestHistoryEvent[] @relation("RequestHistoryEventActor")
-  uploadedQualityDocuments   QualityDocument[]     @relation("QualityDocumentUploadedBy")
+  createdCertificateRequests CertificateRequest[]    @relation("CertificateRequestCreatedBy")
+  uploadedAttachments        RequestAttachment[]     @relation("RequestAttachmentUploadedBy")
+  historyEvents              RequestHistoryEvent[]   @relation("RequestHistoryEventActor")
+  uploadedQualityDocuments   QualityDocument[]       @relation("QualityDocumentUploadedBy")
   certificateInspections     CertificateInspection[] @relation("CertificateInspectionInspectedBy")
 
   @@unique([cardNumber, unit])
@@ -97,14 +97,14 @@ model User {
 }
 
 model Supplier {
-  id                   Int      @id @default(autoincrement())
-  name                 String
-  cnpj                 String   @unique
-  description          String?
-  epromSupplierNumber  String?  @map("eprom_supplier_number")
-  logoStoragePath      String?  @map("logo_storage_path")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id                  Int      @id @default(autoincrement())
+  name                String
+  cnpj                String   @unique
+  description         String?
+  epromSupplierNumber String?  @map("eprom_supplier_number")
+  logoStoragePath     String?  @map("logo_storage_path")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   certificateRequests CertificateRequest[]
 
@@ -140,18 +140,18 @@ model CertificateRequest {
 }
 
 model RequestAttachment {
-  id               String               @id @default(uuid())
-  requestId        Int                  @map("request_id")
-  request          CertificateRequest   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  id               String                 @id @default(uuid())
+  requestId        Int                    @map("request_id")
+  request          CertificateRequest     @relation(fields: [requestId], references: [id], onDelete: Cascade)
   type             AttachmentType
-  fileName         String               @map("file_name")
-  storagePath      String               @map("storage_path")
-  lotLabel         String?              @map("lot_label")
-  lotIndex         Int?                 @map("lot_index")
-  validity         AttachmentValidity   @default(VALID) @map("validity")
-  uploadedByUserId Int?                 @map("uploaded_by_user_id")
-  uploadedBy       User?                @relation("RequestAttachmentUploadedBy", fields: [uploadedByUserId], references: [id])
-  uploadedAt       DateTime             @default(now()) @map("uploaded_at")
+  fileName         String                 @map("file_name")
+  storagePath      String                 @map("storage_path")
+  lotLabel         String?                @map("lot_label")
+  lotIndex         Int?                   @map("lot_index")
+  validity         AttachmentValidity     @default(VALID) @map("validity")
+  uploadedByUserId Int?                   @map("uploaded_by_user_id")
+  uploadedBy       User?                  @relation("RequestAttachmentUploadedBy", fields: [uploadedByUserId], references: [id])
+  uploadedAt       DateTime               @default(now()) @map("uploaded_at")
   inspection       CertificateInspection?
 
   @@unique([requestId, lotIndex, type])
@@ -203,28 +203,28 @@ model QualityDocument {
 }
 
 model CertificateInspection {
-  id                  String                @id @default(uuid())
-  attachmentId        String                @unique @map("attachment_id")
-  attachment          RequestAttachment     @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
-  requestId           Int                   @map("request_id")
-  qualityDocumentId   String                @map("quality_document_id")
-  qualityDocument     QualityDocument       @relation(fields: [qualityDocumentId], references: [id])
-  receiptDate         DateTime              @map("receipt_date") @db.Date
-  materialDescription String                @map("material_description")
-  rm                  String
-  certificateNumber   String                @map("certificate_number")
-  chemicalComposition InspectionCheckResult @map("chemical_composition")
-  quantitySpecified   String                @map("quantity_specified")
-  quantityFound       String                @map("quantity_found")
-  dimensionalSpecified String               @map("dimensional_specified")
-  dimensionalFound    String                @map("dimensional_found")
-  visualInspection    InspectionCheckResult @map("visual_inspection")
-  reportStatus        InspectionCheckResult @map("report_status")
-  receiverResponsible String                @map("receiver_responsible")
-  receiverEmployeeId  Int?                  @map("receiver_employee_id")
-  inspectedByUserId   Int                   @map("inspected_by_user_id")
-  inspectedBy         User                  @relation("CertificateInspectionInspectedBy", fields: [inspectedByUserId], references: [id])
-  inspectedAt         DateTime              @default(now()) @map("inspected_at")
+  id                   String                @id @default(uuid())
+  attachmentId         String                @unique @map("attachment_id")
+  attachment           RequestAttachment     @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+  requestId            Int                   @map("request_id")
+  qualityDocumentId    String                @map("quality_document_id")
+  qualityDocument      QualityDocument       @relation(fields: [qualityDocumentId], references: [id])
+  receiptDate          DateTime              @map("receipt_date") @db.Date
+  materialDescription  String                @map("material_description")
+  rm                   String
+  certificateNumber    String                @map("certificate_number")
+  chemicalComposition  InspectionCheckResult @map("chemical_composition")
+  quantitySpecified    String                @map("quantity_specified")
+  quantityFound        String                @map("quantity_found")
+  dimensionalSpecified String                @map("dimensional_specified")
+  dimensionalFound     String                @map("dimensional_found")
+  visualInspection     InspectionCheckResult @map("visual_inspection")
+  reportStatus         InspectionCheckResult @map("report_status")
+  receiverResponsible  String                @map("receiver_responsible")
+  receiverEmployeeId   Int?                  @map("receiver_employee_id")
+  inspectedByUserId    Int                   @map("inspected_by_user_id")
+  inspectedBy          User                  @relation("CertificateInspectionInspectedBy", fields: [inspectedByUserId], references: [id])
+  inspectedAt          DateTime              @default(now()) @map("inspected_at")
 
   @@index([requestId])
   @@map("certificate_inspections")
