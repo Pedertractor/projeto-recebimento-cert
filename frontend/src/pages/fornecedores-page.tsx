@@ -18,11 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatRequestDate } from '@/lib/certificate-request-labels';
 import {
   listSuppliers,
   suppliersListQueryKey,
 } from '@/services/suppliers/supplier.service';
 import type { Supplier } from '@/types/supplier';
+import { formatCnpjInput } from '@/utils/cnpj';
 
 export function FornecedoresPage() {
   const [search, setSearch] = useState('');
@@ -47,11 +49,13 @@ export function FornecedoresPage() {
       const name = supplier.name.toLowerCase();
       const cnpj = supplier.cnpj.toLowerCase();
       const description = (supplier.description ?? '').toLowerCase();
+      const eprom = (supplier.epromSupplierNumber ?? '').toLowerCase();
 
       return (
         name.includes(query) ||
         cnpj.includes(query) ||
         description.includes(query) ||
+        eprom.includes(query) ||
         (digits.length > 0 && supplier.cnpj.replace(/\D/g, '').includes(digits))
       );
     });
@@ -74,7 +78,7 @@ export function FornecedoresPage() {
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por nome, CNPJ ou descrição"
+          placeholder="Buscar por nome, CNPJ, EPROM ou descrição"
           className="pl-9"
         />
       </div>
@@ -145,7 +149,15 @@ export function FornecedoresPage() {
                           label="CNPJ"
                           value={
                             <span className="tabular-nums">
-                              {supplier.cnpj}
+                              {formatCnpjInput(supplier.cnpj)}
+                            </span>
+                          }
+                        />
+                        <MobileListCardRow
+                          label="Nº EPROM"
+                          value={
+                            <span className="tabular-nums">
+                              {supplier.epromSupplierNumber || '—'}
                             </span>
                           }
                         />
@@ -156,6 +168,14 @@ export function FornecedoresPage() {
                               {supplier.description || '—'}
                             </span>
                           }
+                        />
+                        <MobileListCardRow
+                          label="Cadastro"
+                          value={formatRequestDate(supplier.createdAt)}
+                        />
+                        <MobileListCardRow
+                          label="Atualizado"
+                          value={formatRequestDate(supplier.updatedAt)}
                         />
                       </div>
                     </div>
@@ -169,7 +189,10 @@ export function FornecedoresPage() {
                       <TableHead className="w-12" />
                       <TableHead>Nome</TableHead>
                       <TableHead>CNPJ</TableHead>
+                      <TableHead>Nº EPROM</TableHead>
                       <TableHead>Descrição</TableHead>
+                      <TableHead>Cadastro</TableHead>
+                      <TableHead>Atualizado</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -197,11 +220,20 @@ export function FornecedoresPage() {
                         <TableCell className="font-medium">
                           {supplier.name}
                         </TableCell>
+                        <TableCell className="tabular-nums whitespace-nowrap">
+                          {formatCnpjInput(supplier.cnpj)}
+                        </TableCell>
                         <TableCell className="tabular-nums">
-                          {supplier.cnpj}
+                          {supplier.epromSupplierNumber || '—'}
                         </TableCell>
                         <TableCell className="max-w-xs truncate text-muted-foreground">
                           {supplier.description || '—'}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap tabular-nums">
+                          {formatRequestDate(supplier.createdAt)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap tabular-nums">
+                          {formatRequestDate(supplier.updatedAt)}
                         </TableCell>
                       </TableRow>
                     ))}
