@@ -128,3 +128,8 @@ export const attachCertificateFieldsSchema = z.object({
 export type AttachCertificateFields = z.infer<
   typeof attachCertificateFieldsSchema
 >;
+
+export const deleteInvoiceResponseSchema = z.object({
+  invoiceNumber: z.string(),
+  deletedRequestIds: z.array(z.number()),
+});

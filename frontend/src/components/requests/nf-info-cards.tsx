@@ -4,6 +4,7 @@ import { ExternalLink, FileText, Loader2, Pencil, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { DeleteInvoiceButton } from '@/components/requests/delete-invoice-button';
 import { CreateSupplierDialog } from '@/components/suppliers/create-supplier-dialog';
 import { SupplierLogo } from '@/components/suppliers/supplier-logo';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
@@ -107,19 +108,28 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Identificação da nota
           </p>
-          <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
-            <h1 className="min-w-0 break-all text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              {request.invoiceNumber}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <RequestStatusBadge status={request.status} />
-              {canEdit ? (
-                <EditPencilButton
-                  onClick={() => setEditField('invoiceNumber')}
-                  label="Editar número da NF"
-                />
-              ) : null}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-2">
+              <h1 className="min-w-0 break-all text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                {request.invoiceNumber}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <RequestStatusBadge status={request.status} />
+                {canEdit ? (
+                  <EditPencilButton
+                    onClick={() => setEditField('invoiceNumber')}
+                    label="Editar número da NF"
+                  />
+                ) : null}
+              </div>
             </div>
+            <DeleteInvoiceButton
+              requestId={request.id}
+              invoiceNumber={request.invoiceNumber}
+              supplierName={request.supplier.name}
+              redirectTo="/notas-fiscais"
+              className="shrink-0"
+            />
           </div>
         </header>
 

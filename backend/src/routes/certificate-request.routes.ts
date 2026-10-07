@@ -11,6 +11,7 @@ import {
   attachCertificateController,
   cancelCertificateRequestController,
   completeCertificateRequestController,
+  deleteInvoiceController,
   createCertificateRequestController,
   getCertificateRequestController,
   linkCertificatePdfController,
@@ -35,6 +36,7 @@ import {
 import {
   certificateRequestIdParamsSchema,
   certificateRequestResponseSchema,
+  deleteInvoiceResponseSchema,
   listCertificateRequestsResponseSchema,
   updateCertificateRequestSchema,
   type CertificateRequestIdParams,
@@ -456,6 +458,29 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
       ],
     },
     submitCertificateInspectionController,
+  );
+
+  fastify.delete<{ Params: CertificateRequestIdParams }>(
+    '/:id',
+    {
+      schema: {
+        summary:
+          'Delete an invoice and every certificate request tied to it',
+        tags: ['CertificateRequest'],
+        security: [{ cookieAuth: [] }],
+        params: certificateRequestIdParamsSchema,
+        response: {
+          200: deleteInvoiceResponseSchema,
+          ...commonErrors,
+        },
+      },
+      onRequest: [
+        fastify.authenticate,
+        fastify.authorize(UserRole.STOCK_LEADER),
+        fastify.csrfProtection,
+      ],
+    },
+    deleteInvoiceController,
   );
 
   fastify.post<{ Params: CertificateRequestIdParams }>(

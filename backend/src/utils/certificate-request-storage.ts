@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { AttachmentType } from '../generated/prisma/enums.js';
@@ -40,4 +40,11 @@ export async function saveCertificateRequestFile(
   await writeFile(absolutePath, buffer);
 
   return `/uploads/certificate-requests/${requestId}/${folderForType(type)}/${storedName}`;
+}
+
+export async function removeCertificateRequestFiles(
+  requestId: number,
+): Promise<void> {
+  const targetDir = path.join(UPLOADS_ROOT, String(requestId));
+  await rm(targetDir, { recursive: true, force: true });
 }

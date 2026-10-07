@@ -29,6 +29,10 @@ export function canManageQualityDocuments(role: UserRole | undefined): boolean {
   return isSuperAdminRole(role) || isStockLeaderRole(role);
 }
 
+export function canDeleteInvoice(role: UserRole | undefined): boolean {
+  return isSuperAdminRole(role) || isStockLeaderRole(role);
+}
+
 export function canAccessStockModules(role: UserRole | undefined): boolean {
   return isStockOperatorRole(role);
 }

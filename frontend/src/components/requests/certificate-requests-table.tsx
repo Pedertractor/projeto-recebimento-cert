@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { ArrowRight, FileText } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { useWebSession } from '@/hooks/auth/use-web-session';
+
 import { Form084PreviewDialog } from '@/components/conference/form-084-preview-dialog';
 import { InvoiceCertificatePrompt } from '@/components/conference/invoice-certificate-prompt';
+import { DeleteInvoiceButton } from '@/components/requests/delete-invoice-button';
 import { canRequestPurchaseDocument } from '@/lib/certificate-request-purchase-document';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { SupplierLogo } from '@/components/suppliers/supplier-logo';
@@ -26,6 +29,7 @@ import {
   getInspectedCertificatesCount,
   getNfConferenceStatus,
 } from '@/lib/certificate-request-labels';
+import { canDeleteInvoice } from '@/lib/role-access';
 import { cn } from '@/lib/utils';
 import type { CertificateRequest } from '@/types/certificate-request';
 
@@ -69,6 +73,8 @@ export function CertificateRequestsTable({
   showRequestCreator = false,
 }: CertificateRequestsTableProps) {
   const navigate = useNavigate();
+  const { data: sessionUser } = useWebSession();
+  const showDeleteInvoice = canDeleteInvoice(sessionUser?.role);
   const showCreatorColumn =
     variant === 'purchase' || (variant === 'stock' && showRequestCreator);
   const [form084Request, setForm084Request] =
@@ -205,6 +211,14 @@ export function CertificateRequestsTable({
                     </Link>
                   </Button>
                 ) : null}
+                {showDeleteInvoice ? (
+                  <DeleteInvoiceButton
+                    requestId={request.id}
+                    invoiceNumber={request.invoiceNumber}
+                    supplierName={request.supplier.name}
+                    className="w-full"
+                  />
+                ) : null}
               </div>
             </MobileListCard>
           );
@@ -244,6 +258,9 @@ export function CertificateRequestsTable({
             ) : null}
             {nfShortcutPath ? (
               <TableHead className="w-[1%] whitespace-nowrap">Atalho</TableHead>
+            ) : null}
+            {showDeleteInvoice ? (
+              <TableHead className="w-[1%] whitespace-nowrap">Excluir</TableHead>
             ) : null}
           </TableRow>
         </TableHeader>
@@ -346,6 +363,18 @@ export function CertificateRequestsTable({
                       <ArrowRight className="size-4" aria-hidden />
                     </Link>
                   </Button>
+                </TableCell>
+              ) : null}
+              {showDeleteInvoice ? (
+                <TableCell
+                  className="text-right"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <DeleteInvoiceButton
+                    requestId={request.id}
+                    invoiceNumber={request.invoiceNumber}
+                    supplierName={request.supplier.name}
+                  />
                 </TableCell>
               ) : null}
             </TableRow>

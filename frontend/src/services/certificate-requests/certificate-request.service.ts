@@ -313,6 +313,16 @@ export async function submitCertificateInspection(
   );
 }
 
+export async function deleteInvoice(requestId: number): Promise<{
+  invoiceNumber: string;
+  deletedRequestIds: number[];
+}> {
+  return httpClient.delete<{
+    invoiceNumber: string;
+    deletedRequestIds: number[];
+  }>(`/certificate-requests/${requestId}`);
+}
+
 export async function cancelCertificateRequest(
   requestId: number,
 ): Promise<CertificateRequest> {

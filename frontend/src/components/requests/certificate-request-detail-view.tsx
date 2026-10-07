@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 import { InvoiceCertificatePrompt } from '@/components/conference/invoice-certificate-prompt';
 import { CancelCertificateRequestButton } from '@/components/requests/cancel-certificate-request-button';
+import { DeleteInvoiceButton } from '@/components/requests/delete-invoice-button';
 import { CertificateRequestSummary } from '@/components/requests/certificate-request-summary';
 import { InvoiceAttachmentCard } from '@/components/requests/invoice-attachment-card';
 import { SuccessCelebrationOverlay } from '@/components/ui/success-celebration-overlay';
@@ -216,9 +217,17 @@ export function CertificateRequestDetailView({
             </p>
           </div>
         </div>
-        {!isPurchaseView ? (
-          <CancelCertificateRequestButton request={request} />
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <DeleteInvoiceButton
+            requestId={request.id}
+            invoiceNumber={request.invoiceNumber}
+            supplierName={request.supplier.name}
+            redirectTo={backHref}
+          />
+          {!isPurchaseView ? (
+            <CancelCertificateRequestButton request={request} />
+          ) : null}
+        </div>
       </div>
 
       {!isPurchaseView ? (

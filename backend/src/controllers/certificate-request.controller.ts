@@ -338,6 +338,15 @@ export async function linkCertificatePdfController(
   return reply.send(request);
 }
 
+export async function deleteInvoiceController(
+  req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
+  reply: FastifyReply,
+) {
+  const service = new CertificateRequestService(req.server.prisma);
+  const result = await service.deleteInvoice(req.params.id, req.user.role);
+  return reply.send(result);
+}
+
 export async function cancelCertificateRequestController(
   req: FastifyRequest<{ Params: CertificateRequestIdParams }>,
   reply: FastifyReply,

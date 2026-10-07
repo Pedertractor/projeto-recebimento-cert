@@ -13,7 +13,11 @@ import type {
   CreateCertificateRequestFields,
   UpdateCertificateRequestFields,
 } from '../schemas/certificate-request.schemas.js';
-import { saveCertificateRequestFile } from '../utils/certificate-request-storage.js';
+import {
+  removeCertificateRequestFiles,
+  saveCertificateRequestFile,
+} from '../utils/certificate-request-storage.js';
+import { canManageAllStockCertificateRequests } from '../utils/user-roles.js';
 import { hashToken } from '../utils/token-hash.js';
 import { resolveQualityDocumentForRequest } from '../utils/quality-document-public.js';
 import {
@@ -991,5 +995,47 @@ export class CertificateRequestService {
     });
 
     return this.findById(requestId);
+  }
+
+  async deleteInvoice(requestId: number, userRole: UserRole) {
+    if (!canManageAllStockCertificateRequests(userRole)) {
+      throw new AppError('Acesso negado.', 403);
+    }
+
+    const request = await this.prisma.certificateRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true,
+        invoiceNumber: true,
+        supplierId: true,
+      },
+    });
+
+    if (!request) {
+      throw new AppError('NF não encontrada.', 404);
+    }
+
+    const relatedRequests = await this.prisma.certificateRequest.findMany({
+      where: {
+        invoiceNumber: request.invoiceNumber,
+        supplierId: request.supplierId,
+      },
+      select: { id: true },
+    });
+
+    const deletedRequestIds = relatedRequests.map((item) => item.id);
+
+    await this.prisma.certificateRequest.deleteMany({
+      where: { id: { in: deletedRequestIds } },
+    });
+
+    await Promise.all(
+      deletedRequestIds.map((id) => removeCertificateRequestFiles(id)),
+    );
+
+    return {
+      invoiceNumber: request.invoiceNumber,
+      deletedRequestIds,
+    };
   }
 }
