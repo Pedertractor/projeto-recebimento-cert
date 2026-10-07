@@ -6,12 +6,12 @@ COPY package*.json ./
 
 RUN npm set strict-ssl false
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
-RUN npm install
-
-# prisma.config.ts exige DATABASE_URL ao carregar; .env não entra no build (.dockerignore)
-ENV DATABASE_URL=postgresql://certificado_qualidade:certificado_qualidade@compara-nf-database:5432/certificado_qualidade
+RUN npm ci 
 
 COPY . .
+
+# Prisma 7 carrega prisma.config.ts no generate e exige DATABASE_URL (não usa o banco neste passo).
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
 
 RUN npx prisma generate && npm run build
 
@@ -32,4 +32,4 @@ RUN mkdir -p uploads/certificate-requests uploads/suppliers uploads/quality-docu
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run seed && npm run start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run seed && npm run start"]

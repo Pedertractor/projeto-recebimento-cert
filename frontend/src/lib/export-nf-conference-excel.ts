@@ -137,15 +137,18 @@ export async function exportNfConferenceTableToExcel(
     const offsetXPx = Math.max(0, (cellWidthPx - LOGO_SIZE_PX) / 2);
     const offsetYPx = Math.max(0, (cellHeightPx - LOGO_SIZE_PX) / 2);
 
-    worksheet.addImage(logoId, {
-      tl: {
-        nativeCol: 0,
-        nativeColOff: Math.round(offsetXPx * EMU_PER_PIXEL),
-        nativeRow: 0,
-        nativeRowOff: Math.round(offsetYPx * EMU_PER_PIXEL),
-      },
-      ext: { width: LOGO_SIZE_PX, height: LOGO_SIZE_PX },
-    });
+    worksheet.addImage(
+      logoId,
+      {
+        tl: {
+          nativeCol: 0,
+          nativeColOff: Math.round(offsetXPx * EMU_PER_PIXEL),
+          nativeRow: 0,
+          nativeRowOff: Math.round(offsetYPx * EMU_PER_PIXEL),
+        },
+        ext: { width: LOGO_SIZE_PX, height: LOGO_SIZE_PX },
+      } as unknown as import('exceljs').ImagePosition,
+    );
   } catch {
     worksheet.getCell('A1').value = APP_NAME.charAt(0);
     worksheet.getCell('A1').font = { bold: true, size: 20 };

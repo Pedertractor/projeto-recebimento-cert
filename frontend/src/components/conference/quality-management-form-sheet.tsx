@@ -7,7 +7,6 @@ import {
 } from '@/lib/quality-management-form';
 import { Badge } from '@/components/ui/badge';
 import {
-  Card,
   CardContent,
   CardDescription,
   CardFooter,
