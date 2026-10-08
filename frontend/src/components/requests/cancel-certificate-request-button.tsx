@@ -1,0 +1,136 @@
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { HttpClientError } from '@/lib/http-client';
+import {
+  cancelCertificateRequest,
+  certificateRequestDetailQueryKey,
+  certificateRequestsListQueryKey,
+  pendingPurchaseCertificateRequestsQueryKey,
+  purchaseCertificateRequestsListQueryKey,
+} from '@/services/certificate-requests/certificate-request.service';
+import { cn } from '@/lib/utils';
+import type { CertificateRequest } from '@/types/certificate-request';
+
+type CancelCertificateRequestButtonProps = {
+  request: CertificateRequest;
+  label?: string;
+  className?: string;
+  onCancelled?: () => void;
+};
+
+export function CancelCertificateRequestButton({
+  request,
+  label = 'Cancelar',
+  className,
+  onCancelled,
+}: CancelCertificateRequestButtonProps) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+
+  const revertingPurchaseRequest = request.status === 'AGUARDANDO_COMPRAS';
+
+  const cancelMutation = useMutation({
+    mutationFn: () => cancelCertificateRequest(request.id),
+    onSuccess: async (updatedRequest) => {
+      toast.success(
+        revertingPurchaseRequest
+          ? 'Solicitação ao compras cancelada. Você pode solicitar novamente.'
+          : `Solicitação #${request.id} cancelada.`,
+      );
+      setOpen(false);
+      onCancelled?.();
+      queryClient.setQueryData(
+        certificateRequestDetailQueryKey(request.id),
+        updatedRequest,
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: certificateRequestsListQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: purchaseCertificateRequestsListQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: pendingPurchaseCertificateRequestsQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: certificateRequestDetailQueryKey(request.id),
+        }),
+      ]);
+    },
+    onError: (error) => {
+      const message =
+        error instanceof HttpClientError
+          ? error.message
+          : 'Não foi possível cancelar a solicitação.';
+      toast.error(message);
+    },
+  });
+
+  if (
+    request.status !== 'AGUARDANDO_COMPRAS' &&
+    request.status !== 'CADASTRADA'
+  ) {
+    return null;
+  }
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className={cn('text-destructive hover:text-destructive', className)}
+        onClick={() => setOpen(true)}
+      >
+        {label}
+      </Button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="border-0 shadow-xl ring-0 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancelar solicitação #{request.id}?</DialogTitle>
+            <DialogDescription>
+              {revertingPurchaseRequest
+                ? 'Esta ação só é permitida enquanto o compras ainda não registrou o envio ao fornecedor. A NF voltará ao status cadastrada e você poderá solicitar os documentos novamente.'
+                : 'A solicitação ficará com status cancelada e não poderá ser retomada.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={cancelMutation.isPending}
+            >
+              Voltar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={cancelMutation.isPending}
+              onClick={() => cancelMutation.mutate()}
+            >
+              {cancelMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              Confirmar cancelamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

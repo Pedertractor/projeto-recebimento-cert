@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+uploads
+
+/src/generated/prisma
+
+# Gerado automaticamente pelo `prisma init`
+.agents/
+.claude/
+.windsurf/
+skills-lock.json

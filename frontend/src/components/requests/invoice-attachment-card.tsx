@@ -1,0 +1,172 @@
+import { useRef, type ChangeEvent } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { FileText, Loader2, Paperclip, Pencil } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { PdfPageViewer } from '@/components/conference/pdf-page-viewer';
+import { RequestAttachmentActions } from '@/components/requests/request-attachment-actions';
+import { Button } from '@/components/ui/button';
+import { HttpClientError } from '@/lib/http-client';
+import {
+  certificateRequestDetailQueryKey,
+  certificateRequestsListQueryKey,
+  completedCertificateRequestsQueryKey,
+  upsertInvoiceDocument,
+} from '@/services/certificate-requests/certificate-request.service';
+import { resolveAttachmentUrl } from '@/utils/attachment-url';
+import { isImageFile, isPdfFile } from '@/utils/file-type';
+import type { RequestAttachment } from '@/types/certificate-request';
+
+type InvoiceAttachmentCardProps = {
+  attachment: RequestAttachment | null;
+  title?: string;
+  subtitle?: string;
+  emptyMessage?: string;
+  requestId?: number;
+  canUpdate?: boolean;
+  allowPageCopy?: boolean;
+};
+
+export function InvoiceAttachmentCard({
+  attachment,
+  title = 'Nota fiscal',
+  subtitle,
+  emptyMessage = 'Nenhuma nota fiscal anexada.',
+  requestId,
+  canUpdate = false,
+  allowPageCopy = true,
+}: InvoiceAttachmentCardProps) {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updateMutation = useMutation({
+    mutationFn: (file: File) => {
+      if (!requestId) {
+        throw new Error('NF inválida.');
+      }
+      return upsertInvoiceDocument(requestId, file);
+    },
+    onSuccess: async () => {
+      toast.success('Nota fiscal atualizada.');
+      if (!requestId) {
+        return;
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: certificateRequestDetailQueryKey(requestId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: certificateRequestsListQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: completedCertificateRequestsQueryKey,
+        }),
+      ]);
+    },
+    onError: (error) => {
+      const message =
+        error instanceof HttpClientError
+          ? error.message
+          : 'Não foi possível atualizar a nota fiscal.';
+      toast.error(message);
+    },
+  });
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      updateMutation.mutate(file);
+    }
+    event.target.value = '';
+  }
+
+  return (
+    <section className="flex w-full min-w-0 flex-col rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/60 sm:p-6 md:h-full md:min-h-88 lg:min-h-112">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-2">
+          <Paperclip className="mt-0.5 size-4 shrink-0 text-brand" />
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+              {title}
+            </h2>
+            {subtitle ? (
+              <p className="text-xs text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </div>
+        </div>
+        {canUpdate ? (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-full shrink-0 sm:w-auto"
+              disabled={updateMutation.isPending}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {updateMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Pencil className="size-4" />
+              )}
+              {attachment ? 'Atualizar' : 'Anexar'}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </>
+        ) : null}
+      </div>
+
+      <div className="mt-4 flex w-full min-w-0 flex-col gap-3 md:min-h-0 md:flex-1">
+        {attachment ? (
+          <>
+            <div className="relative w-full min-w-0 rounded-xl bg-muted/30 ring-1 ring-border/50 max-md:overflow-visible md:min-h-0 md:flex-1 md:overflow-hidden">
+              {isImageFile(attachment.fileName) ? (
+                <img
+                  src={resolveAttachmentUrl(attachment.storagePath)}
+                  alt={attachment.fileName}
+                  className="max-h-[min(58dvh,26rem)] w-full object-contain md:max-h-none md:size-full"
+                />
+              ) : isPdfFile(attachment.fileName) ? (
+                <PdfPageViewer
+                  key={`${attachment.id}-${attachment.uploadedAt}`}
+                  pdfUrl={resolveAttachmentUrl(attachment.storagePath)}
+                  showCopyButton={allowPageCopy}
+                  expandDialogTitle="Nota fiscal"
+                  className="w-full min-h-0 max-md:flex-none md:size-full md:p-2"
+                />
+              ) : (
+                <div className="flex size-full flex-col items-center justify-center gap-2 p-4 text-center">
+                  <FileText className="size-8 text-muted-foreground" />
+                  <p className="text-sm font-medium">{attachment.fileName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Pré-visualização indisponível para este formato.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {allowPageCopy && isPdfFile(attachment.fileName) ? (
+              <p className="text-xs text-muted-foreground">
+                Navegue pelas páginas, toque em &quot;Copiar página&quot; e use
+                &quot;Usar página copiada&quot; no lote (no celular). No
+                computador, você também pode colar com Ctrl+V.
+              </p>
+            ) : null}
+
+            <RequestAttachmentActions attachment={attachment} compact />
+          </>
+        ) : (
+          <div className="flex w-full min-w-0 items-center justify-center rounded-xl bg-muted/20 px-4 py-10 text-center ring-1 ring-border/50 max-md:min-h-[12rem] md:min-h-0 md:flex-1">
+            <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

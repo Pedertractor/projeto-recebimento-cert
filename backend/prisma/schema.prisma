@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Unit {
+  PEDERTRACTOR
+  TRACTOR
+
+  @@map("unit")
+}
+
+enum UserRole {
+  SUPERADMIN
+  STOCK_LEADER
+  STOCK_OPERATOR
+  PURCHASE_OPERATOR
+  QUALITY_VIEWER
+
+  @@map("user_role")
+}
+
+enum CertificateRequestStatus {
+  CADASTRADA
+  AGUARDANDO_COMPRAS
+  AGUARDANDO_FORNECEDOR
+  CONCLUIDA
+  CANCELADA
+
+  @@map("certificate_request_status")
+}
+
+enum AttachmentType {
+  NOTA_FISCAL
+  CERTIFICADO
+  IMPRESSAO_CONFERENCIA
+
+  @@map("attachment_type")
+}
+
+enum AttachmentValidity {
+  VALID
+  INVALID
+
+  @@map("attachment_validity")
+}
+
+enum InspectionCheckResult {
+  OK
+  NOK
+
+  @@map("inspection_check_result")
+}
+
+enum RequestHistoryEventType {
+  SOLICITACAO_CRIADA
+  EMAIL_COMPRAS_ENVIADO
+  ENVIO_FORNECEDOR_REGISTRADO
+  CERTIFICADO_ANEXADO
+  CERTIFICADO_REMOVIDO
+  SOLICITACAO_CONCLUIDA
+  EMAIL_ESTOQUE_ENVIADO
+  SOLICITACAO_CANCELADA
+  CONFERENCIA_REALIZADA
+  CERTIFICADO_INVALIDADO
+
+  @@map("request_history_event_type")
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  email      String?
+  cardNumber String    @map("card_number")
+  unit       Unit
+  password   String
+  employeeId Int       @unique @map("employee_id")
+  name       String?
+  firstLogin Boolean   @default(true) @map("first_login")
+  status     Boolean   @default(true)
+  role       UserRole  @default(STOCK_OPERATOR)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  refreshTokens              RefreshToken[]
+  createdCertificateRequests CertificateRequest[]    @relation("CertificateRequestCreatedBy")
+  uploadedAttachments        RequestAttachment[]     @relation("RequestAttachmentUploadedBy")
+  historyEvents              RequestHistoryEvent[]   @relation("RequestHistoryEventActor")
+  uploadedQualityDocuments   QualityDocument[]       @relation("QualityDocumentUploadedBy")
+  certificateInspections     CertificateInspection[] @relation("CertificateInspectionInspectedBy")
+
+  @@unique([cardNumber, unit])
+  @@map("users")
+}
+
+model Supplier {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  cnpj                String   @unique
+  description         String?
+  epromSupplierNumber String?  @map("eprom_supplier_number")
+  logoStoragePath     String?  @map("logo_storage_path")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  certificateRequests CertificateRequest[]
+
+  @@map("suppliers")
+}
+
+model CertificateRequest {
+  id                   Int                      @id @default(autoincrement())
+  supplierId           Int                      @map("supplier_id")
+  supplier             Supplier                 @relation(fields: [supplierId], references: [id])
+  invoiceNumber        String                   @map("invoice_number")
+  invoiceDate          DateTime                 @map("invoice_date") @db.Date
+  expectedCertificates Int                      @default(1) @map("expected_certificates")
+  notes                String?
+  status               CertificateRequestStatus @default(CADASTRADA)
+  createdByUserId      Int                      @map("created_by_user_id")
+  createdBy            User                     @relation("CertificateRequestCreatedBy", fields: [createdByUserId], references: [id])
+  registeredByName     String                   @map("registered_by_name")
+  submittedAt          DateTime                 @default(now()) @map("submitted_at")
+  supplierContactAt    DateTime?                @map("supplier_contact_at")
+  completedAt          DateTime?                @map("completed_at")
+  qualityDocumentId    String?                  @map("quality_document_id")
+  qualityDocument      QualityDocument?         @relation(fields: [qualityDocumentId], references: [id])
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  updatedAt            DateTime                 @updatedAt @map("updated_at")
+
+  attachments   RequestAttachment[]
+  historyEvents RequestHistoryEvent[]
+  magicLink     MagicLink?
+
+  @@index([qualityDocumentId])
+  @@map("certificate_requests")
+}
+
+model RequestAttachment {
+  id               String                 @id @default(uuid())
+  requestId        Int                    @map("request_id")
+  request          CertificateRequest     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  type             AttachmentType
+  fileName         String                 @map("file_name")
+  storagePath      String                 @map("storage_path")
+  lotLabel         String?                @map("lot_label")
+  lotIndex         Int?                   @map("lot_index")
+  validity         AttachmentValidity     @default(VALID) @map("validity")
+  uploadedByUserId Int?                   @map("uploaded_by_user_id")
+  uploadedBy       User?                  @relation("RequestAttachmentUploadedBy", fields: [uploadedByUserId], references: [id])
+  uploadedAt       DateTime               @default(now()) @map("uploaded_at")
+  inspection       CertificateInspection?
+
+  @@unique([requestId, lotIndex, type])
+  @@map("request_attachments")
+}
+
+model RequestHistoryEvent {
+  id          String                  @id @default(uuid())
+  requestId   Int                     @map("request_id")
+  request     CertificateRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  eventType   RequestHistoryEventType @map("event_type")
+  description String?
+  actorUserId Int?                    @map("actor_user_id")
+  actor       User?                   @relation("RequestHistoryEventActor", fields: [actorUserId], references: [id])
+  occurredAt  DateTime                @default(now()) @map("occurred_at")
+
+  @@map("request_history_events")
+}
+
+model MagicLink {
+  id        String             @id @default(uuid())
+  requestId Int                @unique @map("request_id")
+  request   CertificateRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  tokenHash String             @unique @map("token_hash")
+  expiresAt DateTime?          @map("expires_at")
+  usedAt    DateTime?          @map("used_at")
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  @@map("magic_links")
+}
+
+model QualityDocument {
+  id               String   @id @default(uuid())
+  year             Int
+  versionNumber    Int      @map("version_number")
+  displayName      String   @map("display_name")
+  fileName         String   @map("file_name")
+  storagePath      String   @map("storage_path")
+  uploadedByUserId Int      @map("uploaded_by_user_id")
+  uploadedBy       User     @relation("QualityDocumentUploadedBy", fields: [uploadedByUserId], references: [id])
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  certificateInspections CertificateInspection[]
+  certificateRequests    CertificateRequest[]
+
+  @@unique([year, versionNumber])
+  @@index([year])
+  @@map("quality_documents")
+}
+
+model CertificateInspection {
+  id                   String                @id @default(uuid())
+  attachmentId         String                @unique @map("attachment_id")
+  attachment           RequestAttachment     @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+  requestId            Int                   @map("request_id")
+  qualityDocumentId    String                @map("quality_document_id")
+  qualityDocument      QualityDocument       @relation(fields: [qualityDocumentId], references: [id])
+  receiptDate          DateTime              @map("receipt_date") @db.Date
+  materialDescription  String                @map("material_description")
+  rm                   String
+  certificateNumber    String                @map("certificate_number")
+  chemicalComposition  InspectionCheckResult @map("chemical_composition")
+  quantitySpecified    String                @map("quantity_specified")
+  quantityFound        String                @map("quantity_found")
+  dimensionalSpecified String                @map("dimensional_specified")
+  dimensionalFound     String                @map("dimensional_found")
+  visualInspection     InspectionCheckResult @map("visual_inspection")
+  reportStatus         InspectionCheckResult @map("report_status")
+  receiverResponsible  String                @map("receiver_responsible")
+  receiverEmployeeId   Int?                  @map("receiver_employee_id")
+  inspectedByUserId    Int                   @map("inspected_by_user_id")
+  inspectedBy          User                  @relation("CertificateInspectionInspectedBy", fields: [inspectedByUserId], references: [id])
+  inspectedAt          DateTime              @default(now()) @map("inspected_at")
+
+  @@index([requestId])
+  @@map("certificate_inspections")
+}
+
+model RefreshToken {
+  id           String        @id @default(uuid())
+  userId       Int           @map("user_id")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String        @unique @map("token_hash")
+  familyId     String        @map("family_id")
+  expiresAt    DateTime      @map("expires_at")
+  revokedAt    DateTime?     @map("revoked_at")
+  replacedById String?       @unique @map("replaced_by_id")
+  replacedBy   RefreshToken? @relation("RefreshRotation", fields: [replacedById], references: [id])
+  predecessor  RefreshToken? @relation("RefreshRotation")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@index([familyId])
+  @@index([userId])
+  @@map("refresh_tokens")
+}

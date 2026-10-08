@@ -1,0 +1,40 @@
+name: compara-nf
+services:
+  back-end-compara-nf:
+    build: .
+    container_name: compara-nf-back-end
+    ports:
+      - "${PORT}:3000"
+    env_file:
+      - .env
+    volumes:
+      - compara-nf-data:/usr/src/app/uploads
+    depends_on:
+      - compara-nf-database
+    networks:
+      - compara-nf-net
+
+  compara-nf-database:
+    image: postgres:17-alpine
+    container_name: compara-nf-database
+    ports:
+      - "${PORT_DATABASE}:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      # Dados do Postgres sobrevivem a rebuild/restart do compose (exceto `docker compose down -v`).
+      - postgres-data-compara-nf:/var/lib/postgresql/data
+    networks:
+      - compara-nf-net
+
+volumes:
+  postgres-data-compara-nf:
+  compara-nf-data:
+
+networks:
+  compara-nf-net:
+    name: compara-nf

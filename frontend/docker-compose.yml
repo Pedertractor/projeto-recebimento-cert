@@ -1,0 +1,19 @@
+name: compara-nf
+services:
+  front-end-compara-nf:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+    container_name: front-end-compara-nf
+    restart: always
+    ports:
+      - "${PORT_FRONT_END}:80"
+    networks:
+      - compara-nf-net
+
+networks:
+  compara-nf-net:
+    external: true
+    name: compara-nf
