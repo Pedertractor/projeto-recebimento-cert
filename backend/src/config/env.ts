@@ -29,7 +29,6 @@ const envSchema = z.object({
   NAME_APPLICATION: z.string().min(1),
   KEY: z.string().min(1),
   COOKIE_SECURE: z.enum(['true', 'false']).optional(),
-  APP_BASE_URL: z.string().url().default('http://localhost:5173'),
   EMAIL_COMPRAS: z.string().email().optional(),
   CORREIO: optionalEnvString(),
   EMAIL_AUTOMACAO: optionalEnvString(),

@@ -658,7 +658,7 @@ export class CertificateRequestService {
     });
 
     const fullRequest = await this.findById(requestId);
-    const magicLinkUrl = `${env.APP_BASE_URL}/solicitacoes/${fullRequest.id}?token=${rawToken}`;
+    const magicLinkUrl = `${env.FRONTEND_ORIGIN}/solicitacoes/${fullRequest.id}?token=${rawToken}`;
 
     const userService = new UserService(this.prisma);
     const purchaseOperatorEmails =
@@ -927,7 +927,7 @@ export class CertificateRequestService {
 
     const notifyStock = options?.notifyStock ?? true;
 
-    const requestUrl = `${env.APP_BASE_URL}/notas-fiscais/${requestId}`;
+    const requestUrl = `${env.FRONTEND_ORIGIN}/notas-fiscais/${requestId}`;
 
     if (notifyStock) {
       await sendCompletedCertificateRequestEmail({
