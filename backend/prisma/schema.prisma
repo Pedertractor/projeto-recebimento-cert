@@ -19,6 +19,7 @@ enum UserRole {
   STOCK_LEADER
   STOCK_OPERATOR
   PURCHASE_OPERATOR
+  QUALITY_VIEWER
 
   @@map("user_role")
 }

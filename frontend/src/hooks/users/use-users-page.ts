@@ -54,6 +54,7 @@ export function useUsersPage() {
     'STOCK_OPERATOR',
     'PURCHASE_OPERATOR',
     'STOCK_LEADER',
+    'QUALITY_VIEWER',
     'SUPERADMIN',
   ] as UserRole[]);
   const roleOptions: RoleFilterOption[] = useMemo(

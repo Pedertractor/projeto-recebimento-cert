@@ -32,11 +32,11 @@ import {
   canAccessPurchaseModules,
   canAccessStockModules,
   canAccessUserManagement,
-  canManageQualityDocuments,
+  canViewQualityDocuments,
   getDefaultRouteForRole,
   isPurchaseOnlyOperator,
 } from '@/lib/role-access';
-import { isStockLeaderRole } from '@/lib/user-labels';
+import { isQualityViewerRole, isStockLeaderRole } from '@/lib/user-labels';
 
 type SidebarNavItem = {
   label: string;
@@ -96,14 +96,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { pathname } = useLocation();
   const { data: user } = useWebSession();
   const canManageUsers = canAccessUserManagement(user?.role);
-  const canManageQualityDoc = canManageQualityDocuments(user?.role);
+  const canViewQualityDoc = canViewQualityDocuments(user?.role);
   const canUseStockModules = canAccessStockModules(user?.role);
   const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
   const purchaseOnly = isPurchaseOnlyOperator(user?.role);
+  const qualityViewer = isQualityViewerRole(user?.role);
   const isStockLeader = isStockLeaderRole(user?.role);
   const appRootHref = getDefaultRouteForRole(user?.role);
 
-  const homeItems: SidebarNavItem[] = purchaseOnly
+  const homeItems: SidebarNavItem[] = purchaseOnly || qualityViewer
     ? []
     : [
         {
@@ -115,7 +116,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
       ];
 
-  const qualityDocItems: SidebarNavItem[] = canManageQualityDoc
+  const qualityDocItems: SidebarNavItem[] =
+    canViewQualityDoc && !qualityViewer
+      ? [
+          {
+            label: 'Doc qualidade',
+            href: '/doc-qualidade',
+            tooltip: 'Doc qualidade',
+            icon: FileText,
+            isActive: (path) => path.startsWith('/doc-qualidade'),
+          },
+        ]
+      : [];
+
+  const qualityViewerItems: SidebarNavItem[] = qualityViewer
     ? [
         {
           label: 'Doc qualidade',
@@ -123,6 +137,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           tooltip: 'Doc qualidade',
           icon: FileText,
           isActive: (path) => path.startsWith('/doc-qualidade'),
+        },
+        {
+          label: "NF's de materiais",
+          href: '/notas-fiscais',
+          tooltip: "NF's de materiais",
+          icon: FileSearch,
+          isActive: (path) => path.startsWith('/notas-fiscais'),
         },
       ]
     : [];
@@ -198,12 +219,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ]
     : [];
 
-  const navGroups = [
-    { label: 'Início', items: homeItems },
-    { label: 'Operações', items: stockItems },
-    { label: 'Compras', items: purchaseItems },
-    { label: 'Administração', items: adminItems },
-  ];
+  const navGroups = qualityViewer
+    ? [{ label: 'Qualidade', items: qualityViewerItems }]
+    : [
+        { label: 'Início', items: homeItems },
+        { label: 'Operações', items: stockItems },
+        { label: 'Compras', items: purchaseItems },
+        { label: 'Administração', items: adminItems },
+      ];
 
   return (
     <Sidebar collapsible="icon" {...props}>

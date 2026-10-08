@@ -12,7 +12,13 @@ export function roleLabel(role: UserRole): string {
       return 'Operador de estoque';
     case 'PURCHASE_OPERATOR':
       return 'Operador de compras';
+    case 'QUALITY_VIEWER':
+      return 'Qualidade';
   }
+}
+
+export function isQualityViewerRole(role: UserRole | undefined): boolean {
+  return role === 'QUALITY_VIEWER';
 }
 
 export function isStockLeaderRole(role: UserRole | undefined): boolean {

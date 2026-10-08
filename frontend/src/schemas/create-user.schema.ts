@@ -10,7 +10,13 @@ export const createUserFormSchema = z.object({
     message: 'Selecione a unidade.',
   }),
   role: z.enum(
-    ['STOCK_OPERATOR', 'PURCHASE_OPERATOR', 'SUPERADMIN', 'STOCK_LEADER'],
+    [
+      'STOCK_OPERATOR',
+      'PURCHASE_OPERATOR',
+      'SUPERADMIN',
+      'STOCK_LEADER',
+      'QUALITY_VIEWER',
+    ],
     {
       message: 'Selecione a função.',
     },

@@ -17,7 +17,10 @@ import {
   removeCertificateRequestFiles,
   saveCertificateRequestFile,
 } from '../utils/certificate-request-storage.js';
-import { canManageAllStockCertificateRequests } from '../utils/user-roles.js';
+import {
+  canManageAllStockCertificateRequests,
+  isQualityViewerRole,
+} from '../utils/user-roles.js';
 import { hashToken } from '../utils/token-hash.js';
 import { resolveQualityDocumentForRequest } from '../utils/quality-document-public.js';
 import {
@@ -229,7 +232,8 @@ export class CertificateRequestService {
     const seeAllRequests =
       userRole === UserRole.SUPERADMIN ||
       userRole === UserRole.STOCK_LEADER ||
-      userRole === UserRole.PURCHASE_OPERATOR;
+      userRole === UserRole.PURCHASE_OPERATOR ||
+      isQualityViewerRole(userRole);
 
     const requests = await this.prisma.certificateRequest.findMany({
       where: seeAllRequests

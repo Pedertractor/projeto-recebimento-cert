@@ -2,7 +2,7 @@ import { Loader2Icon } from 'lucide-react';
 import { Navigate, Outlet } from 'react-router-dom';
 
 import { useWebSession } from '@/hooks/auth/use-web-session';
-import { canManageQualityDocuments } from '@/lib/role-access';
+import { canViewQualityDocuments } from '@/lib/role-access';
 
 export function RequireQualityDocumentManager() {
   const { data: user, isLoading, isError } = useWebSession();
@@ -15,7 +15,7 @@ export function RequireQualityDocumentManager() {
     );
   }
 
-  if (isError || !user || !canManageQualityDocuments(user.role)) {
+  if (isError || !user || !canViewQualityDocuments(user.role)) {
     return <Navigate to="/" replace />;
   }
 

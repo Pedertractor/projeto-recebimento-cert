@@ -14,7 +14,10 @@ import type {
   UpdateCertificateRequestFields,
 } from '../schemas/certificate-request.schemas.js';
 import { CertificateRequestService } from '../services/certificate-request.service.js';
-import { canManageAllStockCertificateRequests } from '../utils/user-roles.js';
+import {
+  canManageAllStockCertificateRequests,
+  isQualityViewerRole,
+} from '../utils/user-roles.js';
 
 type MultipartFields = Record<string, string>;
 
@@ -66,7 +69,10 @@ function canAccessCertificateRequest(
     return true;
   }
 
-  if (user.role === UserRole.PURCHASE_OPERATOR) {
+  if (
+    user.role === UserRole.PURCHASE_OPERATOR ||
+    isQualityViewerRole(user.role)
+  ) {
     return true;
   }
 

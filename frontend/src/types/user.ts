@@ -4,7 +4,8 @@ export type UserRole =
   | 'SUPERADMIN'
   | 'STOCK_LEADER'
   | 'STOCK_OPERATOR'
-  | 'PURCHASE_OPERATOR';
+  | 'PURCHASE_OPERATOR'
+  | 'QUALITY_VIEWER';
 
 export type PublicUser = {
   id: number;

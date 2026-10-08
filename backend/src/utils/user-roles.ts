@@ -8,6 +8,10 @@ export function isStockLeaderRole(role: UserRole): boolean {
   return role === UserRole.STOCK_LEADER;
 }
 
+export function isQualityViewerRole(role: UserRole): boolean {
+  return role === UserRole.QUALITY_VIEWER;
+}
+
 export function canManageAllStockCertificateRequests(role: UserRole): boolean {
   return isSuperAdminRole(role) || isStockLeaderRole(role);
 }

@@ -7,7 +7,9 @@ import { QualityDocumentTimeline } from '@/components/quality-documents/quality-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useWebSession } from '@/hooks/auth/use-web-session';
 import { HttpClientError } from '@/lib/http-client';
+import { canManageQualityDocuments } from '@/lib/role-access';
 import {
   createQualityDocument,
   getNextVersionPreview,
@@ -19,6 +21,8 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 export function DocQualidadePage() {
   const queryClient = useQueryClient();
+  const { data: sessionUser } = useWebSession();
+  const canPublish = canManageQualityDocuments(sessionUser?.role);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [year, setYear] = useState(String(CURRENT_YEAR));
   const [documentFile, setDocumentFile] = useState<File | null>(null);
@@ -96,71 +100,73 @@ export function DocQualidadePage() {
         </div>
 
         <section className="space-y-8">
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-sm font-medium">Nova versão</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {previewName}
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <div className="w-full space-y-1.5 sm:w-28">
-                <Label htmlFor="qualityDocumentYear">Ano</Label>
-                <Input
-                  id="qualityDocumentYear"
-                  type="number"
-                  min={2000}
-                  max={2100}
-                  value={year}
-                  onChange={(event) => setYear(event.target.value)}
-                />
+          {canPublish ? (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-sm font-medium">Nova versão</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {previewName}
+                </p>
               </div>
 
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <Label htmlFor="qualityDocumentFile">Documento</Label>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="w-full space-y-1.5 sm:w-28">
+                  <Label htmlFor="qualityDocumentYear">Ano</Label>
                   <Input
-                    readOnly
-                    value={documentFile?.name ?? ''}
-                    placeholder="Nenhum arquivo selecionado"
-                    className="min-w-0 flex-1 bg-muted/20"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Escolher
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    id="qualityDocumentFile"
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg,.webp"
-                    className="hidden"
-                    onChange={(event) => {
-                      setDocumentFile(event.target.files?.[0] ?? null);
-                    }}
+                    id="qualityDocumentYear"
+                    type="number"
+                    min={2000}
+                    max={2100}
+                    value={year}
+                    onChange={(event) => setYear(event.target.value)}
                   />
                 </div>
-              </div>
 
-              <Button
-                className="w-full bg-brand text-brand-foreground hover:bg-brand/90 sm:w-auto sm:shrink-0"
-                disabled={
-                  !documentFile || !isValidYear || createMutation.isPending
-                }
-                onClick={() => createMutation.mutate()}
-              >
-                {createMutation.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : null}
-                Publicar
-              </Button>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Label htmlFor="qualityDocumentFile">Documento</Label>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Input
+                      readOnly
+                      value={documentFile?.name ?? ''}
+                      placeholder="Nenhum arquivo selecionado"
+                      className="min-w-0 flex-1 bg-muted/20"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Escolher
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      id="qualityDocumentFile"
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg,.webp"
+                      className="hidden"
+                      onChange={(event) => {
+                        setDocumentFile(event.target.files?.[0] ?? null);
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full bg-brand text-brand-foreground hover:bg-brand/90 sm:w-auto sm:shrink-0"
+                  disabled={
+                    !documentFile || !isValidYear || createMutation.isPending
+                  }
+                  onClick={() => createMutation.mutate()}
+                >
+                  {createMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  Publicar
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <div className="space-y-4">
             <h2 className="text-sm font-medium text-muted-foreground">

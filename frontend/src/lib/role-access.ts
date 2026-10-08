@@ -1,4 +1,8 @@
-import { isStockLeaderRole, isSuperAdminRole } from '@/lib/user-labels';
+import {
+  isQualityViewerRole,
+  isStockLeaderRole,
+  isSuperAdminRole,
+} from '@/lib/user-labels';
 import type { UserRole } from '@/types/user';
 
 export function isStockOperatorRole(role: UserRole | undefined): boolean {
@@ -29,6 +33,10 @@ export function canManageQualityDocuments(role: UserRole | undefined): boolean {
   return isSuperAdminRole(role) || isStockLeaderRole(role);
 }
 
+export function canViewQualityDocuments(role: UserRole | undefined): boolean {
+  return canManageQualityDocuments(role) || isQualityViewerRole(role);
+}
+
 export function canDeleteInvoice(role: UserRole | undefined): boolean {
   return isSuperAdminRole(role) || isStockLeaderRole(role);
 }
@@ -38,7 +46,11 @@ export function canAccessStockModules(role: UserRole | undefined): boolean {
 }
 
 export function canViewNfMaterials(role: UserRole | undefined): boolean {
-  return canAccessStockModules(role) || role === 'PURCHASE_OPERATOR';
+  return (
+    canAccessStockModules(role) ||
+    role === 'PURCHASE_OPERATOR' ||
+    isQualityViewerRole(role)
+  );
 }
 
 export function canEditNfMaterials(role: UserRole | undefined): boolean {
@@ -56,6 +68,9 @@ export function isPurchaseOnlyOperator(role: UserRole | undefined): boolean {
 export function getDefaultRouteForRole(role: UserRole | undefined): string {
   if (isPurchaseOnlyOperator(role)) {
     return '/compras/solicitacoes';
+  }
+  if (isQualityViewerRole(role)) {
+    return '/doc-qualidade';
   }
   return '/';
 }
