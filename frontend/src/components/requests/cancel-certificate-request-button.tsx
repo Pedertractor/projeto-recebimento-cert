@@ -17,6 +17,7 @@ import {
   cancelCertificateRequest,
   certificateRequestDetailQueryKey,
   certificateRequestsListQueryKey,
+  completedCertificateRequestsQueryKey,
   pendingPurchaseCertificateRequestsQueryKey,
   purchaseCertificateRequestsListQueryKey,
 } from '@/services/certificate-requests/certificate-request.service';
@@ -39,22 +40,15 @@ export function CancelCertificateRequestButton({
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const revertingPurchaseRequest = request.status === 'AGUARDANDO_COMPRAS';
-
   const cancelMutation = useMutation({
     mutationFn: () => cancelCertificateRequest(request.id),
-    onSuccess: async (updatedRequest) => {
-      toast.success(
-        revertingPurchaseRequest
-          ? 'Solicitação ao compras cancelada. Você pode solicitar novamente.'
-          : `Solicitação #${request.id} cancelada.`,
-      );
+    onSuccess: async () => {
+      toast.success(`Solicitação #${request.id} excluída.`);
       setOpen(false);
+      queryClient.removeQueries({
+        queryKey: certificateRequestDetailQueryKey(request.id),
+      });
       onCancelled?.();
-      queryClient.setQueryData(
-        certificateRequestDetailQueryKey(request.id),
-        updatedRequest,
-      );
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: certificateRequestsListQueryKey,
@@ -66,7 +60,7 @@ export function CancelCertificateRequestButton({
           queryKey: pendingPurchaseCertificateRequestsQueryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: certificateRequestDetailQueryKey(request.id),
+          queryKey: completedCertificateRequestsQueryKey,
         }),
       ]);
     },
@@ -103,9 +97,7 @@ export function CancelCertificateRequestButton({
           <DialogHeader>
             <DialogTitle>Cancelar solicitação #{request.id}?</DialogTitle>
             <DialogDescription>
-              {revertingPurchaseRequest
-                ? 'Esta ação só é permitida enquanto o compras ainda não registrou o envio ao fornecedor. A NF voltará ao status cadastrada e você poderá solicitar os documentos novamente.'
-                : 'A solicitação ficará com status cancelada e não poderá ser retomada.'}
+              A solicitação será excluída e deixará de aparecer na lista.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

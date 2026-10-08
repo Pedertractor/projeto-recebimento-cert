@@ -215,11 +215,19 @@ export class CertificateRequestService {
   async listForStock(userId: number, userRole: UserRole) {
     const seeAllRequests =
       userRole === UserRole.SUPERADMIN || userRole === UserRole.STOCK_LEADER;
+    const openRequestStatuses = [
+      CertificateRequestStatus.AGUARDANDO_COMPRAS,
+      CertificateRequestStatus.AGUARDANDO_FORNECEDOR,
+    ];
 
     const requests = await this.prisma.certificateRequest.findMany({
       where: {
         ...(seeAllRequests ? {} : { createdByUserId: userId }),
-        status: { not: CertificateRequestStatus.CANCELADA },
+        status: {
+          in: seeAllRequests
+            ? [...openRequestStatuses, CertificateRequestStatus.CANCELADA]
+            : openRequestStatuses,
+        },
       },
       include: this.includeRelations(),
       orderBy: [{ submittedAt: 'desc' }, { createdAt: 'desc' }],
@@ -975,32 +983,11 @@ export class CertificateRequestService {
       throw new AppError('Acesso negado.', 403);
     }
 
-    const revertingPurchaseRequest =
-      request.status === CertificateRequestStatus.AGUARDANDO_COMPRAS;
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.certificateRequest.update({
-        where: { id: requestId },
-        data: {
-          status: revertingPurchaseRequest
-            ? CertificateRequestStatus.CADASTRADA
-            : CertificateRequestStatus.CANCELADA,
-        },
-      });
-
-      await tx.requestHistoryEvent.create({
-        data: {
-          requestId,
-          eventType: RequestHistoryEventType.SOLICITACAO_CANCELADA,
-          description: revertingPurchaseRequest
-            ? 'Solicitação ao compras cancelada pelo estoque. A NF voltou ao status cadastrada.'
-            : 'Solicitação cancelada pelo estoque.',
-          actorUserId: userId,
-        },
-      });
+    await this.prisma.certificateRequest.delete({
+      where: { id: requestId },
     });
 
-    return this.findById(requestId);
+    await removeCertificateRequestFiles(requestId);
   }
 
   async deleteInvoice(requestId: number, userRole: UserRole) {
