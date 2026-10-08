@@ -24,21 +24,27 @@ export type EmailDispatchResult = {
   recipients: string[];
 };
 
+function formatRecipients(to: string | string[]): string {
+  return (Array.isArray(to) ? to : [to]).join(', ');
+}
+
 async function dispatchEmail(
-  to: string,
+  to: string | string[],
   subject: string,
   html: string,
   text: string,
 ): Promise<boolean> {
+  const recipientLabel = formatRecipients(to);
+
   if (!isMailConfigured()) {
-    console.info(`[email:skipped] SMTP não configurado. Para ${to}`);
+    console.info(`[email:skipped] SMTP não configurado. Para ${recipientLabel}`);
     console.info(subject);
     console.info(text);
     return false;
   }
 
   await sendEmailByNodeMailer(to, subject, html, text);
-  console.info(`[email:sent] Para ${to}`);
+  console.info(`[email:sent] Para ${recipientLabel}`);
   return true;
 }
 
@@ -64,20 +70,31 @@ export async function sendNewCertificateRequestEmail(
     return { sent: false, recipients: [] };
   }
 
+  try {
+    const sent = await dispatchEmail(recipients, subject, html, text);
+    return {
+      sent,
+      recipients: sent ? recipients : [],
+    };
+  } catch (error) {
+    console.error(
+      `[email:error] Falha no envio conjunto. Tentando um a um. Para ${recipients.join(', ')}`,
+      error,
+    );
+  }
+
   const deliveredRecipients: string[] = [];
 
-  await Promise.all(
-    recipients.map(async (recipient) => {
-      try {
-        const sent = await dispatchEmail(recipient, subject, html, text);
-        if (sent) {
-          deliveredRecipients.push(recipient);
-        }
-      } catch (error) {
-        console.error(`[email:error] Para ${recipient}`, error);
+  for (const recipient of recipients) {
+    try {
+      const sent = await dispatchEmail(recipient, subject, html, text);
+      if (sent) {
+        deliveredRecipients.push(recipient);
       }
-    }),
-  );
+    } catch (error) {
+      console.error(`[email:error] Para ${recipient}`, error);
+    }
+  }
 
   return {
     sent: deliveredRecipients.length > 0,
