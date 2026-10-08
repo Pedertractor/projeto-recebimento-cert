@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { CertificateRequestsTable } from '@/components/requests/certificate-requests-table';
 import { Button } from '@/components/ui/button';
 import { NfConferenceFilters } from '@/components/requests/nf-conference-filters';
+import { useWebSession } from '@/hooks/auth/use-web-session';
+import { canExportNfConferenceExcel } from '@/lib/role-access';
 import {
   buildNfConferenceFiltersSummary,
   filterNfConferenceRequests,
@@ -22,6 +24,8 @@ import {
 } from '@/services/certificate-requests/certificate-request.service';
 
 export function NotasFiscaisPage() {
+  const { data: sessionUser } = useWebSession();
+  const canExportExcel = canExportNfConferenceExcel(sessionUser?.role);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<NfConferenceStatusFilter>('ALL');
@@ -59,6 +63,10 @@ export function NotasFiscaisPage() {
   );
 
   async function handleExportExcel() {
+    if (!canExportExcel) {
+      return;
+    }
+
     if (nfsParaExportarExcel.length === 0) {
       toast.info('Não há NFs em conferência com comparações pendentes.');
       return;
@@ -90,7 +98,7 @@ export function NotasFiscaisPage() {
           </p>
         </div>
 
-        {requestsQuery.isSuccess ? (
+        {requestsQuery.isSuccess && canExportExcel ? (
           <Button
             type="button"
             variant="outline"

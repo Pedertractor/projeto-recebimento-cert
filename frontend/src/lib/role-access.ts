@@ -41,6 +41,12 @@ export function canDeleteInvoice(role: UserRole | undefined): boolean {
   return isSuperAdminRole(role) || isStockLeaderRole(role);
 }
 
+export function canExportNfConferenceExcel(
+  role: UserRole | undefined,
+): boolean {
+  return isSuperAdminRole(role) || isStockLeaderRole(role);
+}
+
 export function canAccessStockModules(role: UserRole | undefined): boolean {
   return isStockOperatorRole(role);
 }
