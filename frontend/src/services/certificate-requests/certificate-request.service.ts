@@ -325,8 +325,8 @@ export async function deleteInvoice(requestId: number): Promise<{
 
 export async function cancelCertificateRequest(
   requestId: number,
-): Promise<CertificateRequest> {
-  const response = await axios.post<CertificateRequest>(
+): Promise<void> {
+  await axios.post(
     `${env.apiUrl}/certificate-requests/${requestId}/cancel`,
     {},
     {
@@ -336,6 +336,4 @@ export async function cancelCertificateRequest(
       },
     },
   );
-
-  return response.data;
 }

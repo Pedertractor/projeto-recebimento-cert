@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle2, FileUp, Loader2, Mail } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { InvoiceCertificatePrompt } from '@/components/conference/invoice-certificate-prompt';
@@ -41,6 +41,7 @@ export function CertificateRequestDetailView({
   backHref,
   viewer,
 }: CertificateRequestDetailViewProps) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: sessionUser } = useWebSession();
   const [combinedDocument, setCombinedDocument] = useState<File | null>(null);
@@ -225,7 +226,10 @@ export function CertificateRequestDetailView({
             redirectTo={backHref}
           />
           {!isPurchaseView ? (
-            <CancelCertificateRequestButton request={request} />
+            <CancelCertificateRequestButton
+              request={request}
+              onCancelled={() => navigate(backHref)}
+            />
           ) : null}
         </div>
       </div>

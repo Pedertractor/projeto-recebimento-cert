@@ -14,7 +14,7 @@ import {
   type RequestListStatusFilter,
 } from '@/lib/certificate-request-table-filters';
 import { useWebSession } from '@/hooks/auth/use-web-session';
-import { isStockLeaderRole } from '@/lib/user-labels';
+import { isStockLeaderRole, isSuperAdminRole } from '@/lib/user-labels';
 import {
   certificateRequestsListQueryKey,
   listCertificateRequests,
@@ -23,6 +23,13 @@ import {
 export function MinhasSolicitacoesPage() {
   const { data: user } = useWebSession();
   const isStockLeader = isStockLeaderRole(user?.role);
+  const canSeeCancelledRequests =
+    isStockLeader || isSuperAdminRole(user?.role);
+  const statusOptions = canSeeCancelledRequests
+    ? STOCK_REQUEST_STATUS_FILTER_OPTIONS
+    : STOCK_REQUEST_STATUS_FILTER_OPTIONS.filter(
+        (option) => option.value !== 'CANCELADA',
+      );
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<RequestListStatusFilter>('ALL');
@@ -32,17 +39,27 @@ export function MinhasSolicitacoesPage() {
     queryFn: listCertificateRequests,
   });
 
+  const openRequests = useMemo(() => {
+    const requests = requestsQuery.data ?? [];
+
+    return requests.filter((request) => {
+      if (
+        request.status === 'AGUARDANDO_COMPRAS' ||
+        request.status === 'AGUARDANDO_FORNECEDOR'
+      ) {
+        return true;
+      }
+
+      return canSeeCancelledRequests && request.status === 'CANCELADA';
+    });
+  }, [canSeeCancelledRequests, requestsQuery.data]);
+
   const filteredRequests = useMemo(
-    () =>
-      filterCertificateRequestList(
-        requestsQuery.data ?? [],
-        search,
-        statusFilter,
-      ),
-    [requestsQuery.data, search, statusFilter],
+    () => filterCertificateRequestList(openRequests, search, statusFilter),
+    [openRequests, search, statusFilter],
   );
 
-  const totalCount = requestsQuery.data?.length ?? 0;
+  const totalCount = openRequests.length;
   const filtersSummary = buildCertificateRequestListFiltersSummary(
     search,
     statusFilter,
@@ -67,9 +84,9 @@ export function MinhasSolicitacoesPage() {
             {isStockLeader ? 'Solicitações' : 'Minhas solicitações'}
           </h1>
           <p className="page-lead">
-            {isStockLeader
-              ? 'Acompanhe NFs cadastradas e solicitações enviadas ao compras.'
-              : 'Acompanhe suas NFs e solicite documentos ao compras quando necessário.'}
+            {canSeeCancelledRequests
+              ? 'Solicitações em aberto enviadas ao compras, de cada solicitante.'
+              : 'Somente as suas solicitações em aberto enviadas ao compras.'}
           </p>
         </div>
         <Button
@@ -101,7 +118,7 @@ export function MinhasSolicitacoesPage() {
             searchPlaceholder="NF, fornecedor, CNPJ ou nº da solicitação"
             search={search}
             statusFilter={statusFilter}
-            statusOptions={STOCK_REQUEST_STATUS_FILTER_OPTIONS}
+            statusOptions={statusOptions}
             filtersSummary={filtersSummary}
             hasActiveFilters={hasActiveFilters}
             onSearchChange={setSearch}

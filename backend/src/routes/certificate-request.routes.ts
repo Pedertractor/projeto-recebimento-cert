@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { UserRole } from '../generated/prisma/enums.js';
 import {
   attachConferencePrintController,
@@ -491,12 +492,12 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
     '/:id/cancel',
     {
       schema: {
-        summary: 'Cancel certificate request by stock operator',
+        summary: 'Delete a certificate request cancelled by stock',
         tags: ['CertificateRequest'],
         security: [{ cookieAuth: [] }],
         params: certificateRequestIdParamsSchema,
         response: {
-          200: certificateRequestResponseSchema,
+          204: z.null(),
           ...commonErrors,
         },
       },

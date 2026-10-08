@@ -20,10 +20,6 @@ export const STOCK_REQUEST_STATUS_FILTER_OPTIONS: Array<{
     label: certificateRequestStatusLabel('AGUARDANDO_FORNECEDOR'),
   },
   {
-    value: 'CONCLUIDA',
-    label: certificateRequestStatusLabel('CONCLUIDA'),
-  },
-  {
     value: 'CANCELADA',
     label: certificateRequestStatusLabel('CANCELADA'),
   },

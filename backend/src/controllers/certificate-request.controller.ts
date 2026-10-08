@@ -77,6 +77,10 @@ function canAccessCertificateRequest(
   }
 
   if (user.role === UserRole.STOCK_OPERATOR) {
+    if (request.status === CertificateRequestStatus.CANCELADA) {
+      return false;
+    }
+
     if (request.status === CertificateRequestStatus.CONCLUIDA) {
       return true;
     }
@@ -358,11 +362,7 @@ export async function cancelCertificateRequestController(
   reply: FastifyReply,
 ) {
   const service = new CertificateRequestService(req.server.prisma);
-  const request = await service.cancel(
-    req.params.id,
-    req.user.id,
-    req.user.role,
-  );
+  await service.cancel(req.params.id, req.user.id, req.user.role);
 
-  return reply.send(request);
+  return reply.status(204).send();
 }
