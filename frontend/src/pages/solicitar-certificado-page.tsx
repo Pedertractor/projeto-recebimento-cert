@@ -194,6 +194,16 @@ export function SolicitarCertificadoPage() {
                   })
                 }
                 itemToStringLabel={(supplier) => supplier.name}
+                filter={(supplier, query) => {
+                  const term = query.trim().toLocaleLowerCase('pt-BR');
+                  if (!term) return true;
+
+                  return [supplier.name, supplier.cnpj, supplier.epromSupplierNumber]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLocaleLowerCase('pt-BR')
+                    .includes(term);
+                }}
               >
                 <div
                   ref={supplierAnchorRef}
@@ -203,7 +213,7 @@ export function SolicitarCertificadoPage() {
                     placeholder={
                       suppliersQuery.isLoading
                         ? 'Carregando fornecedores…'
-                        : 'Selecione o fornecedor'
+                        : 'Busque por nome ou código EPROM'
                     }
                     className="min-h-10 min-w-0 flex-1 border-0 shadow-none"
                     showClear
@@ -224,7 +234,14 @@ export function SolicitarCertificadoPage() {
                         <div className="flex flex-col">
                           <span>{supplier.name}</span>
                           <span className="text-xs text-muted-foreground">
-                            {supplier.cnpj}
+                            {[
+                              supplier.epromSupplierNumber
+                                ? `EPROM ${supplier.epromSupplierNumber}`
+                                : null,
+                              supplier.cnpj,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
                           </span>
                         </div>
                       </ComboboxItem>
