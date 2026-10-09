@@ -1,29 +1,47 @@
+import { env } from '@/config/env';
+
+/**
+ * Origem pública do backend, sem `/api`.
+ * Com API no mesmo host (`/api` no dev ou no nginx), devolve null e o caminho fica relativo.
+ */
+function uploadsOrigin(): string | null {
+  const apiUrl = env.apiUrl.trim().replace(/\/$/, '');
+  if (!apiUrl || apiUrl.startsWith('/')) {
+    return null;
+  }
+
+  return apiUrl.replace(/\/api$/, '');
+}
+
 /**
  * Monta a URL de arquivos em `/uploads/` servidos pelo backend.
- * Em dev (e no Docker com nginx), usa caminho relativo para o proxy repassar.
+ * Ex.: `/uploads/suppliers/2/logo.jpg` → `http://host:3000/uploads/suppliers/2/logo.jpg`
+ * quando `VITE_API_URL` aponta para outro host.
  */
 export function resolveUploadUrl(imagePath: string | null): string | null {
   if (!imagePath) {
     return null;
   }
 
-  if (/^https?:\/\//i.test(imagePath)) {
-    return imagePath;
+  const trimmed = imagePath.trim();
+  if (!trimmed) {
+    return null;
   }
 
-  if (!imagePath.startsWith('/uploads/')) {
-    return imagePath;
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
   }
 
-  if (import.meta.env.DEV) {
-    return imagePath;
+  const normalized = trimmed.replace(/\\/g, '/');
+  const withSlash = normalized.startsWith('/') ? normalized : `/${normalized}`;
+  if (!withSlash.startsWith('/uploads/')) {
+    return trimmed;
   }
 
-  const configured = import.meta.env.VITE_API_URL?.trim();
-  if (!configured || configured === '/api') {
-    return imagePath;
+  const origin = uploadsOrigin();
+  if (!origin) {
+    return withSlash;
   }
 
-  const origin = configured.replace(/\/api\/?$/, '');
-  return `${origin}${imagePath}`;
+  return `${origin}${withSlash}`;
 }

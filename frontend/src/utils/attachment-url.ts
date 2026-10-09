@@ -1,5 +1,7 @@
+import { resolveUploadUrl } from '@/lib/resolve-upload-url';
+
 export function resolveAttachmentUrl(storagePath: string): string {
-  return storagePath.startsWith('/') ? storagePath : `/${storagePath}`;
+  return resolveUploadUrl(storagePath) ?? storagePath;
 }
 
 export function canPreviewAttachment(fileName: string): boolean {
