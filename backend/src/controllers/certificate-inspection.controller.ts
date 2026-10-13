@@ -58,18 +58,17 @@ async function parseConferencePrintMultipart(
 }
 
 function canAccessConferenceRequest(
-  request: { createdByUserId: number; status: CertificateRequestStatus },
-  user: { id: number; role: UserRole },
+  request: { status: CertificateRequestStatus },
+  user: { role: UserRole },
 ): boolean {
   if (canManageAllStockCertificateRequests(user.role)) {
     return true;
   }
 
-  if (user.role === UserRole.STOCK_OPERATOR) {
-    return request.status === CertificateRequestStatus.CONCLUIDA;
-  }
-
-  return false;
+  return (
+    user.role === UserRole.STOCK_OPERATOR &&
+    request.status !== CertificateRequestStatus.CANCELADA
+  );
 }
 
 function canAttachConferencePrint(
