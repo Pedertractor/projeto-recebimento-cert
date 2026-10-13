@@ -8,6 +8,7 @@ import {
   getEmployeeInfoController,
   getMyUserController,
   getUserByEmployeeIdController,
+  postHomeAccessController,
   inactivateUserController,
   listRolesController,
   listUsersController,
@@ -30,6 +31,7 @@ import {
   listRolesResponseSchema,
   listUsersResponseSchema,
   loginBodySchema,
+  homeAccessResponseSchema,
   loginResponseSchema,
   type ChangePasswordBody,
   type ChangePasswordParams,
@@ -83,6 +85,23 @@ export function userRoutes(fastify: FastifyInstance) {
       onRequest: [fastify.authenticate],
     },
     getMyUserController,
+  );
+
+  fastify.post(
+    '/home-access',
+    {
+      schema: {
+        summary: 'Notify Orion on home page access',
+        tags: ['User'],
+        security: [{ cookieAuth: [] }],
+        response: {
+          200: homeAccessResponseSchema.describe('Home access telemetry'),
+          ...commonErrors,
+        },
+      },
+      onRequest: [fastify.authenticate],
+    },
+    postHomeAccessController,
   );
 
   fastify.patch<{ Body: UpdateMyEmailBody }>(
