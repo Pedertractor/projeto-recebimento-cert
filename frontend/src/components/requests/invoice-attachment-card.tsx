@@ -81,7 +81,7 @@ export function InvoiceAttachmentCard({
   }
 
   return (
-    <section className="flex w-full min-w-0 flex-col rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/60 sm:p-6 md:h-full md:min-h-88 lg:min-h-112">
+    <section className="flex w-full min-w-0 flex-col rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/60 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-2">
           <Paperclip className="mt-0.5 size-4 shrink-0 text-brand" />
@@ -122,15 +122,15 @@ export function InvoiceAttachmentCard({
         ) : null}
       </div>
 
-      <div className="mt-4 flex w-full min-w-0 flex-col gap-3 md:min-h-0 md:flex-1">
+      <div className="mt-4 flex w-full min-w-0 flex-col gap-3">
         {attachment ? (
           <>
-            <div className="relative w-full min-w-0 rounded-xl bg-muted/30 ring-1 ring-border/50 max-md:overflow-visible md:min-h-0 md:flex-1 md:overflow-hidden">
+            <div className="relative w-full min-w-0 overflow-hidden rounded-xl bg-muted/30 ring-1 ring-border/50">
               {isImageFile(attachment.fileName) ? (
                 <img
                   src={resolveAttachmentUrl(attachment.storagePath)}
                   alt={attachment.fileName}
-                  className="max-h-[min(58dvh,26rem)] w-full object-contain md:max-h-none md:size-full"
+                  className="h-auto max-h-[min(72dvh,44rem)] w-full object-contain"
                 />
               ) : isPdfFile(attachment.fileName) ? (
                 <PdfPageViewer
@@ -138,7 +138,8 @@ export function InvoiceAttachmentCard({
                   pdfUrl={resolveAttachmentUrl(attachment.storagePath)}
                   showCopyButton={allowPageCopy}
                   expandDialogTitle="Nota fiscal"
-                  className="w-full min-h-0 max-md:flex-none md:size-full md:p-2"
+                  fitDocument
+                  className="w-full p-2"
                 />
               ) : (
                 <div className="flex size-full flex-col items-center justify-center gap-2 p-4 text-center">
@@ -162,7 +163,7 @@ export function InvoiceAttachmentCard({
             <RequestAttachmentActions attachment={attachment} compact />
           </>
         ) : (
-          <div className="flex w-full min-w-0 items-center justify-center rounded-xl bg-muted/20 px-4 py-10 text-center ring-1 ring-border/50 max-md:min-h-[12rem] md:min-h-0 md:flex-1">
+          <div className="flex min-h-48 w-full min-w-0 items-center justify-center rounded-xl bg-muted/20 px-4 py-10 text-center ring-1 ring-border/50">
             <p className="text-sm text-muted-foreground">{emptyMessage}</p>
           </div>
         )}

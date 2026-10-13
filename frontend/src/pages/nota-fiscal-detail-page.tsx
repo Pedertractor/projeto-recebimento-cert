@@ -176,7 +176,7 @@ export function NotaFiscalDetailPage() {
         </div>
       ) : null}
 
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <section className="order-2 min-w-0 space-y-4 lg:order-1">
           <div>
             <h2 className="text-base font-semibold md:text-lg">
@@ -209,7 +209,7 @@ export function NotaFiscalDetailPage() {
           {canEdit ? <InvoiceCertificatePrompt request={request} /> : null}
         </section>
 
-        <div className="order-1 min-w-0 space-y-4 lg:order-2">
+        <div className="order-1 min-w-0 self-start space-y-4 lg:order-2">
           <InvoiceAttachmentCard
             attachment={invoiceAttachment}
             requestId={request.id}
