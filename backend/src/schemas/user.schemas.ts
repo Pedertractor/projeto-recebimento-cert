@@ -132,3 +132,8 @@ export const updateMyEmailResponseSchema = userSchema;
 export const csrfResponseSchema = z.object({
   csrfToken: z.string(),
 });
+
+export const homeAccessResponseSchema = z.object({
+  ok: z.boolean(),
+  skipped: z.boolean().optional(),
+});
