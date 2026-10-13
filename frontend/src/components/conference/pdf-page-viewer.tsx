@@ -33,6 +33,8 @@ type PdfPageViewerProps = {
   showExpandButton?: boolean;
   expandDialogTitle?: string;
   compact?: boolean;
+  /** Altura segue a página do PDF, sem esticar com o card vizinho. */
+  fitDocument?: boolean;
 };
 
 export function PdfPageViewer({
@@ -44,6 +46,7 @@ export function PdfPageViewer({
   showExpandButton = true,
   expandDialogTitle = 'Visualizar página',
   compact = false,
+  fitDocument = false,
 }: PdfPageViewerProps) {
   const [document, setDocument] = useState<PDFDocumentProxy | null>(null);
   const [pageNumber, setPageNumber] = useState(initialPage);
@@ -210,16 +213,22 @@ export function PdfPageViewer({
       <div
         className={cn(
           'flex min-h-0 flex-col gap-2 sm:gap-3',
-          compact ? 'flex-1' : 'max-md:flex-none md:flex-1',
+          fitDocument
+            ? 'h-auto w-full flex-none'
+            : compact
+              ? 'flex-1'
+              : 'max-md:flex-none md:flex-1',
           className,
         )}
       >
         <div
           className={cn(
             'relative shrink-0 overflow-hidden rounded-xl bg-muted/30 ring-1 ring-border/50',
-            compact
-              ? 'min-h-48 md:flex-1 md:min-h-0'
-              : 'h-[min(48dvh,20rem)] md:min-h-56 md:h-auto md:flex-1',
+            fitDocument
+              ? 'h-auto min-h-48 w-full'
+              : compact
+                ? 'min-h-48 md:flex-1 md:min-h-0'
+                : 'h-[min(48dvh,20rem)] md:min-h-56 md:h-auto md:flex-1',
           )}
         >
           {showInitialLoader ? (
@@ -236,7 +245,10 @@ export function PdfPageViewer({
                 src={previewUrl}
                 alt={`Página ${pageNumber}`}
                 className={cn(
-                  'size-full object-contain transition-opacity duration-150',
+                  'object-contain transition-opacity duration-150',
+                  fitDocument
+                    ? 'h-auto max-h-[min(72dvh,44rem)] w-full'
+                    : 'size-full',
                   isRendering && 'opacity-70',
                 )}
               />
