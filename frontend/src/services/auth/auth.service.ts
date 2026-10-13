@@ -53,3 +53,11 @@ export async function logout(): Promise<void> {
   await httpClient.post<void>('/users/logout');
   setWebCsrfToken(null);
 }
+
+/** Dispara telemetria Orion ao abrir o sistema (não bloqueia a UI). */
+export async function postHomeAccess(): Promise<{ ok: boolean }> {
+  return httpClient.post<{ ok: boolean }, Record<string, never>>(
+    '/users/home-access',
+    {},
+  );
+}

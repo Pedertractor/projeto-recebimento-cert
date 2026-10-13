@@ -34,6 +34,9 @@ const envSchema = z.object({
   EMAIL_AUTOMACAO: optionalEnvString(),
   PASSWORD_AUTOMACAO: optionalEnvString(),
   PORT_CORREIO: z.coerce.number().default(587),
+  /** Orion — telemetria de acesso (opcional). */
+  ORION_URL: optionalEnvString(),
+  ORION_APP_TOKEN: optionalEnvString(),
 });
 
 const parsed = envSchema.safeParse(process.env);

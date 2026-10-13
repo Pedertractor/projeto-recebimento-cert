@@ -19,6 +19,8 @@ import {
 } from '../utils/auth-cookies.js';
 import { AppError } from '../lib/errors.js';
 import { infoByCardAndUnit } from '../integrations/employee-by-card-api.js';
+import { notifyOrionOncePerDay } from '../api-orion/orion-api.js';
+import { env } from '../config/env.js';
 
 async function signAccessToken(
   reply: FastifyReply,
@@ -54,6 +56,36 @@ export async function getMyUserController(
   const userService = new UserService(req.server.prisma);
   const user = await userService.getUserById(req.user.id);
   return reply.status(200).send(user);
+}
+
+/** Notifica o Orion ao abrir o sistema (telemetria de módulo). */
+export async function postHomeAccessController(
+  req: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const userService = new UserService(req.server.prisma);
+  const user = await userService.getUserById(req.user.id);
+
+  const result = await notifyOrionOncePerDay({
+    userId: String(user.id),
+    userName: user.name ?? undefined,
+    cardNumberUser: user.cardNumber,
+    metadata: {
+      action: 'app_access',
+      module: 'home',
+      role: user.role,
+      application: env.NAME_APPLICATION,
+    },
+  });
+
+  if (!result.ok) {
+    req.log.warn('[orion] daily access notification skipped');
+  }
+
+  return reply.status(200).send({
+    ok: true,
+    skipped: 'skipped' in result ? result.skipped === true : false,
+  });
 }
 
 export async function updateMyEmailController(

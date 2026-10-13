@@ -1,4 +1,4 @@
-import { useRef, useState, type UIEvent } from 'react';
+import { useEffect, useRef, useState, type UIEvent } from 'react';
 import { ArrowUp } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 
@@ -8,6 +8,8 @@ import { UserEmailRequiredNotifier } from '@/components/auth/user-email-required
 import { PurchasePendingRequestNotifier } from '@/components/requests/purchase-pending-request-notifier';
 import { Button } from '@/components/ui/button';
 import { AppChromeProvider, useAppChrome } from '@/contexts/app-chrome-context';
+import { useWebSession } from '@/hooks/auth/use-web-session';
+import { postHomeAccess } from '@/services/auth/auth.service';
 import {
   SidebarInset,
   SidebarProvider,
@@ -25,8 +27,29 @@ export function AppShell() {
 
 function AppShellContent() {
   const { hideHeader } = useAppChrome();
+  const { data: user } = useWebSession();
   const pageScrollRef = useRef<HTMLDivElement>(null);
   const [showMobileScrollTop, setShowMobileScrollTop] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const storageKey = `orion-home-access:${user.id}`;
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+    }).format(new Date());
+    if (sessionStorage.getItem(storageKey) === today) {
+      return;
+    }
+
+    void postHomeAccess()
+      .then(() => {
+        sessionStorage.setItem(storageKey, today);
+      })
+      .catch(() => undefined);
+  }, [user?.id]);
 
   function handlePageScroll(event: UIEvent<HTMLDivElement>) {
     const element = event.currentTarget;
