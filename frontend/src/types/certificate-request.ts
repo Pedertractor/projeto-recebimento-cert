@@ -1,3 +1,4 @@
+import type { ProductType } from '@/types/product-type';
 import type { QualityDocument } from '@/types/quality-document';
 
 export type CertificateRequestStatus =
@@ -70,6 +71,8 @@ export type CertificateRequest = {
   invoiceNumber: string;
   invoiceDate: string;
   expectedCertificates: number;
+  productTypeId: number;
+  productType: ProductType;
   notes: string | null;
   status: CertificateRequestStatus;
   createdByUserId: number;
@@ -93,6 +96,7 @@ export type CreateCertificateRequestPayload = {
   invoiceNumber: string;
   invoiceDate: string;
   expectedCertificates: number;
+  productTypeId: number;
   notes?: string;
   invoiceFile?: File;
 };
@@ -102,5 +106,6 @@ export type UpdateCertificateRequestPayload = {
   invoiceNumber?: string;
   invoiceDate?: string;
   expectedCertificates?: number;
+  productTypeId?: number;
   notes?: string;
 };

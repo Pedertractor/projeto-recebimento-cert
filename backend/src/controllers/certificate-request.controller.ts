@@ -178,7 +178,12 @@ export async function updateCertificateRequestController(
     throw new AppError('Acesso negado.', 403);
   }
 
-  const request = await service.update(req.params.id, req.user.id, parsed.data);
+  const request = await service.update(
+    req.params.id,
+    req.user.id,
+    req.user.role,
+    parsed.data,
+  );
   return reply.send(request);
 }
 

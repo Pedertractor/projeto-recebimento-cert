@@ -6,6 +6,7 @@ import {
   listQualityDocumentsController,
 } from '../controllers/quality-document.controller.js';
 import {
+  currentQualityDocumentQuerySchema,
   listQualityDocumentsResponseSchema,
   qualityDocumentResponseSchema,
 } from '../schemas/quality-document.schemas.js';
@@ -36,13 +37,14 @@ export function qualityDocumentRoutes(fastify: FastifyInstance) {
     listQualityDocumentsController,
   );
 
-  fastify.get(
+  fastify.get<{ Querystring: { productTypeId: number } }>(
     '/current',
     {
       schema: {
         summary: 'Get current quality document version',
         tags: ['QualityDocument'],
         security: [{ cookieAuth: [] }],
+        querystring: currentQualityDocumentQuerySchema,
         response: {
           200: qualityDocumentResponseSchema,
           ...commonErrors,

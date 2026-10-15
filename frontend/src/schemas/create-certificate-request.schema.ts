@@ -8,6 +8,10 @@ export const createCertificateRequestFormSchema = z.object({
     .min(1, 'Informe o número da nota fiscal.')
     .max(30, 'Número da NF inválido.'),
   invoiceDate: z.string().min(1, 'Informe a data da NF.'),
+  productTypeId: z
+    .number({ error: 'Selecione o tipo de produto.' })
+    .int('Selecione o tipo de produto.')
+    .positive('Selecione o tipo de produto.'),
   expectedCertificates: z
     .number({ error: 'Informe a quantidade de lotes.' })
     .int('Informe a quantidade de lotes.')

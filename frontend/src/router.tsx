@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { MotionIconProvider } from '@/components/motion-icon-provider';
 import { DefaultRouteRedirect } from '@/components/auth/default-route-redirect';
 import { HomeRoute } from '@/components/auth/home-route';
+import { RequireProductTypeManagement } from '@/components/auth/require-product-type-management';
 import { RequireQualityDocumentManager } from '@/components/auth/require-quality-document-manager';
 import { RequireUserManagement } from '@/components/auth/require-user-management';
 import { RequireAuth } from '@/components/auth/require-auth';
@@ -14,6 +15,7 @@ import { AdminThemeProvider } from '@/providers/admin-theme-provider';
 import { LoginPage } from '@/pages/auth/login-page';
 import { CertificateComparisonPage } from '@/pages/certificate-comparison-page';
 import { DocQualidadePage } from '@/pages/doc-qualidade-page';
+import { ProductTypesPage } from '@/pages/product-types-page';
 import { FornecedoresPage } from '@/pages/fornecedores-page';
 import { MinhasSolicitacoesPage } from '@/pages/minhas-solicitacoes-page';
 import { NotaFiscalDetailPage } from '@/pages/nota-fiscal-detail-page';
@@ -36,6 +38,12 @@ export function AppRouter() {
                 <Route path="/" element={<HomeRoute />} />
                 <Route element={<RequireQualityDocumentManager />}>
                   <Route path="/doc-qualidade" element={<DocQualidadePage />} />
+                </Route>
+                <Route element={<RequireProductTypeManagement />}>
+                  <Route
+                    path="/tipos-produto"
+                    element={<ProductTypesPage />}
+                  />
                 </Route>
                 <Route element={<RequireStockOperator />}>
                   <Route

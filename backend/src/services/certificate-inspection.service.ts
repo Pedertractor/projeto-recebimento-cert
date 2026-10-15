@@ -56,8 +56,11 @@ function toPublicInspection(inspection: InspectionWithDocument) {
 export class CertificateInspectionService {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async getCurrentQualityDocument() {
-    const document = await getCurrentQualityDocumentRecord(this.prisma);
+  async getCurrentQualityDocument(productTypeId: number) {
+    const document = await getCurrentQualityDocumentRecord(
+      this.prisma,
+      productTypeId,
+    );
     return toPublicQualityDocument(document);
   }
 
@@ -228,7 +231,17 @@ export class CertificateInspectionService {
       ? await this.prisma.qualityDocument.findUnique({
           where: { id: request.qualityDocumentId },
         })
-      : await getCurrentQualityDocumentRecord(this.prisma);
+      : await getCurrentQualityDocumentRecord(this.prisma, request.productTypeId);
+
+    if (
+      qualityDocument &&
+      qualityDocument.productTypeId !== request.productTypeId
+    ) {
+      throw new AppError(
+        'Documento de qualidade não corresponde ao tipo de produto da NF.',
+        400,
+      );
+    }
 
     if (!qualityDocument) {
       throw new AppError('Documento de qualidade da NF não encontrado.', 404);

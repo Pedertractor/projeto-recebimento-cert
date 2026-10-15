@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -47,9 +48,14 @@ import {
   requestDocumentFromPurchase,
 } from '@/services/certificate-requests/certificate-request.service';
 import {
+  listProductTypeOptions,
+  productTypeOptionsQueryKey,
+} from '@/services/product-types/product-type.service';
+import {
   listSuppliers,
   suppliersListQueryKey,
 } from '@/services/suppliers/supplier.service';
+import type { ProductType } from '@/types/product-type';
 
 type DocumentChoice = 'have-invoice' | 'request-invoice';
 
@@ -69,7 +75,13 @@ export function SolicitarCertificadoPage() {
     queryFn: () => listSuppliers(),
   });
 
+  const productTypesQuery = useQuery({
+    queryKey: productTypeOptionsQueryKey,
+    queryFn: listProductTypeOptions,
+  });
+
   const suppliers = suppliersQuery.data ?? [];
+  const productTypes = productTypesQuery.data ?? [];
 
   const {
     register,
@@ -84,6 +96,7 @@ export function SolicitarCertificadoPage() {
       invoiceNumber: '',
       invoiceDate: '',
       expectedCertificates: 1,
+      productTypeId: 0,
       notes: '',
     },
   });
@@ -92,7 +105,20 @@ export function SolicitarCertificadoPage() {
   const invoiceNumber = watch('invoiceNumber');
   const invoiceDate = watch('invoiceDate');
   const expectedCertificates = watch('expectedCertificates');
+  const productTypeId = watch('productTypeId');
   const invoiceFile = watch('invoiceFile');
+
+  useEffect(() => {
+    if (productTypeId > 0 || productTypes.length === 0) {
+      return;
+    }
+
+    const chapa =
+      productTypes.find((type) => type.code === 'CHAPA') ?? productTypes[0];
+    if (chapa) {
+      setValue('productTypeId', chapa.id, { shouldValidate: true });
+    }
+  }, [productTypeId, productTypes, setValue]);
 
   const selectedSupplier = useMemo(
     () => suppliers.find((supplier) => supplier.id === supplierId) ?? null,
@@ -306,6 +332,54 @@ export function SolicitarCertificadoPage() {
 
           <FormTimelineStep
             step={3}
+            title="Tipo de produto"
+            description="Define qual documento de qualidade será usado na conferência."
+            complete={productTypeId > 0}
+          >
+            <div className="space-y-3">
+              {productTypesQuery.isLoading ? (
+                <div className="flex flex-wrap gap-3" aria-busy="true">
+                  {[0, 1].map((index) => (
+                    <div
+                      key={index}
+                      className="size-24 animate-pulse rounded-xl bg-muted sm:size-28"
+                    />
+                  ))}
+                </div>
+              ) : productTypes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum tipo de produto disponível.
+                </p>
+              ) : (
+                <div
+                  role="radiogroup"
+                  aria-label="Tipo de produto"
+                  className="flex flex-wrap gap-3"
+                >
+                  {productTypes.map((type) => (
+                    <ProductTypeTile
+                      key={type.id}
+                      type={type}
+                      selected={productTypeId === type.id}
+                      onSelect={() =>
+                        setValue('productTypeId', type.id, {
+                          shouldValidate: true,
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+              {errors.productTypeId?.message ? (
+                <p className="text-sm text-destructive">
+                  {errors.productTypeId.message}
+                </p>
+              ) : null}
+            </div>
+          </FormTimelineStep>
+
+          <FormTimelineStep
+            step={4}
             title="Lotes na NF"
             description="Quantos lotes (certificados) esta nota cobre."
             complete={Number(expectedCertificates) >= 1}
@@ -328,7 +402,7 @@ export function SolicitarCertificadoPage() {
           </FormTimelineStep>
 
           <FormTimelineStep
-            step={4}
+            step={5}
             title="Observações"
             description="Opcional. Use para detalhes que ajudem o compras ou a conferência."
             complete={Boolean(watch('notes')?.trim())}
@@ -342,7 +416,7 @@ export function SolicitarCertificadoPage() {
           </FormTimelineStep>
 
           <FormTimelineStep
-            step={5}
+            step={6}
             title="Documento da NF"
             description="Escolha o caminho mais simples para o seu caso."
             complete={documentChoice !== null}
@@ -482,6 +556,46 @@ function FormTimelineStep({
         {children}
       </div>
     </li>
+  );
+}
+
+function ProductTypeTile({
+  type,
+  selected,
+  onSelect,
+}: {
+  type: ProductType;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={cn(
+        'relative flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 text-center transition-[colors,box-shadow] sm:size-28',
+        selected
+          ? 'border-brand bg-brand-muted shadow-sm ring-2 ring-brand/20'
+          : 'border-border bg-muted/40 hover:border-muted-foreground/30 hover:bg-muted',
+      )}
+    >
+      {selected ? (
+        <span
+          className="absolute top-2 right-2 flex size-5 items-center justify-center rounded-full bg-brand text-brand-foreground"
+          aria-hidden
+        >
+          <Check className="size-3" />
+        </span>
+      ) : null}
+      <span className="text-sm font-semibold leading-tight">{type.name}</span>
+      {type.code !== type.name ? (
+        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {type.code}
+        </span>
+      ) : null}
+    </button>
   );
 }
 

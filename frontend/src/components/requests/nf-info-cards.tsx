@@ -29,6 +29,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useWebSession } from '@/hooks/auth/use-web-session';
 import { formatRequestDate } from '@/lib/certificate-request-labels';
 import {
@@ -45,6 +52,10 @@ import {
   updateCertificateRequest,
 } from '@/services/certificate-requests/certificate-request.service';
 import {
+  listProductTypes,
+  productTypesListQueryKey,
+} from '@/services/product-types/product-type.service';
+import {
   listSuppliers,
   suppliersListQueryKey,
 } from '@/services/suppliers/supplier.service';
@@ -56,7 +67,12 @@ import type { QualityDocument } from '@/types/quality-document';
 import { formatCnpjInput } from '@/utils/cnpj';
 import { resolveAttachmentUrl } from '@/utils/attachment-url';
 
-type EditField = 'invoiceNumber' | 'invoiceDate' | 'lots' | 'supplier';
+type EditField =
+  | 'invoiceNumber'
+  | 'invoiceDate'
+  | 'lots'
+  | 'supplier'
+  | 'productType';
 
 type NfInfoCardsProps = {
   request: CertificateRequest;
@@ -70,6 +86,11 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
   const [editField, setEditField] = useState<EditField | null>(null);
   const canEdit =
     canEditNfMaterials(sessionUser?.role) && request.status !== 'CANCELADA';
+  const canEditProductType =
+    canManageQualityDoc &&
+    request.status !== 'CANCELADA' &&
+    !request.qualityDocumentLocked &&
+    (request.inspectedCertificatesCount ?? 0) === 0;
 
   const mutation = useMutation({
     mutationFn: (payload: UpdateCertificateRequestPayload) =>
@@ -151,6 +172,15 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
             editLabel="Editar quantidade de lotes"
           >
             {request.expectedCertificates}
+          </NfInfoField>
+          <NfInfoField
+            label="Tipo de produto"
+            onEdit={
+              canEditProductType ? () => setEditField('productType') : undefined
+            }
+            editLabel="Alterar tipo de produto"
+          >
+            {request.productType?.name ?? '—'}
           </NfInfoField>
           <NfInfoField label="Solicitação" className="col-span-2 sm:col-span-1">
             #{request.id}
@@ -320,13 +350,20 @@ function NfEditDialog({
   const [invoiceDate, setInvoiceDate] = useState(request.invoiceDate);
   const [lots, setLots] = useState(String(request.expectedCertificates));
   const [supplierId, setSupplierId] = useState(request.supplier.id);
+  const [productTypeId, setProductTypeId] = useState(request.productTypeId);
 
   const suppliersQuery = useQuery({
     queryKey: suppliersListQueryKey,
     queryFn: () => listSuppliers(),
     enabled: field === 'supplier',
   });
+  const productTypesQuery = useQuery({
+    queryKey: productTypesListQueryKey,
+    queryFn: listProductTypes,
+    enabled: field === 'productType',
+  });
   const suppliers = suppliersQuery.data ?? [];
+  const productTypes = productTypesQuery.data ?? [];
 
   useEffect(() => {
     if (!field) {
@@ -336,6 +373,7 @@ function NfEditDialog({
     setInvoiceDate(request.invoiceDate);
     setLots(String(request.expectedCertificates));
     setSupplierId(request.supplier.id);
+    setProductTypeId(request.productTypeId);
   }, [field, request]);
 
   const selectedSupplier = useMemo(
@@ -360,6 +398,11 @@ function NfEditDialog({
     supplier: {
       title: 'Editar fornecedor',
       description: 'Altere o fornecedor vinculado a esta nota fiscal.',
+    },
+    productType: {
+      title: 'Alterar tipo de produto',
+      description:
+        'A conferência passará a usar o documento de qualidade vigente deste tipo. Não é possível depois de registrar conferências.',
     },
   };
 
@@ -399,6 +442,19 @@ function NfEditDialog({
         return;
       }
       onSave({ supplierId });
+      return;
+    }
+
+    if (field === 'productType') {
+      if (!productTypeId) {
+        toast.error('Selecione o tipo de produto.');
+        return;
+      }
+      if (productTypeId === request.productTypeId) {
+        onOpenChange(false);
+        return;
+      }
+      onSave({ productTypeId });
     }
   }
 
@@ -508,6 +564,34 @@ function NfEditDialog({
                     </Button>
                   }
                 />
+              </div>
+            ) : null}
+
+            {field === 'productType' ? (
+              <div className="space-y-2">
+                <Label>Tipo de produto</Label>
+                <Select
+                  value={productTypeId ? String(productTypeId) : undefined}
+                  onValueChange={(value) => setProductTypeId(Number(value))}
+                  disabled={productTypesQuery.isLoading}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        productTypesQuery.isLoading
+                          ? 'Carregando tipos…'
+                          : 'Selecione o tipo'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="z-110">
+                    {productTypes.map((type) => (
+                      <SelectItem key={type.id} value={String(type.id)}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             ) : null}
 

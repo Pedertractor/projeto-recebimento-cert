@@ -104,11 +104,16 @@ export async function listCompletedCertificateRequestsController(
 }
 
 export async function getCurrentQualityDocumentController(
-  req: FastifyRequest,
+  req: FastifyRequest<{ Querystring: { productTypeId: number } }>,
   reply: FastifyReply,
 ) {
+  const productTypeId = Number(req.query.productTypeId);
+  if (!Number.isFinite(productTypeId) || productTypeId <= 0) {
+    throw new AppError('Informe o tipo de produto.', 400);
+  }
+
   const service = new CertificateInspectionService(req.server.prisma);
-  const document = await service.getCurrentQualityDocument();
+  const document = await service.getCurrentQualityDocument(productTypeId);
   return reply.send(document);
 }
 

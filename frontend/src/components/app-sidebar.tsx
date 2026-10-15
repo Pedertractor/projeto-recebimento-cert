@@ -8,6 +8,7 @@ import {
   FileText,
   House,
   Inbox,
+  Package,
   Users,
 } from 'lucide-react-motion';
 
@@ -32,6 +33,7 @@ import {
   canAccessPurchaseModules,
   canAccessStockModules,
   canAccessUserManagement,
+  canManageQualityDocuments,
   canViewQualityDocuments,
   getDefaultRouteForRole,
   isPurchaseOnlyOperator,
@@ -97,6 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: user } = useWebSession();
   const canManageUsers = canAccessUserManagement(user?.role);
   const canViewQualityDoc = canViewQualityDocuments(user?.role);
+  const canManageQualityDoc = canManageQualityDocuments(user?.role);
   const canUseStockModules = canAccessStockModules(user?.role);
   const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
   const purchaseOnly = isPurchaseOnlyOperator(user?.role);
@@ -119,6 +122,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const qualityDocItems: SidebarNavItem[] =
     canViewQualityDoc && !qualityViewer
       ? [
+          ...(canManageQualityDoc
+            ? [
+                {
+                  label: 'Tipos de produto',
+                  href: '/tipos-produto',
+                  tooltip: 'Tipos de produto',
+                  icon: Package,
+                  isActive: (path: string) => path.startsWith('/tipos-produto'),
+                },
+              ]
+            : []),
           {
             label: 'Doc qualidade',
             href: '/doc-qualidade',

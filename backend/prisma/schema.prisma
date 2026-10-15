@@ -97,6 +97,19 @@ model User {
   @@map("users")
 }
 
+model ProductType {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  qualityDocuments    QualityDocument[]
+  certificateRequests CertificateRequest[]
+
+  @@map("product_types")
+}
+
 model Supplier {
   id                  Int      @id @default(autoincrement())
   name                String
@@ -119,6 +132,8 @@ model CertificateRequest {
   invoiceNumber        String                   @map("invoice_number")
   invoiceDate          DateTime                 @map("invoice_date") @db.Date
   expectedCertificates Int                      @default(1) @map("expected_certificates")
+  productTypeId        Int                      @map("product_type_id")
+  productType          ProductType              @relation(fields: [productTypeId], references: [id])
   notes                String?
   status               CertificateRequestStatus @default(CADASTRADA)
   createdByUserId      Int                      @map("created_by_user_id")
@@ -137,6 +152,7 @@ model CertificateRequest {
   magicLink     MagicLink?
 
   @@index([qualityDocumentId])
+  @@index([productTypeId])
   @@map("certificate_requests")
 }
 
@@ -185,9 +201,11 @@ model MagicLink {
 }
 
 model QualityDocument {
-  id               String   @id @default(uuid())
+  id               String      @id @default(uuid())
+  productTypeId    Int         @map("product_type_id")
+  productType      ProductType @relation(fields: [productTypeId], references: [id])
   year             Int
-  versionNumber    Int      @map("version_number")
+  versionNumber    Int         @map("version_number")
   displayName      String   @map("display_name")
   fileName         String   @map("file_name")
   storagePath      String   @map("storage_path")
@@ -198,8 +216,9 @@ model QualityDocument {
   certificateInspections CertificateInspection[]
   certificateRequests    CertificateRequest[]
 
-  @@unique([year, versionNumber])
+  @@unique([productTypeId, year, versionNumber])
   @@index([year])
+  @@index([productTypeId])
   @@map("quality_documents")
 }
 
