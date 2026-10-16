@@ -1,5 +1,7 @@
 export type QualityDocument = {
   id: string;
+  productTypeId: number;
+  productTypeName: string;
   year: number;
   versionNumber: number;
   displayName: string;
@@ -11,6 +13,7 @@ export type QualityDocument = {
 };
 
 export type CreateQualityDocumentPayload = {
+  productTypeId: number;
   year: number;
   documentFile: File;
 };

@@ -18,14 +18,19 @@ export function listQualityDocuments(): Promise<QualityDocument[]> {
   return httpClient.get<QualityDocument[]>('/quality-documents');
 }
 
-export function getCurrentQualityDocument(): Promise<QualityDocument> {
-  return httpClient.get<QualityDocument>('/quality-documents/current');
+export function getCurrentQualityDocument(
+  productTypeId: number,
+): Promise<QualityDocument> {
+  return httpClient.get<QualityDocument>(
+    `/quality-documents/current?productTypeId=${productTypeId}`,
+  );
 }
 
 export async function createQualityDocument(
   payload: CreateQualityDocumentPayload,
 ): Promise<QualityDocument> {
   const formData = new FormData();
+  formData.append('productTypeId', String(payload.productTypeId));
   formData.append('year', String(payload.year));
   formData.append('documentFile', payload.documentFile);
 
@@ -45,10 +50,14 @@ export async function createQualityDocument(
 
 export function getNextVersionPreview(
   documents: QualityDocument[],
+  productTypeId: number,
   year: number,
 ): string {
   const latestForYear = documents
-    .filter((document) => document.year === year)
+    .filter(
+      (document) =>
+        document.productTypeId === productTypeId && document.year === year,
+    )
     .reduce<QualityDocument | null>((latest, document) => {
       if (!latest || document.versionNumber > latest.versionNumber) {
         return document;

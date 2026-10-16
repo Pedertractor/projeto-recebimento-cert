@@ -7,6 +7,7 @@ import {
 } from '../generated/prisma/enums.js';
 import { certificateInspectionSchema } from './certificate-inspection.schemas.js';
 import { qualityDocumentSchema } from './quality-document.schemas.js';
+import { productTypeSchema } from './product-type.schemas.js';
 
 export const certificateRequestStatusSchema = z.enum(CertificateRequestStatus);
 export const attachmentTypeSchema = z.enum(AttachmentType);
@@ -45,6 +46,8 @@ export const certificateRequestSchema = z.object({
   invoiceNumber: z.string(),
   invoiceDate: z.string(),
   expectedCertificates: z.number(),
+  productTypeId: z.number(),
+  productType: productTypeSchema,
   notes: z.string().nullable(),
   status: certificateRequestStatusSchema,
   createdByUserId: z.number(),
@@ -97,6 +100,11 @@ export const createCertificateRequestFieldsSchema = z.object({
     .int('Informe a quantidade de lotes.')
     .min(1, 'Informe pelo menos 1 lote na NF.')
     .max(99, 'Quantidade de lotes inválida.'),
+  productTypeId: z.coerce
+    .number()
+    .int('Selecione o tipo de produto.')
+    .positive('Selecione o tipo de produto.')
+    .optional(),
   notes: z.string().trim().optional(),
 });
 
@@ -113,6 +121,7 @@ export const updateCertificateRequestSchema =
         value.invoiceNumber !== undefined ||
         value.invoiceDate !== undefined ||
         value.expectedCertificates !== undefined ||
+        value.productTypeId !== undefined ||
         value.notes !== undefined,
       'Informe ao menos um campo para atualizar.',
     );

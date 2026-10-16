@@ -23,6 +23,7 @@ import {
 } from '../utils/user-roles.js';
 import { hashToken } from '../utils/token-hash.js';
 import { resolveQualityDocumentForRequest } from '../utils/quality-document-public.js';
+import { ProductTypeService } from './product-type.service.js';
 import {
   sendCompletedCertificateRequestEmail,
   sendNewCertificateRequestEmail,
@@ -51,9 +52,11 @@ const certificateRequestInclude = {
     },
   },
   historyEvents: { orderBy: { occurredAt: 'asc' as const } },
+  productType: true,
   qualityDocument: {
     include: {
       uploadedBy: { select: { id: true, name: true } },
+      productType: { select: { id: true, name: true } },
     },
   },
 } satisfies Prisma.CertificateRequestInclude;
@@ -140,6 +143,13 @@ function toPublicRequest(request: RequestWithRelations) {
     invoiceNumber: request.invoiceNumber,
     invoiceDate: toIsoDate(request.invoiceDate),
     expectedCertificates: request.expectedCertificates,
+    productTypeId: request.productTypeId,
+    productType: {
+      id: request.productType.id,
+      code: request.productType.code,
+      name: request.productType.name,
+      active: request.productType.active,
+    },
     notes: request.notes,
     status: request.status,
     createdByUserId: request.createdByUserId,
@@ -339,6 +349,12 @@ export class CertificateRequestService {
 
     const registeredByName = resolveRegisteredByName(creator);
 
+    const productTypeService = new ProductTypeService(this.prisma);
+    const productTypeId =
+      fields.productTypeId ??
+      (await productTypeService.findDefaultChapaId());
+    await productTypeService.findActiveById(productTypeId);
+
     const request = await this.prisma.$transaction(async (tx) => {
       const created = await tx.certificateRequest.create({
         data: {
@@ -346,6 +362,7 @@ export class CertificateRequestService {
           invoiceNumber,
           invoiceDate,
           expectedCertificates: fields.expectedCertificates,
+          productTypeId,
           notes: fields.notes?.trim() || null,
           status: CertificateRequestStatus.CADASTRADA,
           createdByUserId: userId,
@@ -392,11 +409,12 @@ export class CertificateRequestService {
   async update(
     requestId: number,
     _userId: number,
+    userRole: UserRole,
     fields: UpdateCertificateRequestFields,
   ) {
     const request = await this.prisma.certificateRequest.findUnique({
       where: { id: requestId },
-      include: { attachments: true },
+      include: { attachments: { include: { inspection: true } } },
     });
 
     if (!request) {
@@ -415,6 +433,30 @@ export class CertificateRequestService {
       if (!supplier) {
         throw new AppError('Fornecedor não encontrado.', 404);
       }
+    }
+
+    const isProductTypeChange =
+      fields.productTypeId != null &&
+      fields.productTypeId !== request.productTypeId;
+
+    if (isProductTypeChange) {
+      if (!canManageAllStockCertificateRequests(userRole)) {
+        throw new AppError('Acesso negado.', 403);
+      }
+
+      const hasInspections = request.attachments.some(
+        (attachment) => attachment.inspection != null,
+      );
+
+      if (hasInspections || request.qualityDocumentId) {
+        throw new AppError(
+          'Não é possível alterar o tipo de produto após conferências ou vínculo do documento de qualidade.',
+          400,
+        );
+      }
+
+      const productTypeService = new ProductTypeService(this.prisma);
+      await productTypeService.findActiveById(fields.productTypeId!);
     }
 
     if (
@@ -456,6 +498,12 @@ export class CertificateRequestService {
         ...(invoiceDate ? { invoiceDate } : {}),
         ...(fields.expectedCertificates != null
           ? { expectedCertificates: fields.expectedCertificates }
+          : {}),
+        ...(isProductTypeChange
+          ? {
+              productTypeId: fields.productTypeId,
+              qualityDocumentId: null,
+            }
           : {}),
         ...(fields.notes !== undefined
           ? { notes: fields.notes.trim() || null }

@@ -1,28 +1,12 @@
-import type { PrismaClient, QualityDocument, User } from '../generated/prisma/client.js';
+import type { PrismaClient } from '../generated/prisma/client.js';
 import { AppError } from '../lib/errors.js';
 import type { CreateQualityDocumentFields } from '../schemas/quality-document.schemas.js';
+import { ProductTypeService } from './product-type.service.js';
 import {
   buildQualityDocumentDisplayName,
   saveQualityDocumentFile,
 } from '../utils/quality-document-storage.js';
-
-type QualityDocumentWithUser = QualityDocument & {
-  uploadedBy: Pick<User, 'id' | 'name'>;
-};
-
-function toPublicQualityDocument(document: QualityDocumentWithUser) {
-  return {
-    id: document.id,
-    year: document.year,
-    versionNumber: document.versionNumber,
-    displayName: document.displayName,
-    fileName: document.fileName,
-    storagePath: document.storagePath,
-    uploadedByUserId: document.uploadedByUserId,
-    uploadedByName: document.uploadedBy.name,
-    createdAt: document.createdAt.toISOString(),
-  };
-}
+import { toPublicQualityDocument } from '../utils/quality-document-public.js';
 
 export class QualityDocumentService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -31,8 +15,13 @@ export class QualityDocumentService {
     const documents = await this.prisma.qualityDocument.findMany({
       include: {
         uploadedBy: { select: { id: true, name: true } },
+        productType: { select: { id: true, name: true } },
       },
-      orderBy: [{ year: 'desc' }, { versionNumber: 'desc' }],
+      orderBy: [
+        { productType: { name: 'asc' } },
+        { year: 'desc' },
+        { versionNumber: 'desc' },
+      ],
     });
 
     return documents.map(toPublicQualityDocument);
@@ -43,11 +32,15 @@ export class QualityDocumentService {
     fields: CreateQualityDocumentFields,
     file: { buffer: Buffer; filename: string },
   ) {
+    const productTypeService = new ProductTypeService(this.prisma);
+    await productTypeService.findActiveById(fields.productTypeId);
+
     const year = fields.year;
+    const productTypeId = fields.productTypeId;
 
     const document = await this.prisma.$transaction(async (tx) => {
       const latestForYear = await tx.qualityDocument.findFirst({
-        where: { year },
+        where: { year, productTypeId },
         orderBy: { versionNumber: 'desc' },
         select: { versionNumber: true },
       });
@@ -62,6 +55,7 @@ export class QualityDocumentService {
 
       return tx.qualityDocument.create({
         data: {
+          productTypeId,
           year,
           versionNumber,
           displayName: buildQualityDocumentDisplayName(year, versionNumber),
@@ -71,6 +65,7 @@ export class QualityDocumentService {
         },
         include: {
           uploadedBy: { select: { id: true, name: true } },
+          productType: { select: { id: true, name: true } },
         },
       });
     });
@@ -83,6 +78,7 @@ export class QualityDocumentService {
       where: { id },
       include: {
         uploadedBy: { select: { id: true, name: true } },
+        productType: { select: { id: true, name: true } },
       },
     });
 

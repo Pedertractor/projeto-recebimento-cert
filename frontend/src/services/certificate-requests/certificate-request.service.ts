@@ -111,6 +111,7 @@ export async function createCertificateRequest(
   formData.append('invoiceNumber', payload.invoiceNumber.trim());
   formData.append('invoiceDate', payload.invoiceDate);
   formData.append('expectedCertificates', String(payload.expectedCertificates));
+  formData.append('productTypeId', String(payload.productTypeId));
   if (payload.notes?.trim()) {
     formData.append('notes', payload.notes.trim());
   }
