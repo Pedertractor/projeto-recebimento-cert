@@ -62,6 +62,7 @@ export type RequestHistoryEvent = {
   eventType: string;
   description: string | null;
   occurredAt: string;
+  actorName?: string | null;
 };
 
 export type CertificateRequest = {

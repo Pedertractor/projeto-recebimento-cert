@@ -137,6 +137,29 @@ export function formatRequestDateTime(value: string): string {
   }).format(date);
 }
 
+export function requestHistoryPurchaseActorLabel(
+  event: { eventType: string; description: string | null; actorName?: string | null },
+): string | null {
+  if (!event.actorName?.trim()) {
+    return null;
+  }
+
+  const name = event.actorName.trim();
+
+  if (event.eventType === 'ENVIO_FORNECEDOR_REGISTRADO') {
+    return `Operador de compras: ${name}`;
+  }
+
+  if (event.eventType === 'CERTIFICADO_ANEXADO') {
+    const description = event.description?.toLowerCase() ?? '';
+    if (description.includes('compras')) {
+      return `Operador de compras: ${name}`;
+    }
+  }
+
+  return null;
+}
+
 export function requestHistoryEventLabel(eventType: string): string {
   switch (eventType) {
     case 'SOLICITACAO_CRIADA':

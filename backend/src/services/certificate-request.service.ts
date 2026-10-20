@@ -51,7 +51,12 @@ const certificateRequestInclude = {
       },
     },
   },
-  historyEvents: { orderBy: { occurredAt: 'asc' as const } },
+  historyEvents: {
+    orderBy: { occurredAt: 'asc' as const },
+    include: {
+      actor: { select: { name: true, cardNumber: true } },
+    },
+  },
   productType: true,
   qualityDocument: {
     include: {
@@ -194,6 +199,7 @@ function toPublicRequest(request: RequestWithRelations) {
       eventType: event.eventType,
       description: event.description,
       occurredAt: event.occurredAt.toISOString(),
+      actorName: event.actor ? resolveRegisteredByName(event.actor) : null,
     })),
     attachedCertificatesCount,
     inspectedCertificatesCount,

@@ -13,6 +13,7 @@ import {
 import {
   formatRequestDateTime,
   requestHistoryEventLabel,
+  requestHistoryPurchaseActorLabel,
 } from '@/lib/certificate-request-labels';
 import { buildHistoryEventAttachmentMap } from '@/lib/match-history-attachment';
 import { cn } from '@/lib/utils';
@@ -122,6 +123,7 @@ export function RequestHistoryTimeline({
         const isLatest = event.id === latestEventId;
         const isLast = index === sortedEvents.length - 1;
         const relatedAttachment = attachmentByEventId.get(event.id) ?? null;
+        const purchaseActorLabel = requestHistoryPurchaseActorLabel(event);
 
         return (
           <li key={event.id} className="relative flex gap-4 pb-8 last:pb-0">
@@ -167,6 +169,12 @@ export function RequestHistoryTimeline({
                   </span>
                 ) : null}
               </div>
+
+              {purchaseActorLabel ? (
+                <p className="mt-1 text-sm font-medium text-foreground">
+                  {purchaseActorLabel}
+                </p>
+              ) : null}
 
               {event.description ? (
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">

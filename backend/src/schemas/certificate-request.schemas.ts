@@ -38,6 +38,7 @@ export const historyEventSchema = z.object({
   eventType: requestHistoryEventTypeSchema,
   description: z.string().nullable(),
   occurredAt: z.string(),
+  actorName: z.string().nullable().optional(),
 });
 
 export const certificateRequestSchema = z.object({
