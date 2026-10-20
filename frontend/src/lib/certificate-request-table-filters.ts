@@ -23,6 +23,10 @@ export const STOCK_REQUEST_STATUS_FILTER_OPTIONS: Array<{
     value: 'CANCELADA',
     label: certificateRequestStatusLabel('CANCELADA'),
   },
+  {
+    value: 'CONCLUIDA',
+    label: certificateRequestStatusLabel('CONCLUIDA'),
+  },
 ];
 
 export const PURCHASE_REQUEST_STATUS_FILTER_OPTIONS: Array<{

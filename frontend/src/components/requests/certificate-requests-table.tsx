@@ -8,6 +8,7 @@ import { Form084PreviewDialog } from '@/components/conference/form-084-preview-d
 import { InvoiceCertificatePrompt } from '@/components/conference/invoice-certificate-prompt';
 import { DeleteInvoiceButton } from '@/components/requests/delete-invoice-button';
 import { canRequestPurchaseDocument } from '@/lib/certificate-request-purchase-document';
+import { UnseenPurchaseCertificateBadge } from '@/components/requests/unseen-purchase-certificate-badge';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
 import { SupplierLogo } from '@/components/suppliers/supplier-logo';
 import { Button } from '@/components/ui/button';
@@ -141,7 +142,14 @@ export function CertificateRequestsTable({
                 <div className="grid gap-2">
                   <MobileListCardRow
                     label="Nº NF"
-                    value={request.invoiceNumber}
+                    value={
+                      <span className="inline-flex flex-wrap items-center gap-2">
+                        {request.invoiceNumber}
+                        {request.hasUnseenPurchaseCertificate ? (
+                          <UnseenPurchaseCertificateBadge />
+                        ) : null}
+                      </span>
+                    }
                   />
                   <MobileListCardRow
                     label="Lotes"
@@ -281,7 +289,14 @@ export function CertificateRequestsTable({
                   request.supplier.name
                 )}
               </TableCell>
-              <TableCell>{request.invoiceNumber}</TableCell>
+              <TableCell>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>{request.invoiceNumber}</span>
+                  {request.hasUnseenPurchaseCertificate ? (
+                    <UnseenPurchaseCertificateBadge />
+                  ) : null}
+                </div>
+              </TableCell>
               <TableCell>{request.expectedCertificates}</TableCell>
               {variant === 'conference' ? (
                 <TableCell className="tabular-nums">

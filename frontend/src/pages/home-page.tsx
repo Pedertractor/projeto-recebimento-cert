@@ -114,12 +114,8 @@ export function HomePage() {
         />
         <HomeActionTile
           className={homeActionTileClassName}
-          title={isStockLeader ? 'Solicitações' : 'Minhas solicitações'}
-          description={
-            isStockLeader
-              ? 'Acompanhe a equipe e o que está em andamento'
-              : 'Acompanhe o que ainda está em andamento'
-          }
+          title="Solicitações"
+          description="Acompanhe as solicitações da equipe de estoque"
           to="/minhas-solicitacoes"
           badge={openRequestsCount}
         />

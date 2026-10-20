@@ -84,6 +84,7 @@ export type CertificateRequest = {
   submittedAt: string;
   supplierContactAt: string | null;
   completedAt: string | null;
+  hasUnseenPurchaseCertificate?: boolean;
   createdAt: string;
   updatedAt: string;
   attachments?: RequestAttachment[];

@@ -16,6 +16,13 @@ export function canManageAllStockCertificateRequests(role: UserRole): boolean {
   return isSuperAdminRole(role) || isStockLeaderRole(role);
 }
 
+export function isStockTeamRole(role: UserRole): boolean {
+  return (
+    role === UserRole.STOCK_OPERATOR ||
+    canManageAllStockCertificateRequests(role)
+  );
+}
+
 export function canManageQualityDocuments(role: UserRole): boolean {
   return isSuperAdminRole(role) || isStockLeaderRole(role);
 }

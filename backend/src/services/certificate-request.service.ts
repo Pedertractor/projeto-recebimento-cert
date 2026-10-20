@@ -120,6 +120,18 @@ function resolveRegisteredByName(user: {
   return `Cartão ${user.cardNumber}`;
 }
 
+function hasUnseenPurchaseCertificate(
+  request: Pick<
+    RequestWithRelations,
+    'purchaseCertificateDeliveredAt' | 'purchaseCertificateStockSeenAt'
+  >,
+): boolean {
+  return (
+    request.purchaseCertificateDeliveredAt != null &&
+    request.purchaseCertificateStockSeenAt == null
+  );
+}
+
 function toPublicRequest(request: RequestWithRelations) {
   const attachedCertificatesCount = request.attachments.filter(
     (attachment) => attachment.type === AttachmentType.CERTIFICADO,
@@ -161,6 +173,7 @@ function toPublicRequest(request: RequestWithRelations) {
     submittedAt: request.submittedAt.toISOString(),
     supplierContactAt: request.supplierContactAt?.toISOString() ?? null,
     completedAt: request.completedAt?.toISOString() ?? null,
+    hasUnseenPurchaseCertificate: hasUnseenPurchaseCertificate(request),
     createdAt: request.createdAt.toISOString(),
     updatedAt: request.updatedAt.toISOString(),
     attachments: request.attachments.map((attachment) => ({
@@ -226,22 +239,23 @@ export class CertificateRequestService {
     });
   }
 
-  async listForStock(userId: number, userRole: UserRole) {
-    const seeAllRequests =
-      userRole === UserRole.SUPERADMIN || userRole === UserRole.STOCK_LEADER;
+  async listForStock(_userId: number, _userRole: UserRole) {
     const openRequestStatuses = [
       CertificateRequestStatus.AGUARDANDO_COMPRAS,
       CertificateRequestStatus.AGUARDANDO_FORNECEDOR,
+      CertificateRequestStatus.CANCELADA,
     ];
 
     const requests = await this.prisma.certificateRequest.findMany({
       where: {
-        ...(seeAllRequests ? {} : { createdByUserId: userId }),
-        status: {
-          in: seeAllRequests
-            ? [...openRequestStatuses, CertificateRequestStatus.CANCELADA]
-            : openRequestStatuses,
-        },
+        OR: [
+          { status: { in: openRequestStatuses } },
+          {
+            status: CertificateRequestStatus.CONCLUIDA,
+            purchaseCertificateDeliveredAt: { not: null },
+            purchaseCertificateStockSeenAt: null,
+          },
+        ],
       },
       include: this.includeRelations(),
       orderBy: [{ submittedAt: 'desc' }, { createdAt: 'desc' }],
@@ -254,6 +268,7 @@ export class CertificateRequestService {
     const seeAllRequests =
       userRole === UserRole.SUPERADMIN ||
       userRole === UserRole.STOCK_LEADER ||
+      userRole === UserRole.STOCK_OPERATOR ||
       userRole === UserRole.PURCHASE_OPERATOR ||
       isQualityViewerRole(userRole);
 
@@ -282,6 +297,19 @@ export class CertificateRequestService {
     });
 
     return requests.map(toPublicRequest);
+  }
+
+  async markPurchaseCertificateSeenByStock(requestId: number) {
+    await this.prisma.certificateRequest.updateMany({
+      where: {
+        id: requestId,
+        purchaseCertificateDeliveredAt: { not: null },
+        purchaseCertificateStockSeenAt: null,
+      },
+      data: {
+        purchaseCertificateStockSeenAt: new Date(),
+      },
+    });
   }
 
   async findById(id: number) {
@@ -612,6 +640,16 @@ export class CertificateRequestService {
           actorUserId: userId,
         },
       });
+
+      if (documentType === AttachmentType.CERTIFICADO) {
+        await tx.certificateRequest.update({
+          where: { id: requestId },
+          data: {
+            purchaseCertificateDeliveredAt: new Date(),
+            purchaseCertificateStockSeenAt: null,
+          },
+        });
+      }
     });
 
     return this.findById(requestId);
@@ -957,6 +995,7 @@ export class CertificateRequestService {
     }
 
     const completedAt = new Date();
+    const notifyStock = options?.notifyStock ?? true;
 
     await this.prisma.$transaction(async (tx) => {
       await tx.certificateRequest.update({
@@ -964,6 +1003,12 @@ export class CertificateRequestService {
         data: {
           status: CertificateRequestStatus.CONCLUIDA,
           completedAt,
+          ...(notifyStock
+            ? {
+                purchaseCertificateDeliveredAt: completedAt,
+                purchaseCertificateStockSeenAt: null,
+              }
+            : {}),
         },
       });
 
@@ -976,8 +1021,6 @@ export class CertificateRequestService {
         },
       });
     });
-
-    const notifyStock = options?.notifyStock ?? true;
 
     const requestUrl = `${env.FRONTEND_ORIGIN}/notas-fiscais/${requestId}`;
 

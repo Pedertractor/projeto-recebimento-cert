@@ -190,9 +190,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             path.startsWith('/solicitar-certificado'),
         },
         {
-          label: isStockLeader ? 'Solicitações' : 'Minhas solicitações',
+          label: 'Solicitações',
           href: '/minhas-solicitacoes',
-          tooltip: isStockLeader ? 'Solicitações' : 'Minhas solicitações',
+          tooltip: 'Solicitações de certificado',
           icon: ClipboardList,
           isActive: (path) => path.startsWith('/minhas-solicitacoes'),
         },

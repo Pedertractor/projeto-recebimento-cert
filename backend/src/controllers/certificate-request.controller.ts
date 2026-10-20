@@ -17,6 +17,7 @@ import { CertificateRequestService } from '../services/certificate-request.servi
 import {
   canManageAllStockCertificateRequests,
   isQualityViewerRole,
+  isStockTeamRole,
 } from '../utils/user-roles.js';
 
 type MultipartFields = Record<string, string>;
@@ -77,15 +78,7 @@ function canAccessCertificateRequest(
   }
 
   if (user.role === UserRole.STOCK_OPERATOR) {
-    if (request.status === CertificateRequestStatus.CANCELADA) {
-      return false;
-    }
-
-    if (request.status === CertificateRequestStatus.CONCLUIDA) {
-      return true;
-    }
-
-    return request.createdByUserId === user.id;
+    return true;
   }
 
   return false;
@@ -136,6 +129,12 @@ export async function getCertificateRequestController(
 
   if (!canAccessCertificateRequest(request, req.user)) {
     throw new AppError('Acesso negado.', 403);
+  }
+
+  if (isStockTeamRole(req.user.role)) {
+    await service.markPurchaseCertificateSeenByStock(req.params.id);
+    const refreshed = await service.findById(req.params.id);
+    return reply.send(refreshed);
   }
 
   return reply.send(request);
