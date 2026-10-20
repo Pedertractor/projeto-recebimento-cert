@@ -1,4 +1,12 @@
-import { useState, type ReactNode } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -13,10 +21,15 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { HttpClientError } from '@/lib/http-client';
 import { cn } from '@/lib/utils';
 import {
-  certificateComparisonFormSchema,
+  buildCertificateComparisonFormSchema,
   type CertificateComparisonFormValues,
 } from '@/schemas/certificate-comparison.schema';
 import { FormattedDimensionalInput } from '@/components/conference/formatted-dimensional-input';
+import {
+  joinDimensionalParts,
+  splitDimensionalCombined,
+  usesChapaDimensionalMask,
+} from '@/lib/inspection-dimensions';
 import { fetchEmployeeByCardAndUnitOrNull } from '@/services/users/user.service';
 import { UNIT_LABELS, UNITS, type Unit } from '@/types/unit';
 
@@ -38,6 +51,7 @@ const LOCKABLE_FIELDS = [
 type LockableField = (typeof LOCKABLE_FIELDS)[number];
 
 type CertificateComparisonFormProps = {
+  productTypeCode: string;
   defaultValues: Partial<CertificateComparisonFormValues>;
   hasSavedInspection?: boolean;
   currentUser?: {
@@ -49,6 +63,77 @@ type CertificateComparisonFormProps = {
   readOnly?: boolean;
   onSubmit: (values: CertificateComparisonFormValues) => void;
 };
+
+type CombinedDimensionalFieldProps = {
+  id: string;
+  disabled: boolean;
+  thickness: string;
+  width: string;
+  length: string;
+  onChange: (parts: {
+    thickness: string;
+    width: string;
+    length: string;
+  }) => void;
+  errorMessage?: string;
+};
+
+export type CombinedDimensionalFieldHandle = {
+  flush: () => void;
+};
+
+const CombinedDimensionalField = forwardRef<
+  CombinedDimensionalFieldHandle,
+  CombinedDimensionalFieldProps
+>(function CombinedDimensionalField(
+  { id, disabled, thickness, width, length, onChange, errorMessage },
+  ref,
+) {
+  const [draft, setDraft] = useState(() =>
+    joinDimensionalParts(thickness, width, length),
+  );
+  const isFocusedRef = useRef(false);
+
+  const flush = () => {
+    onChange(splitDimensionalCombined(draft));
+  };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      flush,
+    }),
+    [draft, onChange],
+  );
+
+  useEffect(() => {
+    if (!isFocusedRef.current) {
+      setDraft(joinDimensionalParts(thickness, width, length));
+    }
+  }, [thickness, width, length]);
+
+  return (
+    <div className="space-y-1.5">
+      <Input
+        id={id}
+        disabled={disabled}
+        value={draft}
+        placeholder="Ex.: 12,50X1,200X3,000"
+        onFocus={() => {
+          isFocusedRef.current = true;
+        }}
+        onBlur={() => {
+          isFocusedRef.current = false;
+          flush();
+        }}
+        onChange={(event) => setDraft(event.target.value)}
+      />
+      {errorMessage ? (
+        <p className="text-xs text-destructive">{errorMessage}</p>
+      ) : null}
+    </div>
+  );
+});
 
 type FormRowProps = {
   label: string;
@@ -142,6 +227,7 @@ function FieldWithPencil({
 }
 
 export function CertificateComparisonForm({
+  productTypeCode,
   defaultValues,
   hasSavedInspection = false,
   currentUser,
@@ -149,6 +235,14 @@ export function CertificateComparisonForm({
   readOnly = false,
   onSubmit,
 }: CertificateComparisonFormProps) {
+  const useChapaDimensions = usesChapaDimensionalMask(productTypeCode);
+  const formSchema = useMemo(
+    () => buildCertificateComparisonFormSchema(productTypeCode),
+    [productTypeCode],
+  );
+  const specifiedDimensionalRef = useRef<CombinedDimensionalFieldHandle>(null);
+  const foundDimensionalRef = useRef<CombinedDimensionalFieldHandle>(null);
+
   const [lockedFields, setLockedFields] = useState<Set<LockableField>>(
     () => new Set(hasSavedInspection ? LOCKABLE_FIELDS : []),
   );
@@ -166,7 +260,7 @@ export function CertificateComparisonForm({
     control,
     formState: { errors },
   } = useForm<CertificateComparisonFormValues>({
-    resolver: zodResolver(certificateComparisonFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       receiptDate: '',
       materialDescription: '',
@@ -231,7 +325,16 @@ export function CertificateComparisonForm({
     (!hasSavedInspection || lockedFields.size < LOCKABLE_FIELDS.length);
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <form
+      className="space-y-6"
+      onSubmit={(event) => {
+        if (!useChapaDimensions) {
+          specifiedDimensionalRef.current?.flush();
+          foundDimensionalRef.current?.flush();
+        }
+        void handleSubmit(onSubmit)(event);
+      }}
+    >
       <div className="overflow-hidden rounded-2xl border border-border">
         <FormRow label="Data do recebimento">
           <FieldWithPencil
@@ -378,78 +481,101 @@ export function CertificateComparisonForm({
             onUnlock={() => unlock('dimensionalSpecified')}
             label="dimensional especificado"
           >
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="dimensional-specified-thickness">
-                  Espessura
-                </Label>
-                <Controller
-                  name="dimensionalSpecifiedThickness"
-                  control={control}
-                  render={({ field }) => (
-                    <FormattedDimensionalInput
-                      id="dimensional-specified-thickness"
-                      fractionDigits={2}
-                      placeholder="0,00"
-                      disabled={isLocked('dimensionalSpecified')}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                {errors.dimensionalSpecifiedThickness ? (
-                  <p className="text-xs text-destructive">
-                    {errors.dimensionalSpecifiedThickness.message}
-                  </p>
-                ) : null}
+            {useChapaDimensions ? (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="dimensional-specified-thickness">
+                    Espessura
+                  </Label>
+                  <Controller
+                    name="dimensionalSpecifiedThickness"
+                    control={control}
+                    render={({ field }) => (
+                      <FormattedDimensionalInput
+                        id="dimensional-specified-thickness"
+                        fractionDigits={2}
+                        placeholder="0,00"
+                        disabled={isLocked('dimensionalSpecified')}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                  {errors.dimensionalSpecifiedThickness ? (
+                    <p className="text-xs text-destructive">
+                      {errors.dimensionalSpecifiedThickness.message}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="dimensional-specified-width">Largura</Label>
+                  <Controller
+                    name="dimensionalSpecifiedWidth"
+                    control={control}
+                    render={({ field }) => (
+                      <FormattedDimensionalInput
+                        id="dimensional-specified-width"
+                        fractionDigits={3}
+                        placeholder="0,000"
+                        disabled={isLocked('dimensionalSpecified')}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                  {errors.dimensionalSpecifiedWidth ? (
+                    <p className="text-xs text-destructive">
+                      {errors.dimensionalSpecifiedWidth.message}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="dimensional-specified-length">
+                    Comprimento
+                  </Label>
+                  <Controller
+                    name="dimensionalSpecifiedLength"
+                    control={control}
+                    render={({ field }) => (
+                      <FormattedDimensionalInput
+                        id="dimensional-specified-length"
+                        fractionDigits={3}
+                        placeholder="0,000"
+                        disabled={isLocked('dimensionalSpecified')}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                  {errors.dimensionalSpecifiedLength ? (
+                    <p className="text-xs text-destructive">
+                      {errors.dimensionalSpecifiedLength.message}
+                    </p>
+                  ) : null}
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dimensional-specified-width">Largura</Label>
-                <Controller
-                  name="dimensionalSpecifiedWidth"
-                  control={control}
-                  render={({ field }) => (
-                    <FormattedDimensionalInput
-                      id="dimensional-specified-width"
-                      fractionDigits={3}
-                      placeholder="0,000"
-                      disabled={isLocked('dimensionalSpecified')}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                {errors.dimensionalSpecifiedWidth ? (
-                  <p className="text-xs text-destructive">
-                    {errors.dimensionalSpecifiedWidth.message}
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dimensional-specified-length">
-                  Comprimento
-                </Label>
-                <Controller
-                  name="dimensionalSpecifiedLength"
-                  control={control}
-                  render={({ field }) => (
-                    <FormattedDimensionalInput
-                      id="dimensional-specified-length"
-                      fractionDigits={3}
-                      placeholder="0,000"
-                      disabled={isLocked('dimensionalSpecified')}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                {errors.dimensionalSpecifiedLength ? (
-                  <p className="text-xs text-destructive">
-                    {errors.dimensionalSpecifiedLength.message}
-                  </p>
-                ) : null}
-              </div>
-            </div>
+            ) : (
+              <CombinedDimensionalField
+                ref={specifiedDimensionalRef}
+                id="dimensional-specified-combined"
+                disabled={isLocked('dimensionalSpecified')}
+                thickness={watch('dimensionalSpecifiedThickness')}
+                width={watch('dimensionalSpecifiedWidth')}
+                length={watch('dimensionalSpecifiedLength')}
+                onChange={(parts) => {
+                  setValue('dimensionalSpecifiedThickness', parts.thickness, {
+                    shouldValidate: true,
+                  });
+                  setValue('dimensionalSpecifiedWidth', parts.width, {
+                    shouldValidate: true,
+                  });
+                  setValue('dimensionalSpecifiedLength', parts.length, {
+                    shouldValidate: true,
+                  });
+                }}
+                errorMessage={errors.dimensionalSpecifiedThickness?.message}
+              />
+            )}
           </FieldWithPencil>
         </FormRow>
 
@@ -460,74 +586,97 @@ export function CertificateComparisonForm({
             onUnlock={() => unlock('dimensionalFound')}
             label="dimensional encontrado"
           >
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="dimensional-found-thickness">Espessura</Label>
-                <Controller
-                  name="dimensionalFoundThickness"
-                  control={control}
-                  render={({ field }) => (
-                    <FormattedDimensionalInput
-                      id="dimensional-found-thickness"
-                      fractionDigits={2}
-                      placeholder="0,00"
-                      disabled={isLocked('dimensionalFound')}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                {errors.dimensionalFoundThickness ? (
-                  <p className="text-xs text-destructive">
-                    {errors.dimensionalFoundThickness.message}
-                  </p>
-                ) : null}
+            {useChapaDimensions ? (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="dimensional-found-thickness">Espessura</Label>
+                  <Controller
+                    name="dimensionalFoundThickness"
+                    control={control}
+                    render={({ field }) => (
+                      <FormattedDimensionalInput
+                        id="dimensional-found-thickness"
+                        fractionDigits={2}
+                        placeholder="0,00"
+                        disabled={isLocked('dimensionalFound')}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                  {errors.dimensionalFoundThickness ? (
+                    <p className="text-xs text-destructive">
+                      {errors.dimensionalFoundThickness.message}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="dimensional-found-width">Largura</Label>
+                  <Controller
+                    name="dimensionalFoundWidth"
+                    control={control}
+                    render={({ field }) => (
+                      <FormattedDimensionalInput
+                        id="dimensional-found-width"
+                        fractionDigits={3}
+                        placeholder="0,000"
+                        disabled={isLocked('dimensionalFound')}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                  {errors.dimensionalFoundWidth ? (
+                    <p className="text-xs text-destructive">
+                      {errors.dimensionalFoundWidth.message}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="dimensional-found-length">Comprimento</Label>
+                  <Controller
+                    name="dimensionalFoundLength"
+                    control={control}
+                    render={({ field }) => (
+                      <FormattedDimensionalInput
+                        id="dimensional-found-length"
+                        fractionDigits={3}
+                        placeholder="0,000"
+                        disabled={isLocked('dimensionalFound')}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                  {errors.dimensionalFoundLength ? (
+                    <p className="text-xs text-destructive">
+                      {errors.dimensionalFoundLength.message}
+                    </p>
+                  ) : null}
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dimensional-found-width">Largura</Label>
-                <Controller
-                  name="dimensionalFoundWidth"
-                  control={control}
-                  render={({ field }) => (
-                    <FormattedDimensionalInput
-                      id="dimensional-found-width"
-                      fractionDigits={3}
-                      placeholder="0,000"
-                      disabled={isLocked('dimensionalFound')}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                {errors.dimensionalFoundWidth ? (
-                  <p className="text-xs text-destructive">
-                    {errors.dimensionalFoundWidth.message}
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dimensional-found-length">Comprimento</Label>
-                <Controller
-                  name="dimensionalFoundLength"
-                  control={control}
-                  render={({ field }) => (
-                    <FormattedDimensionalInput
-                      id="dimensional-found-length"
-                      fractionDigits={3}
-                      placeholder="0,000"
-                      disabled={isLocked('dimensionalFound')}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                {errors.dimensionalFoundLength ? (
-                  <p className="text-xs text-destructive">
-                    {errors.dimensionalFoundLength.message}
-                  </p>
-                ) : null}
-              </div>
-            </div>
+            ) : (
+              <CombinedDimensionalField
+                ref={foundDimensionalRef}
+                id="dimensional-found-combined"
+                disabled={isLocked('dimensionalFound')}
+                thickness={watch('dimensionalFoundThickness')}
+                width={watch('dimensionalFoundWidth')}
+                length={watch('dimensionalFoundLength')}
+                onChange={(parts) => {
+                  setValue('dimensionalFoundThickness', parts.thickness, {
+                    shouldValidate: true,
+                  });
+                  setValue('dimensionalFoundWidth', parts.width, {
+                    shouldValidate: true,
+                  });
+                  setValue('dimensionalFoundLength', parts.length, {
+                    shouldValidate: true,
+                  });
+                }}
+                errorMessage={errors.dimensionalFoundThickness?.message}
+              />
+            )}
           </FieldWithPencil>
         </FormRow>
 

@@ -6,7 +6,7 @@ import {
   attachConferencePrintFieldsSchema,
   attachConferencePrintPasteSchema,
   deleteConferencePrintParamsSchema,
-  submitCertificateInspectionSchema,
+  buildSubmitCertificateInspectionSchema,
 } from '../schemas/certificate-inspection.schemas.js';
 import type {
   AttachConferencePrintParams,
@@ -237,16 +237,19 @@ export async function submitCertificateInspectionController(
 ) {
   const requestId = Number(req.params.id);
   const attachmentId = req.params.attachmentId;
-  const parsed = submitCertificateInspectionSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new AppError(parsed.error.issues[0]?.message ?? 'Dados inválidos.');
-  }
 
   const requestService = new CertificateRequestService(req.server.prisma);
   const existing = await requestService.findById(requestId);
 
   if (!canAccessConferenceRequest(existing, req.user)) {
     throw new AppError('Acesso negado.', 403);
+  }
+
+  const parsed = buildSubmitCertificateInspectionSchema(
+    existing.productType.code,
+  ).safeParse(req.body);
+  if (!parsed.success) {
+    throw new AppError(parsed.error.issues[0]?.message ?? 'Dados inválidos.');
   }
 
   const inspectionService = new CertificateInspectionService(req.server.prisma);

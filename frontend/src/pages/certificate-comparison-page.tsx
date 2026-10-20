@@ -22,6 +22,7 @@ import {
 } from '@/services/certificate-requests/certificate-request.service';
 import type { CertificateComparisonFormValues } from '@/schemas/certificate-comparison.schema';
 import { getComparisonReturnTo } from '@/lib/comparison-navigation';
+import { usesChapaDimensionalMask } from '@/lib/inspection-dimensions';
 import { normalizeStoredDimensionalValue } from '@/utils/dimensional-input';
 
 export function CertificateComparisonPage() {
@@ -145,6 +146,9 @@ export function CertificateComparisonPage() {
     requestQuery.data.attachments,
   );
 
+  const productTypeCode = requestQuery.data.productType.code;
+  const useChapaDimensions = usesChapaDimensionalMask(productTypeCode);
+
   const defaultValues: Partial<CertificateComparisonFormValues> = inspection
     ? {
         receiptDate: inspection.receiptDate,
@@ -154,30 +158,42 @@ export function CertificateComparisonPage() {
         chemicalComposition: inspection.chemicalComposition,
         quantitySpecified: inspection.quantitySpecified,
         quantityFound: inspection.quantityFound,
-        dimensionalSpecifiedThickness: normalizeStoredDimensionalValue(
-          inspection.dimensionalSpecifiedThickness,
-          2,
-        ),
-        dimensionalSpecifiedWidth: normalizeStoredDimensionalValue(
-          inspection.dimensionalSpecifiedWidth,
-          3,
-        ),
-        dimensionalSpecifiedLength: normalizeStoredDimensionalValue(
-          inspection.dimensionalSpecifiedLength,
-          3,
-        ),
-        dimensionalFoundThickness: normalizeStoredDimensionalValue(
-          inspection.dimensionalFoundThickness,
-          2,
-        ),
-        dimensionalFoundWidth: normalizeStoredDimensionalValue(
-          inspection.dimensionalFoundWidth,
-          3,
-        ),
-        dimensionalFoundLength: normalizeStoredDimensionalValue(
-          inspection.dimensionalFoundLength,
-          3,
-        ),
+        dimensionalSpecifiedThickness: useChapaDimensions
+          ? normalizeStoredDimensionalValue(
+              inspection.dimensionalSpecifiedThickness,
+              2,
+            )
+          : inspection.dimensionalSpecifiedThickness,
+        dimensionalSpecifiedWidth: useChapaDimensions
+          ? normalizeStoredDimensionalValue(
+              inspection.dimensionalSpecifiedWidth,
+              3,
+            )
+          : inspection.dimensionalSpecifiedWidth,
+        dimensionalSpecifiedLength: useChapaDimensions
+          ? normalizeStoredDimensionalValue(
+              inspection.dimensionalSpecifiedLength,
+              3,
+            )
+          : inspection.dimensionalSpecifiedLength,
+        dimensionalFoundThickness: useChapaDimensions
+          ? normalizeStoredDimensionalValue(
+              inspection.dimensionalFoundThickness,
+              2,
+            )
+          : inspection.dimensionalFoundThickness,
+        dimensionalFoundWidth: useChapaDimensions
+          ? normalizeStoredDimensionalValue(
+              inspection.dimensionalFoundWidth,
+              3,
+            )
+          : inspection.dimensionalFoundWidth,
+        dimensionalFoundLength: useChapaDimensions
+          ? normalizeStoredDimensionalValue(
+              inspection.dimensionalFoundLength,
+              3,
+            )
+          : inspection.dimensionalFoundLength,
         visualInspection: inspection.visualInspection,
         reportStatus: inspection.reportStatus,
         receiverResponsible: inspection.receiverResponsible,
@@ -230,6 +246,7 @@ export function CertificateComparisonPage() {
       </div>
 
       <CertificateComparisonForm
+        productTypeCode={productTypeCode}
         defaultValues={defaultValues}
         hasSavedInspection={Boolean(inspection)}
         currentUser={
