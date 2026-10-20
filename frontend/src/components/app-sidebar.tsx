@@ -34,6 +34,7 @@ import { useWebSession } from '@/hooks/auth/use-web-session';
 import { useHasUnseenPurchaseCertificate } from '@/hooks/use-has-unseen-purchase-certificate';
 import {
   canAccessPurchaseModules,
+  canAccessQualityDimensionalSearch,
   canAccessStockModules,
   canAccessUserManagement,
   canManageQualityDocuments,
@@ -41,7 +42,7 @@ import {
   getDefaultRouteForRole,
   isPurchaseOnlyOperator,
 } from '@/lib/role-access';
-import { isQualityViewerRole, isStockLeaderRole } from '@/lib/user-labels';
+import { isQualityViewerRole } from '@/lib/user-labels';
 
 type SidebarNavItem = {
   label: string;
@@ -109,6 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const canManageUsers = canAccessUserManagement(user?.role);
   const canViewQualityDoc = canViewQualityDocuments(user?.role);
   const canManageQualityDoc = canManageQualityDocuments(user?.role);
+  const canUseDimensionalSearch = canAccessQualityDimensionalSearch(user?.role);
   const canUseStockModules = canAccessStockModules(user?.role);
   const hasUnseenPurchaseCertificate = useHasUnseenPurchaseCertificate(
     canUseStockModules,
@@ -116,8 +118,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
   const purchaseOnly = isPurchaseOnlyOperator(user?.role);
   const qualityViewer = isQualityViewerRole(user?.role);
-  const isStockLeader = isStockLeaderRole(user?.role);
   const appRootHref = getDefaultRouteForRole(user?.role);
+
+  const dimensionalSearchNavItem: SidebarNavItem = {
+    label: 'Busca dimensionais',
+    href: '/qualidade/busca-dimensionais',
+    tooltip: 'Busca por espessura, largura e comprimento',
+    icon: Ruler,
+    isActive: (path) => path.startsWith('/qualidade/busca-dimensionais'),
+  };
 
   const homeItems: SidebarNavItem[] = purchaseOnly || qualityViewer
     ? []
@@ -152,14 +161,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             icon: FileText,
             isActive: (path) => path.startsWith('/doc-qualidade'),
           },
-          {
-            label: 'Busca dimensionais',
-            href: '/qualidade/busca-dimensionais',
-            tooltip: 'Busca por espessura, largura e comprimento',
-            icon: Ruler,
-            isActive: (path) => path.startsWith('/qualidade/busca-dimensionais'),
-          },
         ]
+      : [];
+
+  const stockDimensionalSearchItems: SidebarNavItem[] =
+    canUseDimensionalSearch && !qualityViewer && !canViewQualityDoc
+      ? [dimensionalSearchNavItem]
+      : [];
+
+  const qualityDimensionalSearchItems: SidebarNavItem[] =
+    canUseDimensionalSearch && !qualityViewer && canViewQualityDoc
+      ? [dimensionalSearchNavItem]
       : [];
 
   const qualityViewerItems: SidebarNavItem[] = qualityViewer
@@ -171,13 +183,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: FileText,
           isActive: (path) => path.startsWith('/doc-qualidade'),
         },
-        {
-          label: 'Busca dimensionais',
-          href: '/qualidade/busca-dimensionais',
-          tooltip: 'Busca por espessura, largura e comprimento',
-          icon: Ruler,
-          isActive: (path) => path.startsWith('/qualidade/busca-dimensionais'),
-        },
+        dimensionalSearchNavItem,
         {
           label: "NF's de materiais",
           href: '/notas-fiscais',
@@ -191,6 +197,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const stockItems: SidebarNavItem[] = canUseStockModules
     ? [
         ...qualityDocItems,
+        ...qualityDimensionalSearchItems,
+        ...stockDimensionalSearchItems,
         {
           label: 'Cadastrar NF',
           href: '/cadastrar-nf',

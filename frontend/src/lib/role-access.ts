@@ -37,6 +37,17 @@ export function canViewQualityDocuments(role: UserRole | undefined): boolean {
   return canManageQualityDocuments(role) || isQualityViewerRole(role);
 }
 
+/** Busca por espessura/largura/comprimento (NF e recebimento). */
+export function canAccessQualityDimensionalSearch(
+  role: UserRole | undefined,
+): boolean {
+  return (
+    isSuperAdminRole(role) ||
+    isQualityViewerRole(role) ||
+    isStockLeaderRole(role)
+  );
+}
+
 export function canDeleteInvoice(role: UserRole | undefined): boolean {
   return isSuperAdminRole(role) || isStockLeaderRole(role);
 }

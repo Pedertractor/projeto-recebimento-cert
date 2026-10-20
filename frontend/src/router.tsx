@@ -3,6 +3,7 @@ import { MotionIconProvider } from '@/components/motion-icon-provider';
 import { DefaultRouteRedirect } from '@/components/auth/default-route-redirect';
 import { HomeRoute } from '@/components/auth/home-route';
 import { RequireProductTypeManagement } from '@/components/auth/require-product-type-management';
+import { RequireQualityDimensionalSearch } from '@/components/auth/require-quality-dimensional-search';
 import { RequireQualityDocumentManager } from '@/components/auth/require-quality-document-manager';
 import { RequireUserManagement } from '@/components/auth/require-user-management';
 import { RequireAuth } from '@/components/auth/require-auth';
@@ -39,6 +40,8 @@ export function AppRouter() {
                 <Route path="/" element={<HomeRoute />} />
                 <Route element={<RequireQualityDocumentManager />}>
                   <Route path="/doc-qualidade" element={<DocQualidadePage />} />
+                </Route>
+                <Route element={<RequireQualityDimensionalSearch />}>
                   <Route
                     path="/qualidade/busca-dimensionais"
                     element={<QualityDimensionalSearchPage />}

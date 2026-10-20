@@ -4,10 +4,10 @@ import { HomeActionTile } from '@/components/home/home-action-tile';
 import { HomeHeroCard } from '@/components/home/home-hero-card';
 import { useWebSession } from '@/hooks/auth/use-web-session';
 import {
+  canAccessQualityDimensionalSearch,
   canAccessStockModules,
   canManageQualityDocuments,
 } from '@/lib/role-access';
-import { isStockLeaderRole } from '@/lib/user-labels';
 import {
   isNfConferenceComplete,
   isNfMissingLotComparisons,
@@ -37,8 +37,8 @@ const homeActionTileClassName =
 export function HomePage() {
   const { data: user } = useWebSession();
   const canUseStockModules = canAccessStockModules(user?.role);
-  const isStockLeader = isStockLeaderRole(user?.role);
   const canManageQualityDoc = canManageQualityDocuments(user?.role);
+  const canUseDimensionalSearch = canAccessQualityDimensionalSearch(user?.role);
 
   const stockRequestsQuery = useQuery({
     queryKey: certificateRequestsListQueryKey,
@@ -130,6 +130,14 @@ export function HomePage() {
             title="Doc qualidade"
             description="Padrões usados na conferência"
             to="/doc-qualidade"
+          />
+        ) : null}
+        {canUseDimensionalSearch ? (
+          <HomeActionTile
+            className={homeActionTileClassName}
+            title="Busca dimensionais"
+            description="Localize NFs por espessura, largura e comprimento"
+            to="/qualidade/busca-dimensionais"
           />
         ) : null}
         <HomeActionTile
