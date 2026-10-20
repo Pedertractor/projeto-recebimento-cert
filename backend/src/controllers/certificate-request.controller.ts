@@ -17,7 +17,6 @@ import { CertificateRequestService } from '../services/certificate-request.servi
 import {
   canManageAllStockCertificateRequests,
   isQualityViewerRole,
-  isStockTeamRole,
 } from '../utils/user-roles.js';
 
 type MultipartFields = Record<string, string>;
@@ -131,7 +130,7 @@ export async function getCertificateRequestController(
     throw new AppError('Acesso negado.', 403);
   }
 
-  if (isStockTeamRole(req.user.role)) {
+  if (req.user.role === UserRole.STOCK_OPERATOR) {
     await service.markPurchaseCertificateSeenByStock(req.params.id);
     const refreshed = await service.findById(req.params.id);
     return reply.send(refreshed);
