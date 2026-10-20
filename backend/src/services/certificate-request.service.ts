@@ -51,7 +51,12 @@ const certificateRequestInclude = {
       },
     },
   },
-  historyEvents: { orderBy: { occurredAt: 'asc' as const } },
+  historyEvents: {
+    orderBy: { occurredAt: 'asc' as const },
+    include: {
+      actor: { select: { name: true, cardNumber: true } },
+    },
+  },
   productType: true,
   qualityDocument: {
     include: {
@@ -88,8 +93,12 @@ function toPublicInspection(
     chemicalComposition: inspection.chemicalComposition,
     quantitySpecified: inspection.quantitySpecified,
     quantityFound: inspection.quantityFound,
-    dimensionalSpecified: inspection.dimensionalSpecified,
-    dimensionalFound: inspection.dimensionalFound,
+    dimensionalSpecifiedThickness: inspection.dimensionalSpecifiedThickness,
+    dimensionalSpecifiedWidth: inspection.dimensionalSpecifiedWidth,
+    dimensionalSpecifiedLength: inspection.dimensionalSpecifiedLength,
+    dimensionalFoundThickness: inspection.dimensionalFoundThickness,
+    dimensionalFoundWidth: inspection.dimensionalFoundWidth,
+    dimensionalFoundLength: inspection.dimensionalFoundLength,
     visualInspection: inspection.visualInspection,
     reportStatus: inspection.reportStatus,
     receiverResponsible: inspection.receiverResponsible,
@@ -114,6 +123,18 @@ function resolveRegisteredByName(user: {
   }
 
   return `Cartão ${user.cardNumber}`;
+}
+
+function hasUnseenPurchaseCertificate(
+  request: Pick<
+    RequestWithRelations,
+    'purchaseCertificateDeliveredAt' | 'purchaseCertificateStockSeenAt'
+  >,
+): boolean {
+  return (
+    request.purchaseCertificateDeliveredAt != null &&
+    request.purchaseCertificateStockSeenAt == null
+  );
 }
 
 function toPublicRequest(request: RequestWithRelations) {
@@ -157,6 +178,7 @@ function toPublicRequest(request: RequestWithRelations) {
     submittedAt: request.submittedAt.toISOString(),
     supplierContactAt: request.supplierContactAt?.toISOString() ?? null,
     completedAt: request.completedAt?.toISOString() ?? null,
+    hasUnseenPurchaseCertificate: hasUnseenPurchaseCertificate(request),
     createdAt: request.createdAt.toISOString(),
     updatedAt: request.updatedAt.toISOString(),
     attachments: request.attachments.map((attachment) => ({
@@ -177,6 +199,7 @@ function toPublicRequest(request: RequestWithRelations) {
       eventType: event.eventType,
       description: event.description,
       occurredAt: event.occurredAt.toISOString(),
+      actorName: event.actor ? resolveRegisteredByName(event.actor) : null,
     })),
     attachedCertificatesCount,
     inspectedCertificatesCount,
@@ -222,22 +245,23 @@ export class CertificateRequestService {
     });
   }
 
-  async listForStock(userId: number, userRole: UserRole) {
-    const seeAllRequests =
-      userRole === UserRole.SUPERADMIN || userRole === UserRole.STOCK_LEADER;
+  async listForStock(_userId: number, _userRole: UserRole) {
     const openRequestStatuses = [
       CertificateRequestStatus.AGUARDANDO_COMPRAS,
       CertificateRequestStatus.AGUARDANDO_FORNECEDOR,
+      CertificateRequestStatus.CANCELADA,
     ];
 
     const requests = await this.prisma.certificateRequest.findMany({
       where: {
-        ...(seeAllRequests ? {} : { createdByUserId: userId }),
-        status: {
-          in: seeAllRequests
-            ? [...openRequestStatuses, CertificateRequestStatus.CANCELADA]
-            : openRequestStatuses,
-        },
+        OR: [
+          { status: { in: openRequestStatuses } },
+          {
+            status: CertificateRequestStatus.CONCLUIDA,
+            purchaseCertificateDeliveredAt: { not: null },
+            purchaseCertificateStockSeenAt: null,
+          },
+        ],
       },
       include: this.includeRelations(),
       orderBy: [{ submittedAt: 'desc' }, { createdAt: 'desc' }],
@@ -250,6 +274,7 @@ export class CertificateRequestService {
     const seeAllRequests =
       userRole === UserRole.SUPERADMIN ||
       userRole === UserRole.STOCK_LEADER ||
+      userRole === UserRole.STOCK_OPERATOR ||
       userRole === UserRole.PURCHASE_OPERATOR ||
       isQualityViewerRole(userRole);
 
@@ -278,6 +303,19 @@ export class CertificateRequestService {
     });
 
     return requests.map(toPublicRequest);
+  }
+
+  async markPurchaseCertificateSeenByStock(requestId: number) {
+    await this.prisma.certificateRequest.updateMany({
+      where: {
+        id: requestId,
+        purchaseCertificateDeliveredAt: { not: null },
+        purchaseCertificateStockSeenAt: null,
+      },
+      data: {
+        purchaseCertificateStockSeenAt: new Date(),
+      },
+    });
   }
 
   async findById(id: number) {
@@ -608,6 +646,16 @@ export class CertificateRequestService {
           actorUserId: userId,
         },
       });
+
+      if (documentType === AttachmentType.CERTIFICADO) {
+        await tx.certificateRequest.update({
+          where: { id: requestId },
+          data: {
+            purchaseCertificateDeliveredAt: new Date(),
+            purchaseCertificateStockSeenAt: null,
+          },
+        });
+      }
     });
 
     return this.findById(requestId);
@@ -711,6 +759,21 @@ export class CertificateRequestService {
     const userService = new UserService(this.prisma);
     const purchaseOperatorEmails =
       await userService.listActivePurchaseOperatorEmails();
+    const stockLeaderEmails =
+      await userService.listActiveStockLeaderEmails();
+    const requesterUser = await this.prisma.user.findUnique({
+      where: { id: fullRequest.createdByUserId },
+      select: { email: true },
+    });
+    const requesterEmail = requesterUser?.email?.trim().toLowerCase();
+    const ccRecipients = [
+      ...new Set(
+        [
+          ...stockLeaderEmails,
+          ...(requesterEmail ? [requesterEmail] : []),
+        ].filter(Boolean),
+      ),
+    ];
     const recipients = resolvePurchaseNotificationRecipients(
       purchaseOperatorEmails,
     );
@@ -727,14 +790,20 @@ export class CertificateRequestService {
       submittedAt: fullRequest.submittedAt,
       magicLinkUrl,
       recipients,
+      ccRecipients,
     });
+
+    const purchaseEmailHistorySuffix =
+      emailDispatch.ccRecipients.length > 0
+        ? `; cópia (${emailDispatch.ccRecipients.join(', ')})`
+        : '';
 
     await this.prisma.requestHistoryEvent.create({
       data: {
         requestId: fullRequest.id,
         eventType: RequestHistoryEventType.EMAIL_COMPRAS_ENVIADO,
         description: emailDispatch.recipients.length
-          ? `Solicitação de documento enviada ao compras (${emailDispatch.recipients.join(', ')}).`
+          ? `Solicitação de documento enviada ao compras (${emailDispatch.recipients.join(', ')})${purchaseEmailHistorySuffix}.`
           : 'Solicitação de documento registrada (nenhum operador de compras com e-mail cadastrado).',
         actorUserId: userId,
       },
@@ -953,6 +1022,7 @@ export class CertificateRequestService {
     }
 
     const completedAt = new Date();
+    const notifyStock = options?.notifyStock ?? true;
 
     await this.prisma.$transaction(async (tx) => {
       await tx.certificateRequest.update({
@@ -960,6 +1030,12 @@ export class CertificateRequestService {
         data: {
           status: CertificateRequestStatus.CONCLUIDA,
           completedAt,
+          ...(notifyStock
+            ? {
+                purchaseCertificateDeliveredAt: completedAt,
+                purchaseCertificateStockSeenAt: null,
+              }
+            : {}),
         },
       });
 
@@ -972,8 +1048,6 @@ export class CertificateRequestService {
         },
       });
     });
-
-    const notifyStock = options?.notifyStock ?? true;
 
     const requestUrl = `${env.FRONTEND_ORIGIN}/notas-fiscais/${requestId}`;
 

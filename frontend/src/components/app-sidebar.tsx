@@ -9,6 +9,7 @@ import {
   House,
   Inbox,
   Package,
+  Ruler,
   Users,
 } from 'lucide-react-motion';
 
@@ -28,17 +29,21 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { NewCertificateNavIndicator } from '@/components/requests/new-certificate-nav-indicator';
 import { useWebSession } from '@/hooks/auth/use-web-session';
+import { useHasUnseenPurchaseCertificate } from '@/hooks/use-has-unseen-purchase-certificate';
 import {
   canAccessPurchaseModules,
+  canAccessQualityDimensionalSearch,
   canAccessStockModules,
   canAccessUserManagement,
+  canViewUnseenPurchaseCertificateIndicators,
   canManageQualityDocuments,
   canViewQualityDocuments,
   getDefaultRouteForRole,
   isPurchaseOnlyOperator,
 } from '@/lib/role-access';
-import { isQualityViewerRole, isStockLeaderRole } from '@/lib/user-labels';
+import { isQualityViewerRole } from '@/lib/user-labels';
 
 type SidebarNavItem = {
   label: string;
@@ -46,6 +51,7 @@ type SidebarNavItem = {
   tooltip: string;
   icon: React.ComponentType<{ size?: number }>;
   isActive: (pathname: string) => boolean;
+  showNewCertificate?: boolean;
 };
 
 function SidebarNavGroup({
@@ -82,7 +88,12 @@ function SidebarNavGroup({
                 >
                   <Link to={item.href} {...motionIconGroupProps}>
                     <Icon size={16} />
-                    <span>{item.label}</span>
+                    <span className="flex flex-1 items-center justify-between gap-2">
+                      <span>{item.label}</span>
+                      {item.showNewCertificate ? (
+                        <NewCertificateNavIndicator size="sm" />
+                      ) : null}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -100,12 +111,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const canManageUsers = canAccessUserManagement(user?.role);
   const canViewQualityDoc = canViewQualityDocuments(user?.role);
   const canManageQualityDoc = canManageQualityDocuments(user?.role);
+  const canUseDimensionalSearch = canAccessQualityDimensionalSearch(user?.role);
   const canUseStockModules = canAccessStockModules(user?.role);
+  const canShowUnseenPurchaseCertificateIndicators =
+    canViewUnseenPurchaseCertificateIndicators(user?.role);
+  const hasUnseenPurchaseCertificate = useHasUnseenPurchaseCertificate(
+    canUseStockModules && canShowUnseenPurchaseCertificateIndicators,
+  );
   const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
   const purchaseOnly = isPurchaseOnlyOperator(user?.role);
   const qualityViewer = isQualityViewerRole(user?.role);
-  const isStockLeader = isStockLeaderRole(user?.role);
   const appRootHref = getDefaultRouteForRole(user?.role);
+
+  const dimensionalSearchNavItem: SidebarNavItem = {
+    label: 'Busca dimensionais',
+    href: '/qualidade/busca-dimensionais',
+    tooltip: 'Busca por espessura, largura e comprimento',
+    icon: Ruler,
+    isActive: (path) => path.startsWith('/qualidade/busca-dimensionais'),
+  };
 
   const homeItems: SidebarNavItem[] = purchaseOnly || qualityViewer
     ? []
@@ -143,6 +167,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ]
       : [];
 
+  const stockDimensionalSearchItems: SidebarNavItem[] =
+    canUseDimensionalSearch && !qualityViewer && !canViewQualityDoc
+      ? [dimensionalSearchNavItem]
+      : [];
+
+  const qualityDimensionalSearchItems: SidebarNavItem[] =
+    canUseDimensionalSearch && !qualityViewer && canViewQualityDoc
+      ? [dimensionalSearchNavItem]
+      : [];
+
   const qualityViewerItems: SidebarNavItem[] = qualityViewer
     ? [
         {
@@ -152,6 +186,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: FileText,
           isActive: (path) => path.startsWith('/doc-qualidade'),
         },
+        dimensionalSearchNavItem,
         {
           label: "NF's de materiais",
           href: '/notas-fiscais',
@@ -162,9 +197,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ]
     : [];
 
+  const showStockSolicitationsInOperacoes =
+    canUseStockModules && !canUsePurchaseModules;
+
   const stockItems: SidebarNavItem[] = canUseStockModules
     ? [
         ...qualityDocItems,
+        ...qualityDimensionalSearchItems,
+        ...stockDimensionalSearchItems,
         {
           label: 'Cadastrar NF',
           href: '/cadastrar-nf',
@@ -174,13 +214,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             path.startsWith('/cadastrar-nf') ||
             path.startsWith('/solicitar-certificado'),
         },
-        {
-          label: isStockLeader ? 'Solicitações' : 'Minhas solicitações',
-          href: '/minhas-solicitacoes',
-          tooltip: isStockLeader ? 'Solicitações' : 'Minhas solicitações',
-          icon: ClipboardList,
-          isActive: (path) => path.startsWith('/minhas-solicitacoes'),
-        },
+        ...(showStockSolicitationsInOperacoes
+          ? [
+              {
+                label: 'Solicitações',
+                href: '/minhas-solicitacoes',
+                tooltip: 'Solicitações de certificado',
+                icon: ClipboardList,
+                isActive: (path: string) =>
+                  path.startsWith('/minhas-solicitacoes'),
+              },
+            ]
+          : []),
         {
           label: "NF's de materiais",
           href: '/notas-fiscais',
@@ -214,9 +259,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           label: 'Solicitações',
           href: '/compras/solicitacoes',
-          tooltip: 'Solicitações de certificado',
+          tooltip: hasUnseenPurchaseCertificate
+            ? 'Solicitações — novo certificado do compras'
+            : 'Solicitações de certificado',
           icon: Inbox,
           isActive: (path) => path.startsWith('/compras/solicitacoes'),
+          showNewCertificate: hasUnseenPurchaseCertificate,
         },
       ]
     : [];

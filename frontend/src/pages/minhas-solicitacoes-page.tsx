@@ -4,8 +4,10 @@ import { Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { CertificateRequestTableFilters } from '@/components/requests/certificate-request-table-filters';
-import { CertificateRequestsTable } from '@/components/requests/certificate-requests-table';
+import { StockRequestCards } from '@/components/requests/stock-request-cards';
 import { Button } from '@/components/ui/button';
+import { useWebSession } from '@/hooks/auth/use-web-session';
+import { canViewUnseenPurchaseCertificateIndicators } from '@/lib/role-access';
 import {
   buildCertificateRequestListFiltersSummary,
   filterCertificateRequestList,
@@ -13,23 +15,16 @@ import {
   STOCK_REQUEST_STATUS_FILTER_OPTIONS,
   type RequestListStatusFilter,
 } from '@/lib/certificate-request-table-filters';
-import { useWebSession } from '@/hooks/auth/use-web-session';
-import { isStockLeaderRole, isSuperAdminRole } from '@/lib/user-labels';
 import {
   certificateRequestsListQueryKey,
   listCertificateRequests,
 } from '@/services/certificate-requests/certificate-request.service';
 
 export function MinhasSolicitacoesPage() {
-  const { data: user } = useWebSession();
-  const isStockLeader = isStockLeaderRole(user?.role);
-  const canSeeCancelledRequests =
-    isStockLeader || isSuperAdminRole(user?.role);
-  const statusOptions = canSeeCancelledRequests
-    ? STOCK_REQUEST_STATUS_FILTER_OPTIONS
-    : STOCK_REQUEST_STATUS_FILTER_OPTIONS.filter(
-        (option) => option.value !== 'CANCELADA',
-      );
+  const { data: sessionUser } = useWebSession();
+  const showUnseenPurchaseCertificateIndicators =
+    canViewUnseenPurchaseCertificateIndicators(sessionUser?.role);
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<RequestListStatusFilter>('ALL');
@@ -39,27 +34,16 @@ export function MinhasSolicitacoesPage() {
     queryFn: listCertificateRequests,
   });
 
-  const openRequests = useMemo(() => {
-    const requests = requestsQuery.data ?? [];
-
-    return requests.filter((request) => {
-      if (
-        request.status === 'AGUARDANDO_COMPRAS' ||
-        request.status === 'AGUARDANDO_FORNECEDOR'
-      ) {
-        return true;
-      }
-
-      return canSeeCancelledRequests && request.status === 'CANCELADA';
-    });
-  }, [canSeeCancelledRequests, requestsQuery.data]);
+  const visibleRequests = useMemo(() => {
+    return requestsQuery.data ?? [];
+  }, [requestsQuery.data]);
 
   const filteredRequests = useMemo(
-    () => filterCertificateRequestList(openRequests, search, statusFilter),
-    [openRequests, search, statusFilter],
+    () => filterCertificateRequestList(visibleRequests, search, statusFilter),
+    [visibleRequests, search, statusFilter],
   );
 
-  const totalCount = openRequests.length;
+  const totalCount = visibleRequests.length;
   const filtersSummary = buildCertificateRequestListFiltersSummary(
     search,
     statusFilter,
@@ -80,13 +64,11 @@ export function MinhasSolicitacoesPage() {
     <div className="page-container">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="page-heading">
-            {isStockLeader ? 'Solicitações' : 'Minhas solicitações'}
-          </h1>
+          <h1 className="page-heading">Solicitações</h1>
           <p className="page-lead">
-            {canSeeCancelledRequests
-              ? 'Solicitações em aberto enviadas ao compras, de cada solicitante.'
-              : 'Somente as suas solicitações em aberto enviadas ao compras.'}
+            {showUnseenPurchaseCertificateIndicators
+              ? 'Solicitações em aberto de toda a equipe de estoque e NFs com certificado novo do compras aguardando visualização pela operação.'
+              : 'Solicitações em aberto de toda a equipe de estoque.'}
           </p>
         </div>
         <Button
@@ -118,7 +100,7 @@ export function MinhasSolicitacoesPage() {
             searchPlaceholder="NF, fornecedor, CNPJ ou nº da solicitação"
             search={search}
             statusFilter={statusFilter}
-            statusOptions={statusOptions}
+            statusOptions={STOCK_REQUEST_STATUS_FILTER_OPTIONS}
             filtersSummary={filtersSummary}
             hasActiveFilters={hasActiveFilters}
             onSearchChange={setSearch}
@@ -126,15 +108,14 @@ export function MinhasSolicitacoesPage() {
             onReset={resetFilters}
           />
 
-          <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60">
-            <CertificateRequestsTable
-              requests={filteredRequests}
-              variant="stock"
-              showRequestCreator={isStockLeader}
-              detailPath={(id) => `/minhas-solicitacoes/${id}`}
-              nfShortcutPath={(id) => `/notas-fiscais/${id}`}
-            />
-          </div>
+          <StockRequestCards
+            requests={filteredRequests}
+            detailPath={(id) => `/minhas-solicitacoes/${id}`}
+            nfPath={(id) => `/notas-fiscais/${id}`}
+            showUnseenPurchaseCertificateIndicators={
+              showUnseenPurchaseCertificateIndicators
+            }
+          />
         </div>
       ) : null}
     </div>

@@ -1,5 +1,6 @@
 import z from 'zod';
 import { InspectionCheckResult } from '../generated/prisma/enums.js';
+import { inspectionDimensionFieldsSchema } from './inspection-dimensions.schema.js';
 
 export const inspectionCheckResultSchema = z.enum(InspectionCheckResult);
 
@@ -16,8 +17,12 @@ export const certificateInspectionSchema = z.object({
   chemicalComposition: inspectionCheckResultSchema,
   quantitySpecified: z.string(),
   quantityFound: z.string(),
-  dimensionalSpecified: z.string(),
-  dimensionalFound: z.string(),
+  dimensionalSpecifiedThickness: z.string(),
+  dimensionalSpecifiedWidth: z.string(),
+  dimensionalSpecifiedLength: z.string(),
+  dimensionalFoundThickness: z.string(),
+  dimensionalFoundWidth: z.string(),
+  dimensionalFoundLength: z.string(),
   visualInspection: inspectionCheckResultSchema,
   reportStatus: inspectionCheckResultSchema,
   receiverResponsible: z.string(),
@@ -53,14 +58,7 @@ export const submitCertificateInspectionSchema = z.object({
     .string()
     .trim()
     .min(1, 'Informe a quantidade encontrada no recebimento.'),
-  dimensionalSpecified: z
-    .string()
-    .trim()
-    .min(1, 'Informe o dimensional especificado na NF.'),
-  dimensionalFound: z
-    .string()
-    .trim()
-    .min(1, 'Informe o dimensional encontrado no recebimento.'),
+  ...inspectionDimensionFieldsSchema.shape,
   visualInspection: inspectionCheckResultSchema,
   reportStatus: inspectionCheckResultSchema,
   receiverResponsible: z

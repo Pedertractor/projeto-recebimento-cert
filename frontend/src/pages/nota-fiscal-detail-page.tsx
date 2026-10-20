@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -20,6 +20,8 @@ import {
 import { getQualityManagementFormColumns } from '@/lib/quality-management-form';
 import {
   certificateRequestDetailQueryKey,
+  certificateRequestsListQueryKey,
+  completedCertificateRequestsQueryKey,
   getCertificateRequest,
 } from '@/services/certificate-requests/certificate-request.service';
 import type { RequestAttachment } from '@/types/certificate-request';
@@ -50,6 +52,7 @@ export function NotaFiscalDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: sessionUser } = useWebSession();
+  const queryClient = useQueryClient();
   const canEdit = canEditNfMaterials(sessionUser?.role);
   const requestId = Number(id);
   const [conferenceCelebrationOpen, setConferenceCelebrationOpen] =
@@ -72,6 +75,19 @@ export function NotaFiscalDetailPage() {
     queryFn: () => getCertificateRequest(requestId),
     enabled: Number.isFinite(requestId) && requestId > 0,
   });
+
+  useEffect(() => {
+    if (!requestQuery.isSuccess) {
+      return;
+    }
+
+    void queryClient.invalidateQueries({
+      queryKey: certificateRequestsListQueryKey,
+    });
+    void queryClient.invalidateQueries({
+      queryKey: completedCertificateRequestsQueryKey,
+    });
+  }, [queryClient, requestQuery.isSuccess, requestId]);
 
   const request = requestQuery.data;
   const invoiceAttachment = useMemo(

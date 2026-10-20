@@ -8,6 +8,7 @@ import { DeleteInvoiceButton } from '@/components/requests/delete-invoice-button
 import { CreateSupplierDialog } from '@/components/suppliers/create-supplier-dialog';
 import { SupplierLogo } from '@/components/suppliers/supplier-logo';
 import { RequestStatusBadge } from '@/components/requests/request-status-badge';
+import { UnseenPurchaseCertificateBadge } from '@/components/requests/unseen-purchase-certificate-badge';
 import { Button } from '@/components/ui/button';
 import {
   Combobox,
@@ -140,6 +141,9 @@ export function NfInfoCards({ request, qualityDocument }: NfInfoCardsProps) {
               </h1>
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <RequestStatusBadge status={request.status} />
+                {request.hasUnseenPurchaseCertificate ? (
+                  <UnseenPurchaseCertificateBadge />
+                ) : null}
                 {canEdit ? (
                   <EditPencilButton
                     onClick={() => setEditField('invoiceNumber')}

@@ -3,7 +3,11 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
 import { SupplierLogo } from '@/components/suppliers/supplier-logo';
-import { formatRequestDate } from '@/lib/certificate-request-labels';
+import {
+  formatRequestDate,
+  formatRequestDateTime,
+  getRequestStatusUpdatedAt,
+} from '@/lib/certificate-request-labels';
 import { cn } from '@/lib/utils';
 import type { CertificateRequest } from '@/types/certificate-request';
 import { formatCnpjInput } from '@/utils/cnpj';
@@ -94,11 +98,12 @@ function PurchaseRequestCard({ request }: { request: CertificateRequest }) {
   const tone = cardTone(request);
   const requesterName =
     request.createdByName?.trim() || 'Operador de estoque';
+  const statusUpdatedAt = getRequestStatusUpdatedAt(request);
 
   return (
     <Link
       to={`/compras/solicitacoes/${request.id}`}
-      className="flex h-full min-h-72 flex-col overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-border/60 transition-transform hover:-translate-y-0.5"
+      className="flex h-full min-h-[19.5rem] flex-col overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-border/60 transition-transform hover:-translate-y-0.5"
     >
       <div
         className={cn(
@@ -127,7 +132,7 @@ function PurchaseRequestCard({ request }: { request: CertificateRequest }) {
 
       <div
         className={cn(
-          'flex min-h-0 flex-1 flex-col justify-between gap-3 px-3 py-3',
+          'flex shrink-0 flex-col gap-3 px-3 pt-3 pb-4',
           toneDetailClass[tone],
         )}
       >
@@ -153,6 +158,18 @@ function PurchaseRequestCard({ request }: { request: CertificateRequest }) {
             {request.expectedCertificates} lote
             {request.expectedCertificates === 1 ? '' : 's'}
           </p>
+        </div>
+
+        <div className="mt-auto border-t border-current/10 pt-2">
+          <p className="text-[11px] font-semibold tracking-wide uppercase opacity-70">
+            Última atualização do status
+          </p>
+          <time
+            dateTime={statusUpdatedAt}
+            className="text-xs tabular-nums opacity-90"
+          >
+            {formatRequestDateTime(statusUpdatedAt)}
+          </time>
         </div>
       </div>
     </Link>

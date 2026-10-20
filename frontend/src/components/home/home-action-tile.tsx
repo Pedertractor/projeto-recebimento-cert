@@ -1,12 +1,14 @@
 import { forwardRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
+import { NewCertificateNavIndicator } from '@/components/requests/new-certificate-nav-indicator';
 import { cn } from '@/lib/utils';
 
 type HomeActionTileProps = {
   title: string;
   description?: string;
   badge?: number;
+  showNewCertificate?: boolean;
   to?: string;
   disabled?: boolean;
   onClick?: () => void;
@@ -20,6 +22,7 @@ export const HomeActionTile = forwardRef<HTMLButtonElement, HomeActionTileProps>
       title,
       description,
       badge,
+      showNewCertificate = false,
       to,
       disabled = false,
       onClick,
@@ -39,11 +42,14 @@ export const HomeActionTile = forwardRef<HTMLButtonElement, HomeActionTileProps>
           <span className="text-base font-semibold leading-tight tracking-tight sm:text-lg">
             {title}
           </span>
-          {typeof badge === 'number' && badge > 0 ? (
-            <span className="rounded-full bg-brand-muted px-2 py-0.5 text-xs font-medium text-brand transition-colors group-hover:bg-white/20 group-hover:text-brand-foreground">
-              {badge}
-            </span>
-          ) : null}
+          <span className="flex shrink-0 items-center gap-2">
+            {showNewCertificate ? <NewCertificateNavIndicator /> : null}
+            {typeof badge === 'number' && badge > 0 ? (
+              <span className="rounded-full bg-brand-muted px-2 py-0.5 text-xs font-medium text-brand transition-colors group-hover:bg-white/20 group-hover:text-brand-foreground">
+                {badge}
+              </span>
+            ) : null}
+          </span>
         </span>
         {description ? (
           <span className="text-sm text-muted-foreground transition-colors group-hover:text-brand-foreground/80">

@@ -30,8 +30,12 @@ export type CertificateInspection = {
   chemicalComposition: InspectionCheckResult;
   quantitySpecified: string;
   quantityFound: string;
-  dimensionalSpecified: string;
-  dimensionalFound: string;
+  dimensionalSpecifiedThickness: string;
+  dimensionalSpecifiedWidth: string;
+  dimensionalSpecifiedLength: string;
+  dimensionalFoundThickness: string;
+  dimensionalFoundWidth: string;
+  dimensionalFoundLength: string;
   visualInspection: InspectionCheckResult;
   reportStatus: InspectionCheckResult;
   receiverResponsible: string;
@@ -58,6 +62,7 @@ export type RequestHistoryEvent = {
   eventType: string;
   description: string | null;
   occurredAt: string;
+  actorName?: string | null;
 };
 
 export type CertificateRequest = {
@@ -80,6 +85,7 @@ export type CertificateRequest = {
   submittedAt: string;
   supplierContactAt: string | null;
   completedAt: string | null;
+  hasUnseenPurchaseCertificate?: boolean;
   createdAt: string;
   updatedAt: string;
   attachments?: RequestAttachment[];

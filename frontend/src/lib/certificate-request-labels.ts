@@ -117,6 +117,24 @@ export function certificateRequestStatusClassName(
   }
 }
 
+/** Data/hora em que o status atual da solicitação foi estabelecido. */
+export function getRequestStatusUpdatedAt(
+  request: CertificateRequest,
+): string {
+  switch (request.status) {
+    case 'CONCLUIDA':
+      return request.completedAt ?? request.updatedAt;
+    case 'AGUARDANDO_FORNECEDOR':
+      return request.supplierContactAt ?? request.submittedAt;
+    case 'AGUARDANDO_COMPRAS':
+      return request.submittedAt;
+    case 'CANCELADA':
+    case 'CADASTRADA':
+    default:
+      return request.updatedAt;
+  }
+}
+
 export function formatRequestDate(value: string): string {
   const [year, month, day] = value.slice(0, 10).split('-');
   if (!year || !month || !day) {
@@ -135,6 +153,29 @@ export function formatRequestDateTime(value: string): string {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(date);
+}
+
+export function requestHistoryPurchaseActorLabel(
+  event: { eventType: string; description: string | null; actorName?: string | null },
+): string | null {
+  if (!event.actorName?.trim()) {
+    return null;
+  }
+
+  const name = event.actorName.trim();
+
+  if (event.eventType === 'ENVIO_FORNECEDOR_REGISTRADO') {
+    return `Operador de compras: ${name}`;
+  }
+
+  if (event.eventType === 'CERTIFICADO_ANEXADO') {
+    const description = event.description?.toLowerCase() ?? '';
+    if (description.includes('compras')) {
+      return `Operador de compras: ${name}`;
+    }
+  }
+
+  return null;
 }
 
 export function requestHistoryEventLabel(eventType: string): string {

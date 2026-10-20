@@ -37,6 +37,17 @@ export function canViewQualityDocuments(role: UserRole | undefined): boolean {
   return canManageQualityDocuments(role) || isQualityViewerRole(role);
 }
 
+/** Busca por espessura/largura/comprimento (NF e recebimento). */
+export function canAccessQualityDimensionalSearch(
+  role: UserRole | undefined,
+): boolean {
+  return (
+    isSuperAdminRole(role) ||
+    isQualityViewerRole(role) ||
+    isStockLeaderRole(role)
+  );
+}
+
 export function canDeleteInvoice(role: UserRole | undefined): boolean {
   return isSuperAdminRole(role) || isStockLeaderRole(role);
 }
@@ -49,6 +60,13 @@ export function canExportNfConferenceExcel(
 
 export function canAccessStockModules(role: UserRole | undefined): boolean {
   return isStockOperatorRole(role);
+}
+
+/** Indicador de certificado novo do compras (líder acompanha; operador não vê). */
+export function canViewUnseenPurchaseCertificateIndicators(
+  role: UserRole | undefined,
+): boolean {
+  return isSuperAdminRole(role) || isStockLeaderRole(role);
 }
 
 export function canViewNfMaterials(role: UserRole | undefined): boolean {

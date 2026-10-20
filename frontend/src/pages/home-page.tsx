@@ -4,14 +4,18 @@ import { HomeActionTile } from '@/components/home/home-action-tile';
 import { HomeHeroCard } from '@/components/home/home-hero-card';
 import { useWebSession } from '@/hooks/auth/use-web-session';
 import {
+  canAccessPurchaseModules,
+  canAccessQualityDimensionalSearch,
   canAccessStockModules,
   canManageQualityDocuments,
+  canViewUnseenPurchaseCertificateIndicators,
+  isPurchaseOnlyOperator,
 } from '@/lib/role-access';
-import { isStockLeaderRole } from '@/lib/user-labels';
 import {
   isNfConferenceComplete,
   isNfMissingLotComparisons,
 } from '@/lib/certificate-request-labels';
+import { hasUnseenPurchaseCertificateInList } from '@/lib/unseen-purchase-certificate';
 import {
   certificateRequestsListQueryKey,
   completedCertificateRequestsQueryKey,
@@ -36,8 +40,15 @@ const homeActionTileClassName =
 export function HomePage() {
   const { data: user } = useWebSession();
   const canUseStockModules = canAccessStockModules(user?.role);
-  const isStockLeader = isStockLeaderRole(user?.role);
   const canManageQualityDoc = canManageQualityDocuments(user?.role);
+  const canUseDimensionalSearch = canAccessQualityDimensionalSearch(user?.role);
+  const showUnseenPurchaseCertificateIndicators =
+    canViewUnseenPurchaseCertificateIndicators(user?.role);
+  const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
+  const solicitationsPath =
+    canUsePurchaseModules && !isPurchaseOnlyOperator(user?.role)
+      ? '/compras/solicitacoes'
+      : '/minhas-solicitacoes';
 
   const stockRequestsQuery = useQuery({
     queryKey: certificateRequestsListQueryKey,
@@ -59,6 +70,10 @@ export function HomePage() {
       (request) =>
         request.status !== 'CONCLUIDA' && request.status !== 'CANCELADA',
     ).length ?? 0;
+
+  const hasUnseenPurchaseCertificate =
+    showUnseenPurchaseCertificateIndicators &&
+    hasUnseenPurchaseCertificateInList(requests);
 
   const nfsMissingComparisonsCount =
     conferenceRequests?.filter(isNfMissingLotComparisons).length ?? 0;
@@ -114,14 +129,15 @@ export function HomePage() {
         />
         <HomeActionTile
           className={homeActionTileClassName}
-          title={isStockLeader ? 'Solicitações' : 'Minhas solicitações'}
+          title="Solicitações"
           description={
-            isStockLeader
-              ? 'Acompanhe a equipe e o que está em andamento'
-              : 'Acompanhe o que ainda está em andamento'
+            solicitationsPath === '/compras/solicitacoes'
+              ? 'Acompanhe as solicitações enviadas ao compras'
+              : 'Acompanhe as solicitações da equipe de estoque'
           }
-          to="/minhas-solicitacoes"
+          to={solicitationsPath}
           badge={openRequestsCount}
+          showNewCertificate={hasUnseenPurchaseCertificate}
         />
         {canManageQualityDoc ? (
           <HomeActionTile
@@ -129,6 +145,14 @@ export function HomePage() {
             title="Doc qualidade"
             description="Padrões usados na conferência"
             to="/doc-qualidade"
+          />
+        ) : null}
+        {canUseDimensionalSearch ? (
+          <HomeActionTile
+            className={homeActionTileClassName}
+            title="Busca dimensionais"
+            description="Localize NFs por espessura, largura e comprimento"
+            to="/qualidade/busca-dimensionais"
           />
         ) : null}
         <HomeActionTile

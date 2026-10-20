@@ -122,8 +122,10 @@ export function certificateRequestRoutes(fastify: FastifyInstance) {
         fastify.authenticate,
         fastify.authorize(
           UserRole.STOCK_OPERATOR,
+          UserRole.STOCK_LEADER,
           UserRole.PURCHASE_OPERATOR,
           UserRole.QUALITY_VIEWER,
+          UserRole.SUPERADMIN,
         ),
       ],
     },

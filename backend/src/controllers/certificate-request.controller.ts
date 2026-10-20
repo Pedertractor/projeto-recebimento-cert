@@ -77,15 +77,7 @@ function canAccessCertificateRequest(
   }
 
   if (user.role === UserRole.STOCK_OPERATOR) {
-    if (request.status === CertificateRequestStatus.CANCELADA) {
-      return false;
-    }
-
-    if (request.status === CertificateRequestStatus.CONCLUIDA) {
-      return true;
-    }
-
-    return request.createdByUserId === user.id;
+    return true;
   }
 
   return false;
@@ -136,6 +128,12 @@ export async function getCertificateRequestController(
 
   if (!canAccessCertificateRequest(request, req.user)) {
     throw new AppError('Acesso negado.', 403);
+  }
+
+  if (req.user.role === UserRole.STOCK_OPERATOR) {
+    await service.markPurchaseCertificateSeenByStock(req.params.id);
+    const refreshed = await service.findById(req.params.id);
+    return reply.send(refreshed);
   }
 
   return reply.send(request);

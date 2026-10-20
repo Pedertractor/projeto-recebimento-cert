@@ -3,6 +3,7 @@ import { MotionIconProvider } from '@/components/motion-icon-provider';
 import { DefaultRouteRedirect } from '@/components/auth/default-route-redirect';
 import { HomeRoute } from '@/components/auth/home-route';
 import { RequireProductTypeManagement } from '@/components/auth/require-product-type-management';
+import { RequireQualityDimensionalSearch } from '@/components/auth/require-quality-dimensional-search';
 import { RequireQualityDocumentManager } from '@/components/auth/require-quality-document-manager';
 import { RequireUserManagement } from '@/components/auth/require-user-management';
 import { RequireAuth } from '@/components/auth/require-auth';
@@ -15,6 +16,7 @@ import { AdminThemeProvider } from '@/providers/admin-theme-provider';
 import { LoginPage } from '@/pages/auth/login-page';
 import { CertificateComparisonPage } from '@/pages/certificate-comparison-page';
 import { DocQualidadePage } from '@/pages/doc-qualidade-page';
+import { QualityDimensionalSearchPage } from '@/pages/quality-dimensional-search-page';
 import { ProductTypesPage } from '@/pages/product-types-page';
 import { FornecedoresPage } from '@/pages/fornecedores-page';
 import { MinhasSolicitacoesPage } from '@/pages/minhas-solicitacoes-page';
@@ -38,6 +40,12 @@ export function AppRouter() {
                 <Route path="/" element={<HomeRoute />} />
                 <Route element={<RequireQualityDocumentManager />}>
                   <Route path="/doc-qualidade" element={<DocQualidadePage />} />
+                </Route>
+                <Route element={<RequireQualityDimensionalSearch />}>
+                  <Route
+                    path="/qualidade/busca-dimensionais"
+                    element={<QualityDimensionalSearchPage />}
+                  />
                 </Route>
                 <Route element={<RequireProductTypeManagement />}>
                   <Route
