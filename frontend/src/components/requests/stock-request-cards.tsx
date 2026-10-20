@@ -123,7 +123,7 @@ function StockRequestCard({
           className={cn(
             'flex min-h-0 flex-1 items-center gap-3 rounded-b-2xl px-3 py-3',
             tonePanelClass[tone],
-            request.hasUnseenPurchaseCertificate && 'pr-[5.5rem]',
+            request.hasUnseenPurchaseCertificate && 'pr-[6.25rem]',
           )}
         >
           <div className="size-11 shrink-0 overflow-hidden rounded-xl bg-background ring-1 ring-white/40">

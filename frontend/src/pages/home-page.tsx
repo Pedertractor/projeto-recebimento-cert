@@ -12,6 +12,7 @@ import {
   isNfConferenceComplete,
   isNfMissingLotComparisons,
 } from '@/lib/certificate-request-labels';
+import { hasUnseenPurchaseCertificateInList } from '@/lib/unseen-purchase-certificate';
 import {
   certificateRequestsListQueryKey,
   completedCertificateRequestsQueryKey,
@@ -59,6 +60,9 @@ export function HomePage() {
       (request) =>
         request.status !== 'CONCLUIDA' && request.status !== 'CANCELADA',
     ).length ?? 0;
+
+  const hasUnseenPurchaseCertificate =
+    hasUnseenPurchaseCertificateInList(requests);
 
   const nfsMissingComparisonsCount =
     conferenceRequests?.filter(isNfMissingLotComparisons).length ?? 0;
@@ -118,6 +122,7 @@ export function HomePage() {
           description="Acompanhe as solicitações da equipe de estoque"
           to="/minhas-solicitacoes"
           badge={openRequestsCount}
+          showNewCertificate={hasUnseenPurchaseCertificate}
         />
         {canManageQualityDoc ? (
           <HomeActionTile

@@ -29,7 +29,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { NewCertificateNavIndicator } from '@/components/requests/new-certificate-nav-indicator';
 import { useWebSession } from '@/hooks/auth/use-web-session';
+import { useHasUnseenPurchaseCertificate } from '@/hooks/use-has-unseen-purchase-certificate';
 import {
   canAccessPurchaseModules,
   canAccessStockModules,
@@ -47,6 +49,7 @@ type SidebarNavItem = {
   tooltip: string;
   icon: React.ComponentType<{ size?: number }>;
   isActive: (pathname: string) => boolean;
+  showNewCertificate?: boolean;
 };
 
 function SidebarNavGroup({
@@ -83,7 +86,12 @@ function SidebarNavGroup({
                 >
                   <Link to={item.href} {...motionIconGroupProps}>
                     <Icon size={16} />
-                    <span>{item.label}</span>
+                    <span className="flex flex-1 items-center justify-between gap-2">
+                      <span>{item.label}</span>
+                      {item.showNewCertificate ? (
+                        <NewCertificateNavIndicator size="sm" />
+                      ) : null}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -102,6 +110,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const canViewQualityDoc = canViewQualityDocuments(user?.role);
   const canManageQualityDoc = canManageQualityDocuments(user?.role);
   const canUseStockModules = canAccessStockModules(user?.role);
+  const hasUnseenPurchaseCertificate = useHasUnseenPurchaseCertificate(
+    canUseStockModules,
+  );
   const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
   const purchaseOnly = isPurchaseOnlyOperator(user?.role);
   const qualityViewer = isQualityViewerRole(user?.role);
@@ -192,9 +203,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           label: 'Solicitações',
           href: '/minhas-solicitacoes',
-          tooltip: 'Solicitações de certificado',
+          tooltip: hasUnseenPurchaseCertificate
+            ? 'Solicitações — novo certificado do compras'
+            : 'Solicitações de certificado',
           icon: ClipboardList,
           isActive: (path) => path.startsWith('/minhas-solicitacoes'),
+          showNewCertificate: hasUnseenPurchaseCertificate,
         },
         {
           label: "NF's de materiais",
