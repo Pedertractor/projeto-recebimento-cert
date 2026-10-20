@@ -117,6 +117,24 @@ export function certificateRequestStatusClassName(
   }
 }
 
+/** Data/hora em que o status atual da solicitação foi estabelecido. */
+export function getRequestStatusUpdatedAt(
+  request: CertificateRequest,
+): string {
+  switch (request.status) {
+    case 'CONCLUIDA':
+      return request.completedAt ?? request.updatedAt;
+    case 'AGUARDANDO_FORNECEDOR':
+      return request.supplierContactAt ?? request.submittedAt;
+    case 'AGUARDANDO_COMPRAS':
+      return request.submittedAt;
+    case 'CANCELADA':
+    case 'CADASTRADA':
+    default:
+      return request.updatedAt;
+  }
+}
+
 export function formatRequestDate(value: string): string {
   const [year, month, day] = value.slice(0, 10).split('-');
   if (!year || !month || !day) {

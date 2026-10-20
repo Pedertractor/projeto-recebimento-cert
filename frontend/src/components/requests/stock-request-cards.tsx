@@ -5,7 +5,11 @@ import { Link } from 'react-router-dom';
 import { StockRequestNewCertificateIndicator } from '@/components/requests/stock-request-new-certificate-indicator';
 import { SupplierLogo } from '@/components/suppliers/supplier-logo';
 import { Button } from '@/components/ui/button';
-import { formatRequestDate } from '@/lib/certificate-request-labels';
+import {
+  formatRequestDate,
+  formatRequestDateTime,
+  getRequestStatusUpdatedAt,
+} from '@/lib/certificate-request-labels';
 import { cn } from '@/lib/utils';
 import type { CertificateRequest } from '@/types/certificate-request';
 import { formatCnpjInput } from '@/utils/cnpj';
@@ -113,10 +117,11 @@ function StockRequestCard({
     request.hasUnseenPurchaseCertificate;
   const showNfLink =
     request.status === 'CONCLUIDA' || showNewCertificate;
+  const statusUpdatedAt = getRequestStatusUpdatedAt(request);
 
   return (
     <article
-      className="relative flex h-full min-h-80 flex-col overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-border/60"
+      className="relative flex h-full min-h-[21rem] flex-col overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-border/60"
     >
       {showNewCertificate ? (
         <StockRequestNewCertificateIndicator />
@@ -153,7 +158,7 @@ function StockRequestCard({
 
         <div
           className={cn(
-            'flex min-h-0 flex-1 flex-col justify-between gap-3 px-3 py-3',
+            'flex shrink-0 flex-col gap-3 px-3 pt-3 pb-4',
             toneDetailClass[tone],
           )}
         >
@@ -167,20 +172,30 @@ function StockRequestCard({
             <CardStatusMark tone={tone} />
           </div>
 
-          <div className="min-w-0 space-y-2">
-            <div>
-              <p className="text-[11px] font-semibold tracking-wide uppercase opacity-70">
-                Nota fiscal
-              </p>
-              <p className="truncate text-lg font-semibold tracking-tight">
-                {request.invoiceNumber}
-              </p>
-              <p className="mt-1 truncate text-xs opacity-80">
-                {formatRequestDate(request.invoiceDate)} ·{' '}
-                {request.expectedCertificates} lote
-                {request.expectedCertificates === 1 ? '' : 's'}
-              </p>
-            </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold tracking-wide uppercase opacity-70">
+              Nota fiscal
+            </p>
+            <p className="truncate text-lg font-semibold tracking-tight">
+              {request.invoiceNumber}
+            </p>
+            <p className="mt-1 truncate text-xs opacity-80">
+              {formatRequestDate(request.invoiceDate)} ·{' '}
+              {request.expectedCertificates} lote
+              {request.expectedCertificates === 1 ? '' : 's'}
+            </p>
+          </div>
+
+          <div className="mt-auto border-t border-current/10 pt-2">
+            <p className="text-[11px] font-semibold tracking-wide uppercase opacity-70">
+              Última atualização do status
+            </p>
+            <time
+              dateTime={statusUpdatedAt}
+              className="text-xs tabular-nums opacity-90"
+            >
+              {formatRequestDateTime(statusUpdatedAt)}
+            </time>
           </div>
         </div>
       </Link>
