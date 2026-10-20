@@ -9,6 +9,7 @@ import {
   House,
   Inbox,
   Package,
+  Ruler,
   Users,
 } from 'lucide-react-motion';
 
@@ -140,6 +141,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             icon: FileText,
             isActive: (path) => path.startsWith('/doc-qualidade'),
           },
+          {
+            label: 'Busca dimensionais',
+            href: '/qualidade/busca-dimensionais',
+            tooltip: 'Busca por espessura, largura e comprimento',
+            icon: Ruler,
+            isActive: (path) => path.startsWith('/qualidade/busca-dimensionais'),
+          },
         ]
       : [];
 
@@ -151,6 +159,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           tooltip: 'Doc qualidade',
           icon: FileText,
           isActive: (path) => path.startsWith('/doc-qualidade'),
+        },
+        {
+          label: 'Busca dimensionais',
+          href: '/qualidade/busca-dimensionais',
+          tooltip: 'Busca por espessura, largura e comprimento',
+          icon: Ruler,
+          isActive: (path) => path.startsWith('/qualidade/busca-dimensionais'),
         },
         {
           label: "NF's de materiais",

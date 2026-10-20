@@ -1,5 +1,6 @@
 import { forwardRef, type ReactNode } from 'react';
 import {
+  formatInspectionDimensions,
   formatInspectionOkNok,
   formatReportStatus,
   getInspectionFieldValue,
@@ -102,12 +103,12 @@ const FORM_ROWS: FormRowDefinition[] = [
   {
     label: 'Dimensional especificado NF',
     render: (column) =>
-      getInspectionFieldValue(column.inspection, 'dimensionalSpecified'),
+      formatInspectionDimensions(column.inspection, 'specified'),
   },
   {
     label: 'Dimensional encontrado no recebimento',
     render: (column) =>
-      getInspectionFieldValue(column.inspection, 'dimensionalFound'),
+      formatInspectionDimensions(column.inspection, 'found'),
   },
   {
     label: 'Visual',

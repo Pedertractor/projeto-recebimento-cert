@@ -30,8 +30,12 @@ export type CertificateInspection = {
   chemicalComposition: InspectionCheckResult;
   quantitySpecified: string;
   quantityFound: string;
-  dimensionalSpecified: string;
-  dimensionalFound: string;
+  dimensionalSpecifiedThickness: string;
+  dimensionalSpecifiedWidth: string;
+  dimensionalSpecifiedLength: string;
+  dimensionalFoundThickness: string;
+  dimensionalFoundWidth: string;
+  dimensionalFoundLength: string;
   visualInspection: InspectionCheckResult;
   reportStatus: InspectionCheckResult;
   receiverResponsible: string;

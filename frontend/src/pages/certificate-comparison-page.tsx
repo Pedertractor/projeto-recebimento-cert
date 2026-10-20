@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { CertificateComparisonForm } from '@/components/conference/certificate-comparison-form';
@@ -21,13 +21,21 @@ import {
   submitCertificateInspection,
 } from '@/services/certificate-requests/certificate-request.service';
 import type { CertificateComparisonFormValues } from '@/schemas/certificate-comparison.schema';
+import { getComparisonReturnTo } from '@/lib/comparison-navigation';
+import { normalizeStoredDimensionalValue } from '@/utils/dimensional-input';
 
 export function CertificateComparisonPage() {
   useSidebarAutoCollapse();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { id, attachmentId } = useParams();
   const requestId = Number(id);
+  const returnTo = getComparisonReturnTo(location.state);
+  const backHref = returnTo ?? `/notas-fiscais/${requestId}`;
+  const backLabel = returnTo?.includes('/qualidade/busca-dimensionais')
+    ? 'Voltar para busca'
+    : 'Voltar para NF';
   const { data: user } = useWebSession();
   const readOnly = !canEditNfMaterials(user?.role);
 
@@ -116,9 +124,9 @@ export function CertificateComparisonPage() {
     return (
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
         <Button asChild variant="ghost" className="w-fit">
-          <Link to={`/notas-fiscais/${requestId}`}>
+          <Link to={backHref}>
             <ArrowLeft className="size-4" />
-            Voltar
+            {backLabel}
           </Link>
         </Button>
         <div className="rounded-2xl bg-destructive/5 px-4 py-4">
@@ -146,8 +154,30 @@ export function CertificateComparisonPage() {
         chemicalComposition: inspection.chemicalComposition,
         quantitySpecified: inspection.quantitySpecified,
         quantityFound: inspection.quantityFound,
-        dimensionalSpecified: inspection.dimensionalSpecified,
-        dimensionalFound: inspection.dimensionalFound,
+        dimensionalSpecifiedThickness: normalizeStoredDimensionalValue(
+          inspection.dimensionalSpecifiedThickness,
+          2,
+        ),
+        dimensionalSpecifiedWidth: normalizeStoredDimensionalValue(
+          inspection.dimensionalSpecifiedWidth,
+          3,
+        ),
+        dimensionalSpecifiedLength: normalizeStoredDimensionalValue(
+          inspection.dimensionalSpecifiedLength,
+          3,
+        ),
+        dimensionalFoundThickness: normalizeStoredDimensionalValue(
+          inspection.dimensionalFoundThickness,
+          2,
+        ),
+        dimensionalFoundWidth: normalizeStoredDimensionalValue(
+          inspection.dimensionalFoundWidth,
+          3,
+        ),
+        dimensionalFoundLength: normalizeStoredDimensionalValue(
+          inspection.dimensionalFoundLength,
+          3,
+        ),
         visualInspection: inspection.visualInspection,
         reportStatus: inspection.reportStatus,
         receiverResponsible: inspection.receiverResponsible,
@@ -162,9 +192,9 @@ export function CertificateComparisonPage() {
     <div className="page-container-wide">
       <div className="min-w-0 space-y-3">
         <Button asChild variant="ghost" className="-ml-2 w-fit px-2">
-          <Link to={`/notas-fiscais/${requestId}`}>
+          <Link to={backHref}>
             <ArrowLeft className="size-4" />
-            Voltar para NF
+            {backLabel}
           </Link>
         </Button>
         <div>

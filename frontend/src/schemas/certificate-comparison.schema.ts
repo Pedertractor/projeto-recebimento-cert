@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { inspectionDimensionFieldsSchema } from '@/schemas/inspection-dimensions.schema';
+
 export const certificateComparisonFormSchema = z.object({
   receiptDate: z.string().min(1, 'Informe a data do recebimento.'),
   materialDescription: z
@@ -22,14 +24,7 @@ export const certificateComparisonFormSchema = z.object({
     .string()
     .trim()
     .min(1, 'Informe a quantidade encontrada no recebimento.'),
-  dimensionalSpecified: z
-    .string()
-    .trim()
-    .min(1, 'Informe o dimensional especificado na NF.'),
-  dimensionalFound: z
-    .string()
-    .trim()
-    .min(1, 'Informe o dimensional encontrado no recebimento.'),
+  ...inspectionDimensionFieldsSchema.shape,
   visualInspection: z.enum(['OK', 'NOK'], {
     message: 'Informe se o visual está OK ou NOK.',
   }),

@@ -68,6 +68,31 @@ export function formatInspectionDate(value: string | null | undefined): string {
   return formatRequestDate(value);
 }
 
+export function formatInspectionDimensions(
+  inspection: CertificateInspection | null,
+  kind: 'specified' | 'found',
+): string {
+  if (!inspection) {
+    return '—';
+  }
+
+  const parts =
+    kind === 'specified'
+      ? [
+          inspection.dimensionalSpecifiedThickness,
+          inspection.dimensionalSpecifiedWidth,
+          inspection.dimensionalSpecifiedLength,
+        ]
+      : [
+          inspection.dimensionalFoundThickness,
+          inspection.dimensionalFoundWidth,
+          inspection.dimensionalFoundLength,
+        ];
+
+  const formatted = parts.map((part) => part.trim()).filter(Boolean);
+  return formatted.length > 0 ? formatted.join(' X ') : '—';
+}
+
 export function getInspectionFieldValue(
   inspection: CertificateInspection | null,
   field:
@@ -77,8 +102,6 @@ export function getInspectionFieldValue(
     | 'certificateNumber'
     | 'quantitySpecified'
     | 'quantityFound'
-    | 'dimensionalSpecified'
-    | 'dimensionalFound'
     | 'receiverResponsible',
 ): string {
   if (!inspection) {
