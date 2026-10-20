@@ -14,6 +14,7 @@ type StockRequestCardsProps = {
   requests: CertificateRequest[];
   detailPath: (requestId: number) => string;
   nfPath: (requestId: number) => string;
+  showUnseenPurchaseCertificateIndicators?: boolean;
 };
 
 type CardTone = 'pending' | 'email' | 'done' | 'cancelled';
@@ -97,22 +98,27 @@ function StockRequestCard({
   request,
   detailPath,
   nfPath,
+  showUnseenPurchaseCertificateIndicators,
 }: {
   request: CertificateRequest;
   detailPath: (requestId: number) => string;
   nfPath: (requestId: number) => string;
+  showUnseenPurchaseCertificateIndicators: boolean;
 }) {
   const tone = cardTone(request);
   const requesterName =
     request.createdByName?.trim() || 'Operador de estoque';
+  const showNewCertificate =
+    showUnseenPurchaseCertificateIndicators &&
+    request.hasUnseenPurchaseCertificate;
   const showNfLink =
-    request.status === 'CONCLUIDA' || request.hasUnseenPurchaseCertificate;
+    request.status === 'CONCLUIDA' || showNewCertificate;
 
   return (
     <article
       className="relative flex h-full min-h-80 flex-col overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-border/60"
     >
-      {request.hasUnseenPurchaseCertificate ? (
+      {showNewCertificate ? (
         <StockRequestNewCertificateIndicator />
       ) : null}
       <Link
@@ -123,7 +129,7 @@ function StockRequestCard({
           className={cn(
             'flex min-h-0 flex-1 items-center gap-3 rounded-b-2xl px-3 py-3',
             tonePanelClass[tone],
-            request.hasUnseenPurchaseCertificate && 'pr-[6.25rem]',
+            showNewCertificate && 'pr-[6.25rem]',
           )}
         >
           <div className="size-11 shrink-0 overflow-hidden rounded-xl bg-background ring-1 ring-white/40">
@@ -194,6 +200,7 @@ export function StockRequestCards({
   requests,
   detailPath,
   nfPath,
+  showUnseenPurchaseCertificateIndicators = false,
 }: StockRequestCardsProps) {
   if (requests.length === 0) {
     return (
@@ -211,6 +218,9 @@ export function StockRequestCards({
           request={request}
           detailPath={detailPath}
           nfPath={nfPath}
+          showUnseenPurchaseCertificateIndicators={
+            showUnseenPurchaseCertificateIndicators
+          }
         />
       ))}
     </div>

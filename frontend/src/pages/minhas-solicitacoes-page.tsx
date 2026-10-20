@@ -6,6 +6,8 @@ import { Link } from 'react-router-dom';
 import { CertificateRequestTableFilters } from '@/components/requests/certificate-request-table-filters';
 import { StockRequestCards } from '@/components/requests/stock-request-cards';
 import { Button } from '@/components/ui/button';
+import { useWebSession } from '@/hooks/auth/use-web-session';
+import { canViewUnseenPurchaseCertificateIndicators } from '@/lib/role-access';
 import {
   buildCertificateRequestListFiltersSummary,
   filterCertificateRequestList,
@@ -19,6 +21,10 @@ import {
 } from '@/services/certificate-requests/certificate-request.service';
 
 export function MinhasSolicitacoesPage() {
+  const { data: sessionUser } = useWebSession();
+  const showUnseenPurchaseCertificateIndicators =
+    canViewUnseenPurchaseCertificateIndicators(sessionUser?.role);
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<RequestListStatusFilter>('ALL');
@@ -60,8 +66,9 @@ export function MinhasSolicitacoesPage() {
         <div className="min-w-0">
           <h1 className="page-heading">Solicitações</h1>
           <p className="page-lead">
-            Solicitações em aberto de toda a equipe de estoque e NFs com
-            certificado novo do compras aguardando visualização.
+            {showUnseenPurchaseCertificateIndicators
+              ? 'Solicitações em aberto de toda a equipe de estoque e NFs com certificado novo do compras aguardando visualização pela operação.'
+              : 'Solicitações em aberto de toda a equipe de estoque.'}
           </p>
         </div>
         <Button
@@ -105,6 +112,9 @@ export function MinhasSolicitacoesPage() {
             requests={filteredRequests}
             detailPath={(id) => `/minhas-solicitacoes/${id}`}
             nfPath={(id) => `/notas-fiscais/${id}`}
+            showUnseenPurchaseCertificateIndicators={
+              showUnseenPurchaseCertificateIndicators
+            }
           />
         </div>
       ) : null}

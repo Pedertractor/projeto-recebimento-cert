@@ -4,9 +4,12 @@ import { HomeActionTile } from '@/components/home/home-action-tile';
 import { HomeHeroCard } from '@/components/home/home-hero-card';
 import { useWebSession } from '@/hooks/auth/use-web-session';
 import {
+  canAccessPurchaseModules,
   canAccessQualityDimensionalSearch,
   canAccessStockModules,
   canManageQualityDocuments,
+  canViewUnseenPurchaseCertificateIndicators,
+  isPurchaseOnlyOperator,
 } from '@/lib/role-access';
 import {
   isNfConferenceComplete,
@@ -39,6 +42,13 @@ export function HomePage() {
   const canUseStockModules = canAccessStockModules(user?.role);
   const canManageQualityDoc = canManageQualityDocuments(user?.role);
   const canUseDimensionalSearch = canAccessQualityDimensionalSearch(user?.role);
+  const showUnseenPurchaseCertificateIndicators =
+    canViewUnseenPurchaseCertificateIndicators(user?.role);
+  const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
+  const solicitationsPath =
+    canUsePurchaseModules && !isPurchaseOnlyOperator(user?.role)
+      ? '/compras/solicitacoes'
+      : '/minhas-solicitacoes';
 
   const stockRequestsQuery = useQuery({
     queryKey: certificateRequestsListQueryKey,
@@ -62,6 +72,7 @@ export function HomePage() {
     ).length ?? 0;
 
   const hasUnseenPurchaseCertificate =
+    showUnseenPurchaseCertificateIndicators &&
     hasUnseenPurchaseCertificateInList(requests);
 
   const nfsMissingComparisonsCount =
@@ -119,8 +130,12 @@ export function HomePage() {
         <HomeActionTile
           className={homeActionTileClassName}
           title="Solicitações"
-          description="Acompanhe as solicitações da equipe de estoque"
-          to="/minhas-solicitacoes"
+          description={
+            solicitationsPath === '/compras/solicitacoes'
+              ? 'Acompanhe as solicitações enviadas ao compras'
+              : 'Acompanhe as solicitações da equipe de estoque'
+          }
+          to={solicitationsPath}
           badge={openRequestsCount}
           showNewCertificate={hasUnseenPurchaseCertificate}
         />

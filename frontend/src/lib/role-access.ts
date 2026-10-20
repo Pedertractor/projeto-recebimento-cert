@@ -62,6 +62,13 @@ export function canAccessStockModules(role: UserRole | undefined): boolean {
   return isStockOperatorRole(role);
 }
 
+/** Indicador de certificado novo do compras (líder acompanha; operador não vê). */
+export function canViewUnseenPurchaseCertificateIndicators(
+  role: UserRole | undefined,
+): boolean {
+  return isSuperAdminRole(role) || isStockLeaderRole(role);
+}
+
 export function canViewNfMaterials(role: UserRole | undefined): boolean {
   return (
     canAccessStockModules(role) ||

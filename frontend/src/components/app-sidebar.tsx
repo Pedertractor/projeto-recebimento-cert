@@ -37,6 +37,7 @@ import {
   canAccessQualityDimensionalSearch,
   canAccessStockModules,
   canAccessUserManagement,
+  canViewUnseenPurchaseCertificateIndicators,
   canManageQualityDocuments,
   canViewQualityDocuments,
   getDefaultRouteForRole,
@@ -112,8 +113,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const canManageQualityDoc = canManageQualityDocuments(user?.role);
   const canUseDimensionalSearch = canAccessQualityDimensionalSearch(user?.role);
   const canUseStockModules = canAccessStockModules(user?.role);
+  const canShowUnseenPurchaseCertificateIndicators =
+    canViewUnseenPurchaseCertificateIndicators(user?.role);
   const hasUnseenPurchaseCertificate = useHasUnseenPurchaseCertificate(
-    canUseStockModules,
+    canUseStockModules && canShowUnseenPurchaseCertificateIndicators,
   );
   const canUsePurchaseModules = canAccessPurchaseModules(user?.role);
   const purchaseOnly = isPurchaseOnlyOperator(user?.role);
@@ -194,6 +197,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ]
     : [];
 
+  const showStockSolicitationsInOperacoes =
+    canUseStockModules && !canUsePurchaseModules;
+
   const stockItems: SidebarNavItem[] = canUseStockModules
     ? [
         ...qualityDocItems,
@@ -208,16 +214,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             path.startsWith('/cadastrar-nf') ||
             path.startsWith('/solicitar-certificado'),
         },
-        {
-          label: 'Solicitações',
-          href: '/minhas-solicitacoes',
-          tooltip: hasUnseenPurchaseCertificate
-            ? 'Solicitações — novo certificado do compras'
-            : 'Solicitações de certificado',
-          icon: ClipboardList,
-          isActive: (path) => path.startsWith('/minhas-solicitacoes'),
-          showNewCertificate: hasUnseenPurchaseCertificate,
-        },
+        ...(showStockSolicitationsInOperacoes
+          ? [
+              {
+                label: 'Solicitações',
+                href: '/minhas-solicitacoes',
+                tooltip: 'Solicitações de certificado',
+                icon: ClipboardList,
+                isActive: (path: string) =>
+                  path.startsWith('/minhas-solicitacoes'),
+              },
+            ]
+          : []),
         {
           label: "NF's de materiais",
           href: '/notas-fiscais',
@@ -251,9 +259,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           label: 'Solicitações',
           href: '/compras/solicitacoes',
-          tooltip: 'Solicitações de certificado',
+          tooltip: hasUnseenPurchaseCertificate
+            ? 'Solicitações — novo certificado do compras'
+            : 'Solicitações de certificado',
           icon: Inbox,
           isActive: (path) => path.startsWith('/compras/solicitacoes'),
+          showNewCertificate: hasUnseenPurchaseCertificate,
         },
       ]
     : [];
