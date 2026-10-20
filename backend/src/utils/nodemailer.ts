@@ -37,6 +37,7 @@ export async function sendEmailByNodeMailer(
   subject: string,
   html: string,
   text?: string,
+  cc?: string | string[],
 ) {
   if (!isMailConfigured()) {
     throw new Error(
@@ -54,9 +55,19 @@ export async function sendEmailByNodeMailer(
     throw new Error('Nenhum destinatário informado.');
   }
 
+  const ccRecipients = [
+    ...new Set(
+      (cc ? (Array.isArray(cc) ? cc : [cc]) : [])
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean)
+        .filter((email) => !recipients.includes(email)),
+    ),
+  ];
+
   return getMailTransporter().sendMail({
     from: `"Confere NF" <${env.EMAIL_AUTOMACAO}>`,
     to: recipients,
+    ...(ccRecipients.length > 0 ? { cc: ccRecipients } : {}),
     subject,
     html,
     text,

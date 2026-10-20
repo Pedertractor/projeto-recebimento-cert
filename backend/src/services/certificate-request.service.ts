@@ -753,6 +753,21 @@ export class CertificateRequestService {
     const userService = new UserService(this.prisma);
     const purchaseOperatorEmails =
       await userService.listActivePurchaseOperatorEmails();
+    const stockLeaderEmails =
+      await userService.listActiveStockLeaderEmails();
+    const requesterUser = await this.prisma.user.findUnique({
+      where: { id: fullRequest.createdByUserId },
+      select: { email: true },
+    });
+    const requesterEmail = requesterUser?.email?.trim().toLowerCase();
+    const ccRecipients = [
+      ...new Set(
+        [
+          ...stockLeaderEmails,
+          ...(requesterEmail ? [requesterEmail] : []),
+        ].filter(Boolean),
+      ),
+    ];
     const recipients = resolvePurchaseNotificationRecipients(
       purchaseOperatorEmails,
     );
@@ -769,14 +784,20 @@ export class CertificateRequestService {
       submittedAt: fullRequest.submittedAt,
       magicLinkUrl,
       recipients,
+      ccRecipients,
     });
+
+    const purchaseEmailHistorySuffix =
+      emailDispatch.ccRecipients.length > 0
+        ? `; cópia (${emailDispatch.ccRecipients.join(', ')})`
+        : '';
 
     await this.prisma.requestHistoryEvent.create({
       data: {
         requestId: fullRequest.id,
         eventType: RequestHistoryEventType.EMAIL_COMPRAS_ENVIADO,
         description: emailDispatch.recipients.length
-          ? `Solicitação de documento enviada ao compras (${emailDispatch.recipients.join(', ')}).`
+          ? `Solicitação de documento enviada ao compras (${emailDispatch.recipients.join(', ')})${purchaseEmailHistorySuffix}.`
           : 'Solicitação de documento registrada (nenhum operador de compras com e-mail cadastrado).',
         actorUserId: userId,
       },

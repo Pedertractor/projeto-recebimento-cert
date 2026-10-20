@@ -295,4 +295,22 @@ export class UserService {
 
     return [...new Set(emails)];
   }
+
+  async listActiveStockLeaderEmails(): Promise<string[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.STOCK_LEADER,
+        status: true,
+        deletedAt: null,
+        email: { not: null },
+      },
+      select: { email: true },
+    });
+
+    const emails = users
+      .map((user) => user.email?.trim().toLowerCase())
+      .filter((email): email is string => Boolean(email));
+
+    return [...new Set(emails)];
+  }
 }

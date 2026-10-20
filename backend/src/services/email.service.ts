@@ -17,11 +17,13 @@ type NewRequestEmailParams = {
   submittedAt: string;
   magicLinkUrl: string;
   recipients: string[];
+  ccRecipients?: string[];
 };
 
 export type EmailDispatchResult = {
   sent: boolean;
   recipients: string[];
+  ccRecipients: string[];
 };
 
 function formatRecipients(to: string | string[]): string {
@@ -33,18 +35,23 @@ async function dispatchEmail(
   subject: string,
   html: string,
   text: string,
+  cc?: string[],
 ): Promise<boolean> {
   const recipientLabel = formatRecipients(to);
+  const ccLabel =
+    cc && cc.length > 0 ? ` (cópia: ${formatRecipients(cc)})` : '';
 
   if (!isMailConfigured()) {
-    console.info(`[email:skipped] SMTP não configurado. Para ${recipientLabel}`);
+    console.info(
+      `[email:skipped] SMTP não configurado. Para ${recipientLabel}${ccLabel}`,
+    );
     console.info(subject);
     console.info(text);
     return false;
   }
 
-  await sendEmailByNodeMailer(to, subject, html, text);
-  console.info(`[email:sent] Para ${recipientLabel}`);
+  await sendEmailByNodeMailer(to, subject, html, text, cc);
+  console.info(`[email:sent] Para ${recipientLabel}${ccLabel}`);
   return true;
 }
 
@@ -59,6 +66,15 @@ export async function sendNewCertificateRequestEmail(
     ),
   ];
 
+  const ccRecipients = [
+    ...new Set(
+      (params.ccRecipients ?? [])
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean)
+        .filter((email) => !recipients.includes(email)),
+    ),
+  ];
+
   const { subject, html, text } = buildNewCertificateRequestEmail(params);
 
   if (recipients.length === 0) {
@@ -67,14 +83,21 @@ export async function sendNewCertificateRequestEmail(
     );
     console.info(subject);
     console.info(text);
-    return { sent: false, recipients: [] };
+    return { sent: false, recipients: [], ccRecipients };
   }
 
   try {
-    const sent = await dispatchEmail(recipients, subject, html, text);
+    const sent = await dispatchEmail(
+      recipients,
+      subject,
+      html,
+      text,
+      ccRecipients,
+    );
     return {
       sent,
       recipients: sent ? recipients : [],
+      ccRecipients: sent ? ccRecipients : [],
     };
   } catch (error) {
     console.error(
@@ -87,7 +110,13 @@ export async function sendNewCertificateRequestEmail(
 
   for (const recipient of recipients) {
     try {
-      const sent = await dispatchEmail(recipient, subject, html, text);
+      const sent = await dispatchEmail(
+        recipient,
+        subject,
+        html,
+        text,
+        ccRecipients,
+      );
       if (sent) {
         deliveredRecipients.push(recipient);
       }
@@ -99,6 +128,7 @@ export async function sendNewCertificateRequestEmail(
   return {
     sent: deliveredRecipients.length > 0,
     recipients: deliveredRecipients,
+    ccRecipients: deliveredRecipients.length > 0 ? ccRecipients : [],
   };
 }
 
