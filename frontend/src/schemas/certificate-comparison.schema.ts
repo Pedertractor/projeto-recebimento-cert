@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-import { inspectionDimensionFieldsSchema } from '@/schemas/inspection-dimensions.schema';
+import { inspectionDimensionFieldsSchemaForProductType } from '@/schemas/inspection-dimensions.schema';
 
-export const certificateComparisonFormSchema = z.object({
+const certificateComparisonFormBaseSchema = z.object({
   receiptDate: z.string().min(1, 'Informe a data do recebimento.'),
   materialDescription: z
     .string()
@@ -24,7 +24,6 @@ export const certificateComparisonFormSchema = z.object({
     .string()
     .trim()
     .min(1, 'Informe a quantidade encontrada no recebimento.'),
-  ...inspectionDimensionFieldsSchema.shape,
   visualInspection: z.enum(['OK', 'NOK'], {
     message: 'Informe se o visual está OK ou NOK.',
   }),
@@ -37,6 +36,17 @@ export const certificateComparisonFormSchema = z.object({
     .min(1, 'Informe o recebedor responsável.'),
   receiverEmployeeId: z.number().int().positive().nullable().optional(),
 });
+
+export function buildCertificateComparisonFormSchema(
+  productTypeCode: string | undefined,
+) {
+  return certificateComparisonFormBaseSchema.extend(
+    inspectionDimensionFieldsSchemaForProductType(productTypeCode).shape,
+  );
+}
+
+export const certificateComparisonFormSchema =
+  buildCertificateComparisonFormSchema('CHAPA');
 
 export type CertificateComparisonFormValues = z.infer<
   typeof certificateComparisonFormSchema

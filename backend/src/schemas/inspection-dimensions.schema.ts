@@ -44,3 +44,42 @@ export const dimensionalFoundFieldsSchema = z.object({
 export const inspectionDimensionFieldsSchema = dimensionalSpecifiedFieldsSchema.merge(
   dimensionalFoundFieldsSchema,
 );
+
+const freeTextDimensionalPartSchema = z.string().trim();
+
+export const freeTextDimensionalSpecifiedFieldsSchema = z.object({
+  dimensionalSpecifiedThickness: z
+    .string()
+    .trim()
+    .min(1, 'Informe o dimensional especificado na NF.'),
+  dimensionalSpecifiedWidth: freeTextDimensionalPartSchema,
+  dimensionalSpecifiedLength: freeTextDimensionalPartSchema,
+});
+
+export const freeTextDimensionalFoundFieldsSchema = z.object({
+  dimensionalFoundThickness: z
+    .string()
+    .trim()
+    .min(1, 'Informe o dimensional encontrado no recebimento.'),
+  dimensionalFoundWidth: freeTextDimensionalPartSchema,
+  dimensionalFoundLength: freeTextDimensionalPartSchema,
+});
+
+export const freeTextInspectionDimensionFieldsSchema =
+  freeTextDimensionalSpecifiedFieldsSchema.merge(
+    freeTextDimensionalFoundFieldsSchema,
+  );
+
+export function usesChapaDimensionalMask(
+  productTypeCode: string | undefined,
+): boolean {
+  return productTypeCode?.trim().toUpperCase() === 'CHAPA';
+}
+
+export function inspectionDimensionFieldsSchemaForProductType(
+  productTypeCode: string | undefined,
+) {
+  return usesChapaDimensionalMask(productTypeCode)
+    ? inspectionDimensionFieldsSchema
+    : freeTextInspectionDimensionFieldsSchema;
+}

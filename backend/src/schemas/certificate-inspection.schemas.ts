@@ -1,6 +1,6 @@
 import z from 'zod';
 import { InspectionCheckResult } from '../generated/prisma/enums.js';
-import { inspectionDimensionFieldsSchema } from './inspection-dimensions.schema.js';
+import { inspectionDimensionFieldsSchemaForProductType } from './inspection-dimensions.schema.js';
 
 export const inspectionCheckResultSchema = z.enum(InspectionCheckResult);
 
@@ -36,7 +36,7 @@ export type PublicCertificateInspection = z.infer<
   typeof certificateInspectionSchema
 >;
 
-export const submitCertificateInspectionSchema = z.object({
+const submitCertificateInspectionBaseSchema = z.object({
   receiptDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Informe a data do recebimento.'),
@@ -58,7 +58,6 @@ export const submitCertificateInspectionSchema = z.object({
     .string()
     .trim()
     .min(1, 'Informe a quantidade encontrada no recebimento.'),
-  ...inspectionDimensionFieldsSchema.shape,
   visualInspection: inspectionCheckResultSchema,
   reportStatus: inspectionCheckResultSchema,
   receiverResponsible: z
@@ -67,6 +66,25 @@ export const submitCertificateInspectionSchema = z.object({
     .min(1, 'Informe o recebedor responsável.'),
   receiverEmployeeId: z.number().int().positive().nullable().optional(),
 });
+
+/** Validação na rota (aceita chapa e tubo); regras finas no controller por tipo de produto. */
+export const submitCertificateInspectionSchema =
+  submitCertificateInspectionBaseSchema.extend({
+    dimensionalSpecifiedThickness: z.string(),
+    dimensionalSpecifiedWidth: z.string(),
+    dimensionalSpecifiedLength: z.string(),
+    dimensionalFoundThickness: z.string(),
+    dimensionalFoundWidth: z.string(),
+    dimensionalFoundLength: z.string(),
+  });
+
+export function buildSubmitCertificateInspectionSchema(
+  productTypeCode: string | undefined,
+) {
+  return submitCertificateInspectionBaseSchema.extend(
+    inspectionDimensionFieldsSchemaForProductType(productTypeCode).shape,
+  );
+}
 
 export type SubmitCertificateInspectionFields = z.infer<
   typeof submitCertificateInspectionSchema
