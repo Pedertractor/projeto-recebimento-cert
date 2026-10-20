@@ -5,9 +5,10 @@ import { CollapsibleFilters } from '@/components/collapsible-filters';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
+  isQualityDimensionalSourceSelected,
   QUALITY_DIMENSIONAL_SOURCE_OPTIONS,
+  toggleQualityDimensionalSource,
   type QualityDimensionalFilters,
-  type QualityDimensionalSource,
 } from '@/lib/quality-dimensional-filters';
 import { cn } from '@/lib/utils';
 
@@ -34,11 +35,18 @@ export function QualityDimensionalFiltersPanel({
     <CollapsibleFilters summary={filtersSummary}>
       <div className="flex w-full flex-col gap-2">
         <span className="text-sm font-medium text-foreground">
-          Comparar com
+          Filtrar em
         </span>
+        <p className="text-xs text-muted-foreground">
+          Selecione um ou os dois. Com ambos ativos, o lote precisa bater nos
+          dimensionais na NF e no recebimento.
+        </p>
         <div className="flex flex-wrap gap-2">
           {QUALITY_DIMENSIONAL_SOURCE_OPTIONS.map((option) => {
-            const selected = filters.source === option.value;
+            const selected = isQualityDimensionalSourceSelected(
+              filters,
+              option.value,
+            );
 
             return (
               <button
@@ -46,7 +54,7 @@ export function QualityDimensionalFiltersPanel({
                 type="button"
                 title={option.description}
                 onClick={() =>
-                  patch({ source: option.value as QualityDimensionalSource })
+                  onChange(toggleQualityDimensionalSource(filters, option.value))
                 }
                 className={cn(
                   'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',

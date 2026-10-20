@@ -6,8 +6,15 @@ import { normalizeStoredDimensionalValue } from '@/utils/dimensional-input';
 
 export type QualityDimensionalSource = 'specified' | 'found';
 
+export type QualityDimensionalDimensions = {
+  thickness: string;
+  width: string;
+  length: string;
+};
+
 export type QualityDimensionalFilters = {
-  source: QualityDimensionalSource;
+  matchSpecified: boolean;
+  matchFound: boolean;
   thickness: string;
   width: string;
   length: string;
@@ -21,17 +28,18 @@ export const QUALITY_DIMENSIONAL_SOURCE_OPTIONS: Array<{
   {
     value: 'specified',
     label: 'Especificado na NF',
-    description: 'Compara com o dimensional informado na nota fiscal.',
+    description: 'Inclui o dimensional informado na nota fiscal.',
   },
   {
     value: 'found',
     label: 'Encontrado no recebimento',
-    description: 'Compara com o dimensional medido na conferência.',
+    description: 'Inclui o dimensional medido na conferência.',
   },
 ];
 
 export const EMPTY_QUALITY_DIMENSIONAL_FILTERS: QualityDimensionalFilters = {
-  source: 'specified',
+  matchSpecified: true,
+  matchFound: false,
   thickness: '',
   width: '',
   length: '',
@@ -44,17 +52,15 @@ export type QualityDimensionalSearchMatch = {
   supplierName: string;
   lotIndex: number;
   lotLabel: string;
-  thickness: string;
-  width: string;
-  length: string;
-  dimensionsLabel: string;
+  specified: QualityDimensionalDimensions;
+  found: QualityDimensionalDimensions;
   inspectedAt: string;
 };
 
 function getDimensionsForSource(
   inspection: CertificateInspection,
   source: QualityDimensionalSource,
-) {
+): QualityDimensionalDimensions {
   if (source === 'specified') {
     return {
       thickness: inspection.dimensionalSpecifiedThickness,
@@ -84,17 +90,75 @@ function normalizeCriteria(filters: QualityDimensionalFilters) {
   };
 }
 
+function dimensionsMatchCriteria(
+  dimensions: QualityDimensionalDimensions,
+  criteria: ReturnType<typeof normalizeCriteria>,
+): boolean {
+  if (criteria.thickness && dimensions.thickness !== criteria.thickness) {
+    return false;
+  }
+  if (criteria.width && dimensions.width !== criteria.width) {
+    return false;
+  }
+  if (criteria.length && dimensions.length !== criteria.length) {
+    return false;
+  }
+
+  return true;
+}
+
+export function hasDimensionalSourceSelection(
+  filters: QualityDimensionalFilters,
+): boolean {
+  return filters.matchSpecified || filters.matchFound;
+}
+
 export function hasDimensionalSearchCriteria(
   filters: QualityDimensionalFilters,
 ): boolean {
   const criteria = normalizeCriteria(filters);
-  return Boolean(criteria.thickness || criteria.width || criteria.length);
+  return (
+    hasDimensionalSourceSelection(filters) &&
+    Boolean(criteria.thickness || criteria.width || criteria.length)
+  );
 }
 
 export function hasActiveQualityDimensionalFilters(
   filters: QualityDimensionalFilters,
 ): boolean {
-  return hasDimensionalSearchCriteria(filters);
+  return (
+    hasDimensionalSearchCriteria(filters) ||
+    filters.matchSpecified !== EMPTY_QUALITY_DIMENSIONAL_FILTERS.matchSpecified ||
+    filters.matchFound !== EMPTY_QUALITY_DIMENSIONAL_FILTERS.matchFound
+  );
+}
+
+export function toggleQualityDimensionalSource(
+  filters: QualityDimensionalFilters,
+  source: QualityDimensionalSource,
+): QualityDimensionalFilters {
+  if (source === 'specified') {
+    const nextSpecified = !filters.matchSpecified;
+    return {
+      ...filters,
+      matchSpecified: nextSpecified,
+      matchFound: nextSpecified || filters.matchFound ? filters.matchFound : true,
+    };
+  }
+
+  const nextFound = !filters.matchFound;
+  return {
+    ...filters,
+    matchFound: nextFound,
+    matchSpecified: nextFound || filters.matchSpecified ? filters.matchSpecified : true,
+  };
+}
+
+export function isQualityDimensionalSourceSelected(
+  filters: QualityDimensionalFilters,
+  source: QualityDimensionalSource,
+): boolean {
+  return source === 'specified' ? filters.matchSpecified : filters.matchFound;
 }
 
 export function searchQualityDimensionalMatches(
@@ -119,15 +183,16 @@ export function searchQualityDimensionalMatches(
       }
 
       const inspection = attachment.inspection;
-      const dimensions = getDimensionsForSource(inspection, filters.source);
+      const specified = getDimensionsForSource(inspection, 'specified');
+      const found = getDimensionsForSource(inspection, 'found');
 
-      if (criteria.thickness && dimensions.thickness !== criteria.thickness) {
+      if (
+        filters.matchSpecified &&
+        !dimensionsMatchCriteria(specified, criteria)
+      ) {
         continue;
       }
-      if (criteria.width && dimensions.width !== criteria.width) {
-        continue;
-      }
-      if (criteria.length && dimensions.length !== criteria.length) {
+      if (filters.matchFound && !dimensionsMatchCriteria(found, criteria)) {
         continue;
       }
 
@@ -138,14 +203,8 @@ export function searchQualityDimensionalMatches(
         supplierName: request.supplier.name,
         lotIndex: attachment.lotIndex,
         lotLabel: attachment.lotLabel ?? `Lote ${attachment.lotIndex}`,
-        thickness: dimensions.thickness,
-        width: dimensions.width,
-        length: dimensions.length,
-        dimensionsLabel: [
-          dimensions.thickness,
-          dimensions.width,
-          dimensions.length,
-        ].join(' X '),
+        specified,
+        found,
         inspectedAt: inspection.inspectedAt,
       });
     }
@@ -159,6 +218,16 @@ export function searchQualityDimensionalMatches(
 
     return a.invoiceNumber.localeCompare(b.invoiceNumber, 'pt-BR');
   });
+}
+
+function formatSourceSummary(filters: QualityDimensionalFilters): string {
+  if (filters.matchSpecified && filters.matchFound) {
+    return 'NF e recebimento';
+  }
+  if (filters.matchFound) {
+    return 'recebimento';
+  }
+  return 'especificado NF';
 }
 
 export function buildQualityDimensionalFiltersSummary(
@@ -178,16 +247,11 @@ export function buildQualityDimensionalFiltersSummary(
     parts.push(`comp. ${criteria.length}`);
   }
 
-  const sourceLabel =
-    filters.source === 'specified'
-      ? 'especificado NF'
-      : 'encontrado recebimento';
-
   const countLabel = `${matchCount} resultado${matchCount === 1 ? '' : 's'}`;
 
   if (parts.length === 0) {
     return 'Informe ao menos espessura, largura ou comprimento';
   }
 
-  return `${countLabel} · ${sourceLabel} · ${parts.join(' · ')}`;
+  return `${countLabel} · ${formatSourceSummary(filters)} · ${parts.join(' · ')}`;
 }

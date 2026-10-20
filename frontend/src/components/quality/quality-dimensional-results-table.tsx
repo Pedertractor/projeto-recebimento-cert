@@ -16,11 +16,15 @@ import type { QualityDimensionalSearchMatch } from '@/lib/quality-dimensional-fi
 type QualityDimensionalResultsTableProps = {
   matches: QualityDimensionalSearchMatch[];
   comparisonReturnTo: string;
+  showSpecified: boolean;
+  showFound: boolean;
 };
 
 export function QualityDimensionalResultsTable({
   matches,
   comparisonReturnTo,
+  showSpecified,
+  showFound,
 }: QualityDimensionalResultsTableProps) {
   if (matches.length === 0) {
     return (
@@ -43,9 +47,32 @@ export function QualityDimensionalResultsTable({
             <TableHead>NF</TableHead>
             <TableHead>Fornecedor</TableHead>
             <TableHead>Lote</TableHead>
-            <TableHead>Espessura</TableHead>
-            <TableHead>Largura</TableHead>
-            <TableHead>Comprimento</TableHead>
+            {showSpecified ? (
+              <>
+                <TableHead className="text-muted-foreground">
+                  Esp. NF
+                </TableHead>
+                <TableHead className="text-muted-foreground">
+                  Larg. NF
+                </TableHead>
+                <TableHead className="text-muted-foreground">
+                  Comp. NF
+                </TableHead>
+              </>
+            ) : null}
+            {showFound ? (
+              <>
+                <TableHead className="text-muted-foreground">
+                  Esp. receb.
+                </TableHead>
+                <TableHead className="text-muted-foreground">
+                  Larg. receb.
+                </TableHead>
+                <TableHead className="text-muted-foreground">
+                  Comp. receb.
+                </TableHead>
+              </>
+            ) : null}
             <TableHead>Conferido em</TableHead>
             <TableHead className="text-right">Ação</TableHead>
           </TableRow>
@@ -58,9 +85,32 @@ export function QualityDimensionalResultsTable({
                 {match.supplierName}
               </TableCell>
               <TableCell>{match.lotLabel}</TableCell>
-              <TableCell className="tabular-nums">{match.thickness}</TableCell>
-              <TableCell className="tabular-nums">{match.width}</TableCell>
-              <TableCell className="tabular-nums">{match.length}</TableCell>
+              {showSpecified ? (
+                <>
+                  <TableCell className="tabular-nums">
+                    {match.specified.thickness}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {match.specified.width}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {match.specified.length}
+                  </TableCell>
+                </>
+              ) : null}
+              {showFound ? (
+                <>
+                  <TableCell className="tabular-nums">
+                    {match.found.thickness}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {match.found.width}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {match.found.length}
+                  </TableCell>
+                </>
+              ) : null}
               <TableCell>{formatRequestDate(match.inspectedAt)}</TableCell>
               <TableCell className="text-right">
                 <div className="flex flex-wrap justify-end gap-1">

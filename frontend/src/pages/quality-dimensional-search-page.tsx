@@ -112,6 +112,8 @@ export function QualityDimensionalSearchPage() {
             <QualityDimensionalResultsTable
               matches={matches}
               comparisonReturnTo={comparisonReturnTo}
+              showSpecified={filters.matchSpecified}
+              showFound={filters.matchFound}
             />
           )}
         </div>

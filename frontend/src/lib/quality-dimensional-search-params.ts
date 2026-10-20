@@ -1,7 +1,6 @@
 import {
   EMPTY_QUALITY_DIMENSIONAL_FILTERS,
   type QualityDimensionalFilters,
-  type QualityDimensionalSource,
 } from '@/lib/quality-dimensional-filters';
 
 const PARAM_SOURCE = 'origem';
@@ -9,15 +8,59 @@ const PARAM_THICKNESS = 'esp';
 const PARAM_WIDTH = 'larg';
 const PARAM_LENGTH = 'comp';
 
+function encodeSources(filters: QualityDimensionalFilters): string | null {
+  const { matchSpecified, matchFound } = filters;
+
+  if (matchSpecified && matchFound) {
+    return 'nf,rec';
+  }
+  if (matchFound) {
+    return 'rec';
+  }
+  if (matchSpecified) {
+    return 'nf';
+  }
+
+  return null;
+}
+
+function decodeSources(value: string | null): Pick<
+  QualityDimensionalFilters,
+  'matchSpecified' | 'matchFound'
+> {
+  if (!value) {
+    return {
+      matchSpecified: true,
+      matchFound: false,
+    };
+  }
+
+  if (value === 'found' || value === 'rec') {
+    return { matchSpecified: false, matchFound: true };
+  }
+
+  if (value === 'nf') {
+    return { matchSpecified: true, matchFound: false };
+  }
+
+  const tokens = value.split(',').map((part) => part.trim());
+  const matchSpecified = tokens.includes('nf') || tokens.includes('specified');
+  const matchFound = tokens.includes('rec') || tokens.includes('found');
+
+  if (!matchSpecified && !matchFound) {
+    return { matchSpecified: true, matchFound: false };
+  }
+
+  return { matchSpecified, matchFound };
+}
+
 export function filtersFromSearchParams(
   params: URLSearchParams,
 ): QualityDimensionalFilters {
-  const sourceParam = params.get(PARAM_SOURCE);
-  const source: QualityDimensionalSource =
-    sourceParam === 'found' ? 'found' : 'specified';
+  const sources = decodeSources(params.get(PARAM_SOURCE));
 
   return {
-    source,
+    ...sources,
     thickness: params.get(PARAM_THICKNESS) ?? '',
     width: params.get(PARAM_WIDTH) ?? '',
     length: params.get(PARAM_LENGTH) ?? '',
@@ -29,8 +72,9 @@ export function filtersToSearchParams(
 ): URLSearchParams {
   const params = new URLSearchParams();
 
-  if (filters.source === 'found') {
-    params.set(PARAM_SOURCE, 'found');
+  const sourceValue = encodeSources(filters);
+  if (sourceValue && sourceValue !== 'nf') {
+    params.set(PARAM_SOURCE, sourceValue);
   }
 
   const thickness = filters.thickness.trim();
@@ -64,7 +108,7 @@ export function hasDimensionalSearchParams(params: URLSearchParams): boolean {
     params.has(PARAM_THICKNESS) ||
     params.has(PARAM_WIDTH) ||
     params.has(PARAM_LENGTH) ||
-    params.get(PARAM_SOURCE) === 'found'
+    params.has(PARAM_SOURCE)
   );
 }
 
